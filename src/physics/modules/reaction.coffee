@@ -28,5 +28,5 @@ class @Reaction # reaction module with no class variables only class methods
     
   @circle_polygon: (circle, polygon, d) ->
     return if death_check(circle, polygon)
-    console.log('Reaction.circle_triangle not implemented yet')
+    console.log('Reaction.circle_polygon not implemented yet')
     return
