@@ -39,7 +39,7 @@ class @Root extends Polygon
 
   fire: () =>
     dt = 6
-    return unless @go and timestamp() % dt < dt * 0.4
+    return unless @go and Utils.timestamp() % dt < dt * 0.4
     bullet      = new Bullet()
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
@@ -71,7 +71,7 @@ class @Root extends Polygon
   ship: (ship = @path, dur = 500) ->
     @path = ship 
     endPath = @d() # new end-path to morph to
-    @image.data([endPath]).transition().duration(dur).attrTween("d", pathTween)
+    @image.data([endPath]).transition().duration(dur).attrTween("d", Utils.pathTween)
 
   start: ->
     super

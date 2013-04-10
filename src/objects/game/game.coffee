@@ -11,7 +11,7 @@ class @Game
     @tzoom    = 0 # integer counter for tracking zoom timer
     @scale    = 1 # initialize zoom level
     @root     = new Root() # default root element i.e. under user control
-    @scoretxt    = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black')
+    @scoretxt = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black')
     @lives    = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial black')
     @leveltxt = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial black')
     d3.select(window).on("keydown", @keydown) # default keyboard listener

@@ -15,4 +15,4 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     ]  
 
   d: ->
-    (path_seg(p) for p in @path).join(" ")
+    (Utils.path_seg(p) for p in @path).join(" ")

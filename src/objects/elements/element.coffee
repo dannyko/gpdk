@@ -21,8 +21,8 @@ class @Element
     @_stroke = @config.stroke  || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill   = @config.fill    || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
     @angle   = @config.angle   || 0 # angle for rigid body rotation
-    addChainedAttributeAccessor(@, 'fill')
-    addChainedAttributeAccessor(@, 'stroke')
+    Utils.addChainedAttributeAccessor(@, 'fill')
+    Utils.addChainedAttributeAccessor(@, 'stroke')
     
   distance: -> # Euclidean distance to all other Element "g" tag containers 
     d = [] # initialize
