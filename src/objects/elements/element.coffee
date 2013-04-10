@@ -4,14 +4,14 @@ class @Element
     @svg     = @config.svg     || d3.select("#game_svg")
     @width   = @svg.attr("width")
     @height  = @svg.attr("height")
-    @x       = @config.x       || 0 # [@width * 0.5 + @width * 0.5 * (Math.random() - 0.5), @height * 0.5 + @height * 0.5 * (Math.random() - 0.5)] # initial (x,y)-position
-    @y       = @config.x       || 0 # [@width * 0.5 + @width * 0.5 * (Math.random() - 0.5), @height * 0.5 + @height * 0.5 * (Math.random() - 0.5)] # initial (x,y)-position
-    @u       = @config.v       || 0 # [3 * (Math.random() - 0.5), 2 * (Math.random() - 0.5)] # initial horizontal-velocity u
-    @v       = @config.v       || 0 # [3 * (Math.random() - 0.5), 2 * (Math.random() - 0.5)] # initial vertical-velocity v
+    @x       = @config.x       || 0 
+    @y       = @config.x       || 0 
+    @u       = @config.v       || 0 
+    @v       = @config.v       || 0 
     @f       = @config.f       || [0, 0] # current force vector [fx, fy]
     @n       = @config.n       || [] # array of references to neighbor elements that this element interacts with
     @force   = @config.force   || new Force() # object for computing force vectors: force.f() = [fx, fy]
-    @size    = @config.size    || 15 # default size in units of pixels
+    @size    = @config.size    || 0 # zero default size in units of pixels for abstract class
     @g       = @config.g       || d3.select("#game_g").append("g").attr("transform", "translate(" + @x + "," + @y + ")")
     @image   = @config.image   || null # no image by default for generic element: user must specify
     @go      = @config.go      || false # timer is not immediately on by default
@@ -21,6 +21,8 @@ class @Element
     @_stroke = @config.stroke  || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill   = @config.fill    || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
     @angle   = @config.angle   || 0 # angle for rigid body rotation
+    @is_root = @config.is_root || false # default boolean for root element 
+    @type    = @config.type    || null # default type is null for abstract class
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
     
