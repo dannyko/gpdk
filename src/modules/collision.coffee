@@ -1,89 +1,52 @@
 class @Collision
   @check: (ei, ej) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
-    name = [ei.constructor.name, ej.constructor.name]
-    sort = [ei.constructor.name, ej.constructor.name].sort() # sort names in alphabetical order
+    name = [ei.type, ej.type]
+    sort = [ei.type, ej.type].sort() # sort names in alphabetical order
     if name[0] == sort[0] and name[1] == sort[1] # m and n are neighboring elements that need to resolve a collision event
       m = ei 
       n = ej
     else 
       m = ej
       n = ei
-    switch m.constructor.name 
+    switch m.type # check for combinations of the two basic collison types: circle and polygon (add rectangle later)
       # follow alphabetical order within each case to avoid repeating code i.e. collision(a, b) = collision(b, a) (unordered)
       # the last alphabetical element type gets taken care of by previous types 
-      when 'Bullet' then ( # bullet type elements destroy other elements and themselves
-        switch n.constructor.name 
-          when 'Circle' then (
-            d = @bullet_circle(m, n)
-            Reaction.bullet(m, n) if d.collision # default/generic bullet reaction for now 
-          )
-          when 'Root' then (
-            d = @bullet_root(m, n) 
-            Reaction.bullet_root(m, n, d) if d.collision
-          )
-          when 'Polygon' then Reaction.bullet(m, n) if @bullet_triangle(m, n).collision # default/generic bullet reaction for now 
-      )
       when 'Circle' then (
-        switch n.constructor.name 
+        switch n.type 
           when 'Circle' then (
             d = @circle_circle(m, n) 
             Reaction.circle_circle(m, n, d) if d.collision
           )
-          when 'Root' then (
-            d = @circle_root(m, n) 
-            Reaction.circle_root(m, n, d) if d.collision
-          )
           when 'Polygon' then (
-            d =  @circle_triangle(m, n) 
-            Reaction.circle_triangle(m, n, d) if d.collision
+            d =  @circle_polygon(m, n) 
+            Reaction.circle_polygon(m, n, d) if d.collision
           )
       )
-      when 'Root' then (
-        switch n.constructor.name 
+      when 'Polygon' then (
+        switch n.type 
           when 'Polygon' then (
-            d = @root_triangle(m, n)             
-            Reaction.root_triangle(m, n, d) if d.collision
+            console.log(this, 'not implemented yet')
+            # d =  @polygon_polygon(m, n) 
+            # Reaction.polygon_polygon(m, n, d) if d.collision
           )
       )
     return 
       
-  @bullet_circle: (bullet, circle) ->
-    d = @circle_circle(bullet, circle) # treat bullets as circles for now 
-    if d.collision
-      game.score += 100 
-      Gameprez.score("player", score) if Gameprez?
-    d
- 
-  @bullet_root: (bullet, root) ->
-    @circle_root(bullet, root) # treat bullets as circles for now
-  
-  @bullet_triangle: (bullet, triangle) ->
-    @circle_triangle(bullet, triangle) # treat bullets as circles for now
-    
   @circle_circle: (m, n) ->
     d           = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
     d.collision = if d.dist <= d.dmin then true else false 
     d
-  
-  @circle_root: (circle, root) ->
-    parent = Object.getPrototypeOf(Object.getPrototypeOf(root)).constructor.name
-    switch parent # dynamically retrieve parent class name as string
-      when 'Circle' then d = @circle_circle(circle, root) 
-      when 'Polygon' then d = @circle_triangle(circle, root) 
-    
-  @circle_triangle: (circle, triangle) ->
-    for i in [0..triangle.path.length - 2] # SVG Path segments are defined relative to previous nodes starting from an "M"-type zeroth node 
-      continue unless triangle.path[i].react # use 1st node to toggle reactions of this segment on/off
-      d = circle_line_dist(circle, triangle, i) 
+      
+  @circle_polygon: (circle, polygon) ->
+    for i in [0..polygon.path.length - 2] # SVG Path segments are defined relative to previous nodes starting from an "M"-type zeroth node 
+      continue unless polygon.path[i].react # use 1st node to toggle reactions of this segment on/off
+      d = circle_line_dist(circle, polygon, i) 
       continue if d.dist > circle.size # circle is too far to collide with this line segment
       d.collision = true
       break # stop for loop since we can only react with one segment per collision
     d
-    
-  @root_triangle: (root, triangle) ->
-    console.log('Collision.root_triangle() not implemented yet')
-    
+        
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
     d      = {} # initialize output object containing distance related quantities
     d.dx   = m.x - n.x # horizontal displacement

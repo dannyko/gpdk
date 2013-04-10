@@ -1,6 +1,7 @@
 class @Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
   constructor: (@config = {}) ->
     super
+    @type    = 'Polygon'
     @path    = @config.path || null
     @image   = @g.append("path")
     @image.attr("stroke", @_stroke)

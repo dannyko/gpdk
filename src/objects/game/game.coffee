@@ -38,4 +38,5 @@ class @Game
     @N = @initialN
     @score = 0
     @root = new Root()
+    Gamescore.lives = Gamescore.initialLives
     @start()

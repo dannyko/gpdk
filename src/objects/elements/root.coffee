@@ -1,6 +1,7 @@
 class @Root extends Polygon
   constructor: (@config = {}) ->
     super
+    @is_root   = true
     @fixed     = true    
     @size      = 90
     @x         = @width / 2
@@ -13,8 +14,6 @@ class @Root extends Polygon
     @image.attr("stroke", @_stroke)
     @image.attr("fill", @_fill)
     @attacker = [] # no attackers by default
-    @initialLives = 2 
-    @lives  = @initialLives # 3 lives total by default
     @charge = 5e4 
     d3.timer(@fire)
     @bullet_stroke = "none"
@@ -85,3 +84,19 @@ class @Root extends Polygon
     @svg.on("mousemove", null) # default mouse behavior is to control the root element position
     @svg.on("mousedown", null) # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
+
+  death: ->
+    N    = 240 # random color parameter
+    fill = '#ff0' # "hsl(" + Math.random() * N + ", 80%," + "40%" + ")" # fill     = "hsl(" + Math.random() * N + ", 80%," + 0.5 * Math.sqrt(circle.u * circle.u + circle.v * circle.v) + ")"
+    dur  = 120 # color effect transition duration parameter
+    @image # default reaction
+      .transition()
+      .duration(dur)
+      .ease('sqrt')
+      .attr("fill", fill)
+      .transition()
+      .duration(dur)
+      .ease('linear')
+      .attr("fill", @fill())
+    console.log(fill)
+    Gamescore.lives -= 1 # decrement lives for this game

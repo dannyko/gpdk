@@ -58,7 +58,7 @@ class @Dronewar extends Game
         @root.draw([@root.x, @root.y]) 
       )
       when 82
-        @reset() if @root.lives < 0
+        @reset() if Gamescore.lives < 0
       # down arrow reverses direction of firing angle 
     return
 
@@ -123,9 +123,9 @@ class @Dronewar extends Game
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       d3.timer(() =>  # set a timer to monitor game progress
-        @scoretxt.text('SCORE: ' + @score)
+        @scoretxt.text('SCORE: ' + Gamescore.value)
         @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-        if @root.lives >= 0
+        if Gamescore.lives >= 0
           @lives.text('LIVES: ' + @root.lives) 
         else 
           dur = 420
