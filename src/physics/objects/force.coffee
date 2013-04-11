@@ -13,7 +13,8 @@ class @Force
         fy = @params.q * dr.y / r3
       )
       when 'random' then(
-        fx = [2 * (Math.random() - 0.5) * @params.xScale, 2 * (Math.random() - 0.5) * @params.yScale]
+        fx = 2 * (Math.random() - 0.5) * @params.xScale
+        fy = 2 * (Math.random() - 0.5) * @params.yScale
         fx = -@params.fxBound if r.x > @params.xBound # enforce boundary
         fy = -@params.fyBound if r.y > @params.yBound # enforce boundary
         fx =  @params.fxBound if r.x < 0 # enforce boundary
