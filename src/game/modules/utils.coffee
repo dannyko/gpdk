@@ -1,7 +1,18 @@
 class @Utils
+  @addChainedAttributeAccessor = (obj, attr) -> # modified from  http://coffeescriptcookbook.com/chapters/classes_and_objects/chaining
+    obj[attr] = (newValues...) ->
+      if newValues.length == 0
+        obj['_' + attr]
+      else
+        obj['_' + attr] = newValues[0]
+        obj.image.attr(attr, obj['_' + attr])
+        obj        
+
   @timestamp = ->
     new Date().getTime() # e(new Date()).getTime()-Date.UTC(1970,0,1)
+
   @angle     = (a) -> 2 * Math.PI * a / 360
+
   @path_seg  = (p) -> # helper function for generating "d" attributes of SVG path elements
     a = p.pathSegTypeAsLetter
     switch a
@@ -13,16 +24,10 @@ class @Utils
       when 'Q', 'q' then [a, p.x1, p.y1, p.x, p.y].join(" ")
       when 'T', 't' then [a, p.x, p.y].join(" ")
       when 'Z', 'z' then a
-      
-  @addChainedAttributeAccessor = (obj, attr) -> # modified from  http://coffeescriptcookbook.com/chapters/classes_and_objects/chaining
-    obj[attr] = (newValues...) ->
-      if newValues.length == 0
-        obj['_' + attr]
-      else
-        obj['_' + attr] = newValues[0]
-        obj.image.attr(attr, obj['_' + attr])
-        obj
-        
+
+  @d = (path) ->
+    (@path_seg(p) for p in path).join(" ")      
+    
   @pathTween = (d, i, a) ->
     prec = 4  # pixel spacing along path to use for control-point interpolation
     interp = (d, path) ->

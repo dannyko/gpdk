@@ -4,8 +4,8 @@ class @Root extends Polygon
     @is_root   = true
     @fixed     = true    
     @size      = 90
-    @x         = @width / 2
-    @y         = @height - @size * 2
+    @r.x       = @width / 2
+    @r.y       = @height - @size * 2
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @stroke("#700")
     @fill("#none")
@@ -24,8 +24,8 @@ class @Root extends Polygon
 
   update: (xy = d3.mouse(@svg.node())) =>
     return unless @react # don't draw if not active
-    @x = xy[0]
-    @y = xy[1]
+    @r.x = xy[0]
+    @r.y = xy[1]
     @draw()
     @collision_detect()
     if @attacker?
@@ -45,10 +45,10 @@ class @Root extends Polygon
     bullet.size = @bullet_size
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
-    bullet.x    = @x + x * (@size / 3 + bullet.size)
-    bullet.y    = @y + y * (@size / 6)
-    bullet.u    = @bullet_speed * x  
-    bullet.v    = @bullet_speed * y
+    bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
+    bullet.r.y    = @r.y + y * (@size / 6)
+    bullet.v.x    = @bullet_speed * x  
+    bullet.v.y    = @bullet_speed * y
     bullet.n.push(n) for n in @n
     element.n.push(bullet) for element in @n
     bullet.start()
@@ -58,8 +58,8 @@ class @Root extends Polygon
     return unless @attacker.length > 0
     @params = 
       type: 'charge'
-      cx: @x
-      cy: @y
+      cx: @r.x
+      cy: @r.y
       q:  @charge # charge
     attacker.force.params = @params for attacker in @attacker
 

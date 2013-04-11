@@ -4,11 +4,9 @@ class @Element
     @svg       = @config.svg     || d3.select("#game_svg")
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
-    @x         = @config.x       || 0 
-    @y         = @config.x       || 0 
-    @u         = @config.v       || 0 
-    @v         = @config.v       || 0 
-    @f         = @config.f       || [0, 0] # current force vector [fx, fy]
+    @r         = @config.r       || new Vec() # position vector (rx, ry)
+    @v         = @config.v       || new Vec() # velocity vector (vx, vy)
+    @f         = @config.f       || new Vec() # force    vector (fx, fy)
     @n         = @config.n       || [] # array of references to neighbor elements that this element interacts with
     @force     = @config.force   || new Force() # object for computing force vectors: force.f() = [fx, fy]
     @size      = @config.size    || 0 # zero default size in units of pixels for abstract class
@@ -24,22 +22,9 @@ class @Element
     @is_root   = @config.is_root || false # default boolean for root element control
     @is_bullet = @config.is_bullet || false # default boolean for bullet effects
     @type      = @config.type    || null # default type is null for abstract class
-    @game      = @config.game    || null # default reference to parent game object containing the element instance
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
-    
-    
-  distance: -> # Euclidean distance to all other Element "g" tag containers 
-    d = [] # initialize
-    for element in @n # loop over neighboring elements
-      continue if not element?
-      a    = @x - element.x # horizontal displacement
-      b    = @y - element.y # vertical displacement
-      dist = Math.sqrt(a * a + b * b) # Euclidean distance i.e. Pythagorean theorem
-      d.push(dist) # add neighbor distance to output array
-    d # return d
-    
-    
+        
   collision_detect: -> # default collision detection
     return unless @react
     for n in @n
@@ -49,15 +34,14 @@ class @Element
   integrate: () =>
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
     return if @fixed
-    x  = @x
-    y  = @y
-    f  = @force.f(x, y)
-    @x = @x + @u * @dt + 0.5 * f[0] * @dt * @dt # update position
-    @y = @y + @v * @dt + 0.5 * f[1] * @dt * @dt # update position
-    @f = @force.f(@x, @y)
-    @u = @u + 0.5 * (@f[0] + f[0]) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
-    @v = @v + 0.5 * (@f[1] + f[1]) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
-    if x isnt @x or y isnt @y
+    r    = new Vec(@r) # clone the current position vector object for later comparison
+    f    = @force.f(r)
+    @r.x = @r.x + @v.x * @dt + 0.5 * f.x * @dt * @dt # update position
+    @r.y = @r.y + @v.y * @dt + 0.5 * f.y * @dt * @dt # update position
+    @f   = @force.f(@r)
+    @v.x = @v.x + 0.5 * (@f.x + f.x) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
+    @v.y = @v.y + 0.5 * (@f.y + f.y) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
+    if r.x isnt @r.x or r.y isnt @r.y
       @draw()
       @collision_detect() # check for collisions if position changes
     if @go
@@ -66,7 +50,7 @@ class @Element
       true      
 
   draw: ->
-    @g.attr("transform", "translate(" + @x + "," + @y + ")rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
+    @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
     return
     
   start: (delay = null) ->
@@ -83,12 +67,15 @@ class @Element
     @react = false
     @fixed = true
     @stop()  
+    return
     
   activate: ->
     @react = true
     @fixed = false
     @start()  
+    return
 
   death: -> 
     @deactivate()
     @g.remove() # avoids accumulating indefinite numbers of dead elements
+    return

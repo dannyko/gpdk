@@ -41,54 +41,41 @@ class @Collision
   @circle_polygon: (circle, polygon) ->
     for i in [0..polygon.path.length - 2] # SVG Path segments are defined relative to previous nodes starting from an "M"-type zeroth node 
       continue unless polygon.path[i].react # use 1st node to toggle reactions of this segment on/off
-      d = circle_line_dist(circle, polygon, i) 
-      continue if d.dist > circle.size # circle is too far to collide with this line segment
+      d = circle_polygon_dist(circle, polygon, i) 
+      continue if d.dist > circle.size # circle is too far to collide with this polygon segment
       d.collision = true
       break # stop for loop since we can only react with one segment per collision
     d
         
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
-    d      = {} # initialize output object containing distance related quantities
-    d.dx   = m.x - n.x # horizontal displacement
-    d.dy   = m.y - n.y # vertical displacement
-    d.dist = Math.sqrt(d.dx * d.dx + d.dy * d.dy) # Euclidean distance i.e. Pythagorean theorem
+    d = new Vec(m.r).subtract(n.r)
+    d.dist = d.length() # Euclidean distance i.e. Pythagorean theorem
     d.dmin = m.size + n.size # minimum allowed distance
     d
 
-  circle_line_dist = (circle, line, i) -> # helper function for computing distance related quantities between circles and lines
-    xi = line.path[i].x 
-    yi = line.path[i].y
-    switch line.path[i + 1].pathSegTypeAsLetter
+  circle_polygon_dist = (circle, polygon, i) -> # helper function for computing distance related quantities between circles and polygons
+    ri = polygon.path[i]
+    switch polygon.path[i + 1].pathSegTypeAsLetter
       when 'z', 'Z' then ( # closepath segment connects last node to first node
-        xj = line.path[0].x # first node x position
-        yj = line.path[0].y # first node y position
+        rj = polygon.path[0] # first node x position
       )
       else (
-        xj = line.path[i + 1].x
-        yj = line.path[i + 1].y
+        rj = polygon.path[i + 1]
       )    
-    rx = xj - xi
-    ry = yj - yi
-    rr = rx * rx + ry * ry 
-    dx = circle.x - xi - line.x
-    dy = circle.y - yi - line.y
-    t  = (rx * dx + ry * dy) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
-    if t < 0 # distance to line was measured relative to a point outside of the line segment so compute distance to node i instead
-      dist = Math.sqrt(dx * dx + dy * dy)
+    r  = new Vec(rj).subtract(ri)
+    rr = r.length2() 
+    dr = new Vec(circle.r).subtract(ri).subtract(polygon.r)
+    t  = r.dot(dr) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
+    if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
     else if t > 1 # ditto with respect to other node j
-      dx   = circle.x - xj - line.x
-      dy   = circle.y - yj - line.y
-      dist = Math.sqrt(dx * dx + dy * dy)
-    else # compute the distance from the point to the line
-      tx   = t * rx + xi + line.x
-      ty   = t * ry + yi + line.y
-      dx   = circle.x - tx
-      dy   = circle.y - ty
-      dist = Math.sqrt(dx * dx + dy * dy)
+      dr   = new Vec(circle.r).subtract(rj).subtract(polygon.r)
+    else # compute the distance from the point to the polygon
+      tr   = new Vec(r).scale(t).add(ri).add(polygon.r)
+      dr   = new Vec(circle.r).subtract(tr)
     d  = 
       t: t
-      dx: dx
-      dy: dy
-      r: [rx, ry]
+      x: dr.x
+      y: dr.y
+      r: [r.x, r.y]
       rr: rr
-      dist: dist
+      dist: dr.length()

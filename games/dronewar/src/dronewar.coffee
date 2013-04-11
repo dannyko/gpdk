@@ -14,29 +14,29 @@ class @Dronewar extends Game
         @element[j].n.push(newAttacker) # add the newly created element to the neighbor list
       @element.push(newAttacker) # extend the array of all elements in this game
 #    for i in [0..@element.length - 1] # place elements on grid
-#      @element[i].x = i * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-#      @element[i].x %= @width / 3
-#      @element[i].x += @width / 3
-#      @element[i].y = Math.random() * @height / 8 + 2 * @element[i].size
+#      @element[i].r.x = i * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+#      @element[i].r.x %= @width / 3
+#      @element[i].r.x += @width / 3
+#      @element[i].r.y = Math.random() * @height / 8 + 2 * @element[i].size
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
-        @element[i].x = @width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].y = @height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
+        @element[i].r.x = @width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = @height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
         speed = 20
-        dx = @root.x - @element[i].x
-        dy = @root.y - @element[i].y
+        dx = @root.r.x - @element[i].r.x
+        dy = @root.r.y - @element[i].r.y
         d  = Math.sqrt(dx * dx + dy * dy)
         dx /= d
         dy /= d
-        @element[i].u = 0.1 * @N * dx 
-        @element[i].v = 0.1 * @N * dy
+        @element[i].v.x = 0.1 * @N * dx 
+        @element[i].v.y = 0.1 * @N * dy
     for element in @element # add root to the element neighbor lists but not to element list itself
       @root.n.push(element)
       element.n.push(@root) 
       element.image.remove()
-      element.image = element.g.append("image").attr("xlink:href", "images/drone_1.png").attr("x", -element.size).attr("y", -element.size).attr("width", element.size * 2).attr("height", element.size * 2)
+      element.image = element.g.append("image").attr("xlink:href", "assets/images/drone_1.png").attr("x", -element.size).attr("y", -element.size).attr("width", element.size * 2).attr("height", element.size * 2)
       element.draw() 
     @root.attacker = @element
     @root.update_attacker()
@@ -50,12 +50,12 @@ class @Dronewar extends Game
   keydown: () =>
     switch d3.event.keyCode 
       # when 70 then @root.fire() # f key fires bullets
-      when 39 then @root.angle += @root.angleStep  ; @root.draw([@root.x, @root.y]) # right arrow changes firing angle by default
-      when 37 then @root.angle -= @root.angleStep ; @root.draw([@root.x, @root.y]) # left arrow changes firing angle by default
+      when 39 then @root.angle += @root.angleStep  ; @root.draw([@root.r.x, @root.r.y]) # right arrow changes firing angle by default
+      when 37 then @root.angle -= @root.angleStep ; @root.draw([@root.r.x, @root.r.y]) # left arrow changes firing angle by default
       # when 38 then @root.fire() # up arrow fires bullet
       when 40, 38 then ( 
         @root.angle += Math.PI
-        @root.draw([@root.x, @root.y]) 
+        @root.draw([@root.r.x, @root.r.y]) 
       )
       when 82
         @reset() if Gamescore.lives < 0
@@ -68,7 +68,7 @@ class @Dronewar extends Game
     title.text("DRONEWAR")
     prompt = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", @width / 2 - 320).attr("y", @height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold')
     prompt.text("SELECT SHIP")
-    root = @root # copy for access inside d3
+    root = @root # copy local reference to @root for access inside other objects without using @ 
     sidewinder = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", @width / 2 - 320).attr("y", @height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
     sidewinder.text("SIDEWINDER").style("fill", "#006")
     dur = 500
@@ -109,9 +109,9 @@ class @Dronewar extends Game
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
     )
-    go = @g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", @root.x - 60).attr("y", @root.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    go = @g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", @root.r.x - 60).attr("y", @root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
     go.text("START")
-    how = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", @width / 2 - 320).attr("y", @root.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    how = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", @width / 2 - 320).attr("y", @root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
     how.text("Use the mouse for controlling movement, scrollwheel for rotation")
     go.on("click", => 
       dur = 500
@@ -126,7 +126,7 @@ class @Dronewar extends Game
         @scoretxt.text('SCORE: ' + Gamescore.value)
         @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
         if Gamescore.lives >= 0
-          @lives.text('LIVES: ' + @root.lives) 
+          @lives.text('LIVES: ' + Gamescore.lives) 
         else 
           dur = 420
           @root.image.transition().duration(dur).attr("stroke", "none").attr("fill", "#900").transition().duration(dur).ease('sqrt').style("opacity", 0)
