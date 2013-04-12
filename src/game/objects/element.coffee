@@ -75,6 +75,13 @@ class @Element
     @start()  
     return
 
+  death_check: (n) ->
+    check = @is_root || @is_bullet || n.is_root || n.is_bullet # check if root or bullet
+    if check
+      m.death()
+      n.death()
+    check
+
   death: -> 
     @deactivate()
     @g.remove() # avoids accumulating indefinite numbers of dead elements
