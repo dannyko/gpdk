@@ -41,6 +41,11 @@ class Root extends Circle
     element.n.push(bullet) for element in @n
     bullet.draw()
     bullet.start()
+  
+  death_check: (n) ->
+    d = new Vec(n.r).subtract(@r).normalize()
+    bump = 0.1 / @dt
+    n.v.add(d.scale(bump))
 
 class @Circletest 
   constructor: (@config = {}) ->
