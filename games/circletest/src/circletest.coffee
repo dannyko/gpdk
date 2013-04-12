@@ -1,9 +1,10 @@
-class Root extends Polygon
+class Root extends Circle
   constructor: (@config = {}) ->
     super
-    @fixed = true    
+    @is_root   = true
+    @fixed     = true    
     @image.attr("fill", "#FFF")
-    @size = 13
+    @size      = 13
     @angle     = -Math.PI * 0.5 # initialize bullet angle
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @svg.on("mousemove", @draw) # default mouse behavior is to control the root element position
@@ -12,8 +13,8 @@ class Root extends Polygon
     @svg.on("mousewheel", @spin) # default scroll wheel listener
   draw: (node = @svg.node()) =>
     xy = d3.mouse(node)
-    @x = xy[0]
-    @y = xy[1]
+    @r.x = xy[0]
+    @r.y = xy[1]
     super()
     @collision_detect()
   spin: () =>
@@ -32,14 +33,19 @@ class Root extends Polygon
     speed       = 10 / @dt
     x           = Math.cos(@angle)
     y           = Math.sin(@angle)
-    bullet.x    = @x + x * (@size / 3 + bullet.size)
-    bullet.y    = @y + y * (@size / 3 + bullet.size)
+    bullet.x    = @r.x + x * (@size / 3 + bullet.size)
+    bullet.y    = @r.y + y * (@size / 3 + bullet.size)
     bullet.u    = speed * x
     bullet.v    = speed * y
     bullet.n.push(n) for n in @n
     element.n.push(bullet) for element in @n
     bullet.draw()
     bullet.start()
+  
+  death_check: (n) ->
+    d = new Vec(n.r).subtract(@r).normalize()
+    bump = 0.1 / @dt
+    n.v.add(d.scale(bump))
 
 class @Circletest 
   constructor: (@config = {}) ->

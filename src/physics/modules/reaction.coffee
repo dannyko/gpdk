@@ -1,15 +1,8 @@
 class @Reaction # reaction module with no class variables only class methods
 
-  death_check = (m, n) ->
-    check = m.is_root || n.is_root || m.is_bullet || n.is_bullet # check if root or bullet
-    if check
-      m.death()
-      n.death()
-    check
-        
   ## class methods:
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
-    return if death_check(m, n)
+    return if m.death_check(n) || n.death_check(m)
     line    = new Vec(d)
     line.x  = line.x / d.dist # normalize to get a unit vector
     line.y  = line.y / d.dist # normalize to get a unit vector

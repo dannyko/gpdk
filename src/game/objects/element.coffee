@@ -1,27 +1,27 @@
 class @Element
   constructor: (@config = {}) ->      
     @dt        = @config.dt      || 0.4 # controls animation smoothness relative to d3.timer queue update rate
-    @svg       = @config.svg     || d3.select("#game_svg")
+    @r         = @config.r         || new Vec() # position vector (rx, ry)
+    @v         = @config.v         || new Vec() # velocity vector (vx, vy)
+    @f         = @config.f         || new Vec() # force    vector (fx, fy)
+    @n         = @config.n         || [] # array of references to neighbor elements that this element interacts with
+    @force     = @config.force     || new Force() # object for computing force vectors: force.f() = [fx, fy]
+    @size      = @config.size      || 0 # zero default size in units of pixels for abstract class
+    @go        = @config.go        || false # timer is not immediately on by default
+    @react     = @config.true      || true # boolean switching the element readiness for reactions to collisions
+    @tol       = @config.tol       || 0.1 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
+    @fixed     = @config.fixed     || false # can it move without external control or not
+    @_stroke   = @config.stroke    || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
+    @_fill     = @config.fill      || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
+    @angle     = @config.angle     || 0 # angle for rigid body rotation
+    @is_root   = @config.is_root   || false # default boolean for root element control
+    @is_bullet = @config.is_bullet || false # default boolean for bullet effects
+    @type      = @config.type      || null # default type is null for abstract class
+    @image     = @config.image     || null # no image by default for generic element: user must specify
+    @g         = @config.g         || d3.select("#game_g").append("g").attr("transform", "translate(" + @x + "," + @y + ")")
+    @svg       = @config.svg       || d3.select("#game_svg")
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
-    @r         = @config.r       || new Vec() # position vector (rx, ry)
-    @v         = @config.v       || new Vec() # velocity vector (vx, vy)
-    @f         = @config.f       || new Vec() # force    vector (fx, fy)
-    @n         = @config.n       || [] # array of references to neighbor elements that this element interacts with
-    @force     = @config.force   || new Force() # object for computing force vectors: force.f() = [fx, fy]
-    @size      = @config.size    || 0 # zero default size in units of pixels for abstract class
-    @g         = @config.g       || d3.select("#game_g").append("g").attr("transform", "translate(" + @x + "," + @y + ")")
-    @image     = @config.image   || null # no image by default for generic element: user must specify
-    @go        = @config.go      || false # timer is not immediately on by default
-    @react     = @config.true    || true # boolean switching the element readiness for reactions to collisions
-    @tol       = @config.tol     || 0.1 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
-    @fixed     = @config.fixed   || false # can it move without external control or not
-    @_stroke   = @config.stroke  || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
-    @_fill     = @config.fill    || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
-    @angle     = @config.angle   || 0 # angle for rigid body rotation
-    @is_root   = @config.is_root || false # default boolean for root element control
-    @is_bullet = @config.is_bullet || false # default boolean for bullet effects
-    @type      = @config.type    || null # default type is null for abstract class
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
@@ -74,6 +74,12 @@ class @Element
     @fixed = false
     @start()  
     return
+
+  death_check: (n) ->
+    if @is_root # check if root
+      n.death_check(@) # let the root handle this reaction
+    if @is_bullet # check if bullet after root in order of precedence
+      n.death_check(@) # let the bullet handle this reaction    
 
   death: -> 
     @deactivate()
