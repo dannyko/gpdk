@@ -1,4 +1,31 @@
 class @Dronewar extends Game
+  constructor: ->
+    super
+    @initialN = @config.initialN || 5
+    @N        = @initialN
+    @root     = new Root() # root element i.e. under user control  
+    @scoretxt = @g.append("text").text("")
+      .attr("stroke", "none").attr("fill", "white")
+      .attr("font-size", "18").attr("x", "20")
+      .attr("y", "40").attr('font-family', 'arial black')
+    @lives    = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", "20")
+      .attr("y", "20")
+      .attr('font-family', 'arial black')
+    @leveltxt = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", "20")
+      .attr("y", "60")
+      .attr('font-family', 'arial black')
+    d3.select(window).on("keydown", @keydown) # keyboard listener
+
   level: ->
     @svg.style("cursor", "none")
     dur = 600
@@ -62,8 +89,13 @@ class @Dronewar extends Game
       # down arrow reverses direction of firing angle 
     return
 
-  start: -> # start new game
+  stop: -> # stop the game
     super
+    @root.stop()
+
+  start: -> # start new game
+    @root.draw()
+    @root.go = true # e.g. to start bullets firing without allowing root movement   
     title = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", @width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold')
     title.text("DRONEWAR")
     prompt = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", @width / 2 - 320).attr("y", @height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold')
@@ -149,3 +181,15 @@ class @Dronewar extends Game
         Gameprez.gameData = {}
         Gameprez.gameData.pause = false
       )
+      
+  reset: =>
+    @g.selectAll("g").remove()
+    @lives.text("")
+    @scoretxt.text("")
+    @leveltxt.text("")
+    @svg.style("cursor", "auto")
+    @N = @initialN
+    @score = 0
+    @root = new Root()
+    Gamescore.lives = Gamescore.initialLives
+    @start()

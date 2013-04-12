@@ -14,13 +14,12 @@ class @Root extends Polygon
     @image.attr("stroke", @_stroke)
     @image.attr("fill", @_fill)
     @attacker = [] # no attackers by default
-    @charge = 5e4 
+    @charge   = 5e4 
     d3.timer(@fire)
     @bullet_stroke = "none"
     @bullet_fill   = "#000"
     @bullet_size   = 4
     @bullet_speed  = 10 / @dt
-    # @draw()
 
   update: (xy = d3.mouse(@svg.node())) =>
     return unless @react # don't draw if not active
@@ -98,5 +97,4 @@ class @Root extends Polygon
       .duration(dur)
       .ease('linear')
       .attr("fill", @fill())
-    console.log(fill)
     Gamescore.lives -= 1 # decrement lives for this game
