@@ -31,18 +31,7 @@ class @Element
       continue unless n.react
       Collision.check(@, n)
       
-  reaction: (n = undefined) -> # example reaction with neighbor n
-    N       = 240 # random color parameter
-    dur     = 120 # color effect transition duration parameter
-    fill    = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"
-    @image.transition()
-      .duration(dur)
-      .ease('sqrt')
-      .attr("fill", fill)
-      .transition()
-      .duration(dur * 3)
-      .ease('linear')
-      .attr("fill", @fill())
+  reaction: (n = undefined) -> # abstract reaction with neighbor n
     n.reaction() if n?
           
   integrate: () =>

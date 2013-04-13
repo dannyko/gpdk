@@ -59,7 +59,7 @@ class @Circletest
     @tzoom    = 0 # integer counter for tracking zoom timer
     @scale    = 1 # initialize zoom level
     for i in [0..@numel - 1] # create element list
-      newCircle = new Circle()
+      newCircle = new TestCircle()
       for j in [0..@element.length - 1] # loop over all elements and add a new Circle to their neighbor lists
         continue if not @element[j]?
         newCircle.n.push(@element[j]) # add the newly created element to the neighbor list
