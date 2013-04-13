@@ -5,8 +5,9 @@ class @Bullet extends Circle
     @size = 3 # bullets should be set smaller than default elements
     @fill("#000")
     
-  death: -> # bullet handles score value updates 
-    @deactivate()
-    @g.remove()      
+  death_check: (n) -> # bullet handles score value updates 
+    @death()
+    n.death()
     Gamescore.increment_value() 
     Gameprez.score("player", Gamescore.value) if Gameprez?
+    true

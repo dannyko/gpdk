@@ -84,9 +84,14 @@ class @Root extends Polygon
     @svg.on("mousedown", null) # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
 
+  death_check: (n) ->
+    n.death()
+    @death()
+    Gamescore.lives -= 1 # decrement lives for this game
+  
   death: ->
     N    = 240 # random color parameter
-    fill = '#ff0' # "hsl(" + Math.random() * N + ", 80%," + "40%" + ")" # fill     = "hsl(" + Math.random() * N + ", 80%," + 0.5 * Math.sqrt(circle.u * circle.u + circle.v * circle.v) + ")"
+    fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter
     @image # default reaction
       .transition()
@@ -97,4 +102,4 @@ class @Root extends Polygon
       .duration(dur)
       .ease('linear')
       .attr("fill", @fill())
-    Gamescore.lives -= 1 # decrement lives for this game
+  

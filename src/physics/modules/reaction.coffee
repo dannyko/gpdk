@@ -18,9 +18,10 @@ class @Reaction # reaction module with no class variables only class methods
     uPerp   = new Vec(n.v).subtract(uPar) # the perpendicular component of the neighbor-velocity to the line 
     m.v     = uPar.add(vPerp) # velocity vector for m satisfying the conditions for perfectly elastic collsions
     n.v     = vPar.add(uPerp) # velocity vector for n satisfying the conditions for perfectly elastic collsions
+    m.reaction(n)
     return  
     
   @circle_polygon: (circle, polygon, d) ->
-    return if death_check(circle, polygon)
+    return if circle.death_check(polygon) || polygon.death_check(circle)
     console.log('Reaction.circle_polygon not implemented yet')
     return
