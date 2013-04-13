@@ -31,6 +31,20 @@ class @Element
       continue unless n.react
       Collision.check(@, n)
       
+  reaction: (n = undefined) -> # example reaction with neighbor n
+    N       = 240 # random color parameter
+    dur     = 120 # color effect transition duration parameter
+    fill    = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    @image.transition()
+      .duration(dur)
+      .ease('sqrt')
+      .attr("fill", fill)
+      .transition()
+      .duration(dur * 3)
+      .ease('linear')
+      .attr("fill", @fill())
+    n.reaction() if n?
+          
   integrate: () =>
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
     return if @fixed
@@ -77,9 +91,10 @@ class @Element
 
   death_check: (n) ->
     if @is_root # check if root
-      n.death_check(@) # let the root handle this reaction
+      return n.death_check(@) # call root death check
     if @is_bullet # check if bullet after root in order of precedence
-      n.death_check(@) # let the bullet handle this reaction    
+      return n.death_check(@) # call bullet death check
+    false
 
   death: -> 
     @deactivate()

@@ -33,7 +33,7 @@ class @Dronewar extends Game
     @element = [] # reinitialize element list
     @root.n = [] # reinitialize root neighbor list
     for i in [0..@N - 1] # create element list
-      newAttacker = new Circle()
+      newAttacker = new Drone()
       newAttacker.g.attr("class", "attacker")
       for j in [0..@element.length - 1] # loop over all elements and add a new Circle to their neighbor lists
         continue if not @element[j]?
@@ -62,8 +62,6 @@ class @Dronewar extends Game
     for element in @element # add root to the element neighbor lists but not to element list itself
       @root.n.push(element)
       element.n.push(@root) 
-      element.image.remove()
-      element.image = element.g.append("image").attr("xlink:href", "assets/images/drone_1.png").attr("x", -element.size).attr("y", -element.size).attr("width", element.size * 2).attr("height", element.size * 2)
       element.draw() 
     @root.attacker = @element
     @root.update_attacker()
