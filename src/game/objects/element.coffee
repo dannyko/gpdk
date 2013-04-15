@@ -1,6 +1,6 @@
 class @Element
   constructor: (@config = {}) ->      
-    @dt        = @config.dt      || 0.4 # controls animation smoothness relative to d3.timer queue update rate
+    @dt        = @config.dt        || 0.4 # controls animation smoothness relative to d3.timer queue update rate
     @r         = @config.r         || new Vec() # position vector (rx, ry)
     @v         = @config.v         || new Vec() # velocity vector (vx, vy)
     @f         = @config.f         || new Vec() # force    vector (fx, fy)
@@ -9,7 +9,7 @@ class @Element
     @size      = @config.size      || 0 # zero default size in units of pixels for abstract class
     @go        = @config.go        || false # timer is not immediately on by default
     @react     = @config.true      || true # boolean switching the element readiness for reactions to collisions
-    @tol       = @config.tol       || 0.1 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
+    @tol       = @config.tol       || 0.5 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
     @fixed     = @config.fixed     || false # can it move without external control or not
     @_stroke   = @config.stroke    || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill     = @config.fill      || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
@@ -18,7 +18,10 @@ class @Element
     @is_bullet = @config.is_bullet || false # default boolean for bullet effects
     @type      = @config.type      || null # default type is null for abstract class
     @image     = @config.image     || null # no image by default for generic element: user must specify
-    @g         = @config.g         || d3.select("#game_g").append("g").attr("transform", "translate(" + @x + "," + @y + ")")
+    @g         = d3.select("#game_g")
+                  .append("g")
+                  .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
+    @g         = @config.g         || @g
     @svg       = @config.svg       || d3.select("#game_svg")
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")

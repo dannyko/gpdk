@@ -1,4 +1,4 @@
-class @Circletest 
+class @Polygontest 
   constructor: (@config = {}) ->
     @numel    = @config.numel || 64
     @element  = [] # initialize
@@ -9,13 +9,20 @@ class @Circletest
     @zoomTick = 0 # 5000 # ms spacing between zoom draws    
     @tzoom    = 0 # integer counter for tracking zoom timer
     @scale    = 1 # initialize zoom level
+    @size     = 10 # polygon size
     for i in [0..@numel - 1] # create element list
-      newCircle = new TestCircle()
+      newPolygon = new Polygon({size: @size})
       for j in [0..@element.length - 1] # loop over all elements and add a new Circle to their neighbor lists
         continue if not @element[j]?
-        newCircle.n.push(@element[j]) # add the newly created element to the neighbor list
-        @element[j].n.push(newCircle) # add the newly created element to the neighbor list
-      @element.push(newCircle) # extend the array of all elements in this game
+        newPolygon.n.push(@element[j]) # add the newly created element to the neighbor list
+        @element[j].n.push(newPolygon) # add the newly created element to the neighbor list
+      @element.push(newPolygon) # extend the array of all elements in this game
+    #@element[0].r.x = @width  * 0.5 + 0   * @element[0].size * 2 + @element[0].tol - Math.ceil(Math.sqrt(@element.length)) * @element[0].size 
+    #@element[0].r.y = @height * 0.25 + 0  * @element[0].size  * 2  + @element[0].tol
+    #@element[0].draw()
+    #@element[1].r.x = @width  * 0.5 + 0   * @element[1].size * 2 + @element[1].tol - Math.ceil(Math.sqrt(@element.length)) * @element[1].size 
+    #@element[1].r.y = @height * 0.25 + 1  * @element[1].size  * 2  + @element[1].tol
+    #@element[1].draw()
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
