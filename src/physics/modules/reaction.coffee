@@ -6,7 +6,7 @@ class @Reaction # reaction module with no class variables only class methods
     line   = new Vec(d)
     line.x = line.x / d.dist # normalize to get a unit vector
     line.y = line.y / d.dist # normalize to get a unit vector
-    shift  = (d.dmin + m.tol - d.dist) * 0.5 # shift both by an equal amount adding up to satisfy tolerance
+    shift  = (d.dmin + Math.max(m.tol, n.tol) - d.dist) * 0.5 # shift both by an equal amount adding up to satisfy tolerance
     elastic_collision(m, n, line, shift)
     m.reaction(n)
     return  
@@ -24,8 +24,9 @@ class @Reaction # reaction module with no class variables only class methods
     dot1   = mseg.n.dot(d)
     dot2   = nseg.n.dot(d)
     normal = if Math.abs(dot1) > Math.abs(dot2) then new Vec(mseg.n).scale(dot1 / Math.abs(dot1)) else new Vec(nseg.n).scale(dot2 / Math.abs(dot2)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
-    shift  = 0.5 * (m.tol + n.tol)
+    shift  = 0.5 * Math.max(m.tol, n.tol)
     elastic_collision(m, n, normal, shift)
+    m.reaction(n)
     return 
     
   elastic_collision = (m, n, line, shift) ->

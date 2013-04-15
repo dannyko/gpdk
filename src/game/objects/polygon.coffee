@@ -11,12 +11,10 @@ class @Polygon extends Element # simplest path-based shape by default involving 
         {pathSegTypeAsLetter: 'Z'} # close the path by default
       ]
     @path    = @config.path || @path
+    @pathref = @path.map((d) -> _.clone(d)) # copy original path for reference
+    @polygon_path() # setup path metadata
     @type    = 'Polygon'
     @maxnode = new Vec(_.max @path, (node) -> node.d = node.x * node.x + node.y * node.y) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
-    for i in [0..@path.length - 1]
-      continue if @path[i].pathSegTypeAsLetter == 'Z' || @path[i].pathSegTypeAsLetter == 'z'
-      @path[i].r = new Vec(@path[i]).subtract(@path[i + 1 % @path.length - 1]) # vector pointing to this node from the subsequent node
-      @path[i].n = new Vec({x: -@path[i].y, y: @path[i].x}).normalize() # unit normal vector
     @radius  = @maxnode.length()
     @image   = @g.append("path") # render default polygon image 
       .attr("stroke", @_stroke)
@@ -25,3 +23,9 @@ class @Polygon extends Element # simplest path-based shape by default involving 
   
   d: ->
     Utils.d(@path)
+    
+  polygon_path: ->
+    for i in [0..@path.length - 1]
+      continue if @path[i].pathSegTypeAsLetter == 'Z' || @path[i].pathSegTypeAsLetter == 'z'
+      @path[i].r = new Vec(@path[i]).subtract(@path[i + 1 % @path.length - 1]) # vector pointing to this node from the subsequent node
+      @path[i].n = new Vec({x: -@path[i].y, y: @path[i].x}).normalize() # unit normal vector 

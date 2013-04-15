@@ -11,7 +11,7 @@ class @Polygontest
     @scale    = 1 # initialize zoom level
     @size     = 10 # polygon size
     for i in [0..@numel - 1] # create element list
-      newPolygon = new Polygon({size: @size})
+      newPolygon = new TestPolygon({size: @size})
       for j in [0..@element.length - 1] # loop over all elements and add a new Circle to their neighbor lists
         continue if not @element[j]?
         newPolygon.n.push(@element[j]) # add the newly created element to the neighbor list
@@ -27,8 +27,8 @@ class @Polygontest
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
-        @element[i].r.x = @width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.25 + j  * @element[i].size  * 2  + @element[i].tol
+        @element[i].r.x = @width  * 0.5 + k   * @element[i].radius * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = @height * 0.25 + j  * @element[i].radius * 2 + @element[i].tol
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
     for element in @element
