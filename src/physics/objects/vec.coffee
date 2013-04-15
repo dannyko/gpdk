@@ -17,7 +17,12 @@ class @Vec # two-dimensional vectors {x, y}
     @x -= v.x
     @y -= v.y
     @
-           
+  
+  rotate: (a) ->
+   c = Math.cos(a)
+   s = Math.sin(a)
+   [@x, @y] = [c * @x - s * @y, @y = s * @x + c * @y]
+   
   dot: (v) ->
     @x * v.x + @y * v.y
 
