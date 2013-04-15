@@ -22,14 +22,7 @@ class @Root extends Polygon
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
-    for i in [0..@path.length - 1]
-      seg = @path[i]
-      continue unless seg.x?
-      c = Math.cos(@angle)
-      s = Math.sin(@angle)
-      seg.x = c * @pathref[i].x - s * @pathref[i].y
-      seg.y = s * @pathref[i].x + c * @pathref[i].y
-      @polygon_path() 
+    @rotate_path()
     @draw()
     
   keydown: () =>
