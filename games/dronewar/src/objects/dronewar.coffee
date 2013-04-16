@@ -61,11 +61,16 @@ class @Dronewar extends Game
     @root.attacker = @element
     @root.update_attacker()
     @root.start()
-    dur = 800
+    dur = 400
     n = @element.length * 2
-    d3.selectAll(".attacker").data(@element).style("opacity", 0).transition().delay( (d, i) -> i / n * dur ).duration(dur).style("opacity", 1).each("end", (d, i) -> 
-        d.start() # start element timers
-      )
+    d3.selectAll(".attacker")
+      .data(@element)
+      .style("opacity", 0)
+      .transition()
+      .delay( (d, i) -> i / n * dur )
+      .duration(dur)
+      .style("opacity", 1)
+      .each("end", (d, i) -> d.start()) # start element timers
 
   keydown: () =>
     switch d3.event.keyCode 
@@ -103,6 +108,7 @@ class @Dronewar extends Game
       root.bullet_fill   = "#000"
       root.bullet_size   = 3
       root.bullet_speed  = 12 / root.dt
+      root.wait          = 30
       root.fire() 
       d3.select(this).transition().duration(dur).style("fill", "#006") 
       viper.style("fill", "#FFF") 
@@ -115,8 +121,8 @@ class @Dronewar extends Game
       root.bullet_stroke = "none"
       root.bullet_fill   = "#fff"
       root.bullet_size   = 2
-      root.bullet_speed  = 20 / root.dt
-      root.wait          = 15
+      root.bullet_speed  = 15 / root.dt
+      root.wait          = 20
       root.fire()
       d3.select(this).transition().duration(dur).style("fill", "#006") 
       sidewinder.style("fill", "#FFF") 
@@ -151,6 +157,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       d3.timer(@progress)
     )
+    
   progress: =>  # set a timer to monitor game progress
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
@@ -159,7 +166,7 @@ class @Dronewar extends Game
     else 
       dur = 420
       @root.game_over()
-      @lives.text('GAME OVER, PRESS "r" TO RESTART')
+      @lives.text("GAME OVER, PRESS 'R' TO RESTART")
       @stop()
       return true
     inactive = @element.every (element) -> 
