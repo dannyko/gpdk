@@ -32,5 +32,6 @@ class @Polygontest
 
   start: () ->
     element.start() for element in @element # start element timers
+    @svg.style("cursor", "none")
     # @zoom() # set initial zoom level for the elements to fill the available space
     # d3.timer((d) => @zoom(d)) # start the zoom timer after the element timers 
