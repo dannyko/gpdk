@@ -37,14 +37,15 @@ class @Root extends Polygon
   fire: () =>
     bullet      = new Bullet()
     speed       = 10 / @dt
-    x           = Math.cos(@angle)
-    y           = Math.sin(@angle)
-    bullet.x    = @r.x + x * (@size / 3 + bullet.size)
-    bullet.y    = @r.y + y * (@size / 3 + bullet.size)
-    bullet.u    = speed * x
-    bullet.v    = speed * y
+    x           = Math.cos(@angle - Math.PI * 0.5)
+    y           = Math.sin(@angle - Math.PI * 0.5)
+    bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
+    bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
+    bullet.v.x    = speed * x
+    bullet.v.y    = speed * y
     bullet.n.push(n) for n in @n
     element.n.push(bullet) for element in @n
+    console.log(bullet)
     bullet.draw()
     bullet.start()
   

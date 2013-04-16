@@ -17,18 +17,12 @@ class @Polygontest
         newPolygon.n.push(@element[j]) # add the newly created element to the neighbor list
         @element[j].n.push(newPolygon) # add the newly created element to the neighbor list
       @element.push(newPolygon) # extend the array of all elements in this game
-    #@element[0].r.x = @width  * 0.5 + 0   * @element[0].size * 2 + @element[0].tol - Math.ceil(Math.sqrt(@element.length)) * @element[0].size 
-    #@element[0].r.y = @height * 0.25 + 0  * @element[0].size  * 2  + @element[0].tol
-    #@element[0].draw()
-    #@element[1].r.x = @width  * 0.5 + 0   * @element[1].size * 2 + @element[1].tol - Math.ceil(Math.sqrt(@element.length)) * @element[1].size 
-    #@element[1].r.y = @height * 0.25 + 1  * @element[1].size  * 2  + @element[1].tol
-    #@element[1].draw()
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
-        @element[i].r.x = @width  * 0.5 + k   * @element[i].radius * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.25 + j  * @element[i].radius * 2 + @element[i].tol
+        @element[i].r.x = @width  * 0.5 + k   * @element[i].pathwidth + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = @height * 0.25 + j  * @element[i].pathheight + @element[i].tol
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
     for element in @element

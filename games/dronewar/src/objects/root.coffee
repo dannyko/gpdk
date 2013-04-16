@@ -121,6 +121,9 @@ class @Root extends Polygon
     dur  = 120 # color effect transition duration parameter
     @image # default reaction
       .transition()
+      .duration(dur / 5)
+      .attr('opacity', 1)
+      .transition()
       .duration(dur)
       .ease('sqrt')
       .attr("fill", fill)
@@ -128,6 +131,9 @@ class @Root extends Polygon
       .duration(dur)
       .ease('linear')
       .attr("fill", @fill())
+      .transition()
+      .duration(dur / 5)
+      .attr('opacity', 0)
       
   game_over: (dur = 500) ->
     @image.transition()
