@@ -21,6 +21,7 @@ class @Drone extends Circle
       .duration(dur)
       .ease('sqrt')
       .attr("fill", fill)
+      .remove()
     @g.attr("class", "")
       .transition()
       .delay(dur)

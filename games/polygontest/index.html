@@ -27,13 +27,14 @@
 <script type="text/coffeescript" src="../../src/game/objects/polygon.coffee"></script>
 <script type="text/coffeescript" src="../../src/game/objects/game.coffee"></script>
 <script type="text/coffeescript" src="src/root.coffee"></script>
+<script type="text/coffeescript" src="src/bullet.coffee"></script>
 <script type="text/coffeescript" src="src/testpolygon.coffee"></script>
 <script type="text/coffeescript" src="src/polygontest.coffee"></script>
 <!-- run the game: -->
 <script type="text/coffeescript">
 $(document).ready ->
-  window.game = new Polygontest() # create the game instance
-  window.game.start() # start the game timer
+  @game = new Polygontest() # create the game instance
+  @game.start() # start the game timer
 </script>
 </body>
 </html>

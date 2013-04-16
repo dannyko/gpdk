@@ -31,7 +31,7 @@ class @Dronewar extends Game
     dur = 600
     d3.select('#game_div').transition(dur).style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
     @element = [] # reinitialize element list
-    @root.n = [] # reinitialize root neighbor list
+    @root.n  = [] # reinitialize root neighbor list
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone()
       newAttacker.g.attr("class", "attacker")
@@ -40,11 +40,6 @@ class @Dronewar extends Game
         newAttacker.n.push(@element[j]) # add the newly created element to the neighbor list
         @element[j].n.push(newAttacker) # add the newly created element to the neighbor list
       @element.push(newAttacker) # extend the array of all elements in this game
-#    for i in [0..@element.length - 1] # place elements on grid
-#      @element[i].r.x = i * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-#      @element[i].r.x %= @width / 3
-#      @element[i].r.x += @width / 3
-#      @element[i].r.y = Math.random() * @height / 8 + 2 * @element[i].size
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
@@ -121,6 +116,7 @@ class @Dronewar extends Game
       root.bullet_fill   = "#fff"
       root.bullet_size   = 2
       root.bullet_speed  = 20 / root.dt
+      root.wait          = 15
       root.fire()
       d3.select(this).transition().duration(dur).style("fill", "#006") 
       sidewinder.style("fill", "#FFF") 
@@ -134,6 +130,7 @@ class @Dronewar extends Game
       root.bullet_fill   = "none"
       root.bullet_size   = 4
       root.bullet_speed  = 8 / root.dt
+      root.wait          = 40
       root.fire()
       d3.select(this).transition().duration(dur).style("fill", "#006")
       viper.style("fill", "#FFF")
@@ -152,34 +149,27 @@ class @Dronewar extends Game
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      d3.timer(() =>  # set a timer to monitor game progress
-        @scoretxt.text('SCORE: ' + Gamescore.value)
-        @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-        if Gamescore.lives >= 0
-          @lives.text('LIVES: ' + Gamescore.lives) 
-        else 
-          dur = 420
-          @root.image.transition().duration(dur).attr("stroke", "none").attr("fill", "#900").transition().duration(dur).ease('sqrt').style("opacity", 0)
-          @lives.text('GAME OVER, PRESS "r" TO RESTART')
-          @stop()
-          if Gameprez?
-            Gameprez.gameData.pause = true
-            Gameprez.end()        
-          return true
-        inactive = @element.every (element) -> 
-          element.react == false and element.fixed == true 
-        if inactive # all inactive
-          @N++
-          @charge *= 10
-          @level()
-        return
-      )
-      if Gameprez?
-        Gameprez.start()
-        Gameprez.gameData = {}
-        Gameprez.gameData.pause = false
-      )
-      
+      d3.timer(@progress)
+    )
+  progress: =>  # set a timer to monitor game progress
+    @scoretxt.text('SCORE: ' + Gamescore.value)
+    @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
+    if Gamescore.lives >= 0
+      @lives.text('LIVES: ' + Gamescore.lives) 
+    else 
+      dur = 420
+      @root.game_over()
+      @lives.text('GAME OVER, PRESS "r" TO RESTART')
+      @stop()
+      return true
+    inactive = @element.every (element) -> 
+      element.react == false and element.fixed == true 
+    if inactive # all inactive
+      @N++
+      @charge *= 10
+      @level()
+    return
+            
   reset: =>
     @g.selectAll("g").remove()
     @lives.text("")
