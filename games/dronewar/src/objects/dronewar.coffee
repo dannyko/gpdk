@@ -150,12 +150,7 @@ class @Dronewar extends Game
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       d3.timer(@progress)
-      if Gameprez?
-        Gameprez.start()
-        Gameprez.gameData = {}
-        Gameprez.gameData.pause = false
-      )
-      
+    )
   progress: =>  # set a timer to monitor game progress
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
@@ -166,9 +161,6 @@ class @Dronewar extends Game
       @root.game_over()
       @lives.text('GAME OVER, PRESS "r" TO RESTART')
       @stop()
-      if Gameprez?
-        Gameprez.gameData.pause = true
-        Gameprez.end()        
       return true
     inactive = @element.every (element) -> 
       element.react == false and element.fixed == true 

@@ -33,10 +33,10 @@ class @Root extends Circle
     speed       = 10 / @dt
     x           = Math.cos(@angle)
     y           = Math.sin(@angle)
-    bullet.x    = @r.x + x * (@size / 3 + bullet.size)
-    bullet.y    = @r.y + y * (@size / 3 + bullet.size)
-    bullet.u    = speed * x
-    bullet.v    = speed * y
+    bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
+    bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
+    bullet.v.x    = speed * x
+    bullet.v.y    = speed * y
     bullet.n.push(n) for n in @n
     element.n.push(bullet) for element in @n
     bullet.draw()
