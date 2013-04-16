@@ -149,34 +149,35 @@ class @Dronewar extends Game
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      d3.timer(() =>  # set a timer to monitor game progress
-        @scoretxt.text('SCORE: ' + Gamescore.value)
-        @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-        if Gamescore.lives >= 0
-          @lives.text('LIVES: ' + Gamescore.lives) 
-        else 
-          dur = 420
-          @root.image.transition().duration(dur).attr("stroke", "none").attr("fill", "#900").transition().duration(dur).ease('sqrt').style("opacity", 0)
-          @lives.text('GAME OVER, PRESS "r" TO RESTART')
-          @stop()
-          if Gameprez?
-            Gameprez.gameData.pause = true
-            Gameprez.end()        
-          return true
-        inactive = @element.every (element) -> 
-          element.react == false and element.fixed == true 
-        if inactive # all inactive
-          @N++
-          @charge *= 10
-          @level()
-        return
-      )
+      d3.timer(@progress)
       if Gameprez?
         Gameprez.start()
         Gameprez.gameData = {}
         Gameprez.gameData.pause = false
       )
       
+  progress: =>  # set a timer to monitor game progress
+    @scoretxt.text('SCORE: ' + Gamescore.value)
+    @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
+    if Gamescore.lives >= 0
+      @lives.text('LIVES: ' + Gamescore.lives) 
+    else 
+      dur = 420
+      @root.game_over()
+      @lives.text('GAME OVER, PRESS "r" TO RESTART')
+      @stop()
+      if Gameprez?
+        Gameprez.gameData.pause = true
+        Gameprez.end()        
+      return true
+    inactive = @element.every (element) -> 
+      element.react == false and element.fixed == true 
+    if inactive # all inactive
+      @N++
+      @charge *= 10
+      @level()
+    return
+            
   reset: =>
     @g.selectAll("g").remove()
     @lives.text("")
