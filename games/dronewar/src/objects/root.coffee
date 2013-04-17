@@ -68,9 +68,9 @@ class @Root extends Polygon
     @react = true
     @start()  
   
-  ship: (ship = Ship.sidewinder, dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
+  ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
     @path    = ship.path
-    @pathBB()
+    @pathBB() # set the rectangular bounding box for this path
     endPath  = @d() # new end-path to morph to
     @bitmap.attr('opacity', 1)
       .transition()
