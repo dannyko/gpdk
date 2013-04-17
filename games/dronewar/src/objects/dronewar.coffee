@@ -94,16 +94,43 @@ class @Dronewar extends Game
   start: -> # start new game
     @root.draw()
     @root.go = true # e.g. to start bullets firing without allowing root movement   
-    title = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", @width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold')
+    title = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "48")
+      .attr("x", @width / 2 - 320)
+      .attr("y", 90)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
     title.text("DRONEWAR")
-    prompt = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", @width / 2 - 320).attr("y", @height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold')
+    prompt = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "36")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @height / 4 + 40)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
     prompt.text("SELECT SHIP")
     root = @root # copy local reference to @root for access inside other objects without using @ 
-    sidewinder = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", @width / 2 - 320).attr("y", @height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    sidewinder = @g
+      .append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @height / 4 + 80)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
     sidewinder.text("SIDEWINDER").style("fill", "#006")
     dur = 500
     sidewinder.on("click", -> 
-      root.ship(Ship.sidewinder) 
+      return if this.style.fill == '#000066'
+      root.ship(Ship.sidewinder()) 
       root.bullet_stroke = "none"
       root.bullet_fill   = "#000"
       root.bullet_size   = 3
@@ -114,10 +141,19 @@ class @Dronewar extends Game
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
-    viper = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", @width / 2 - 320).attr("y", @height / 4 + 110).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    viper = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @height / 4 + 110)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
     viper.on("click", -> 
-      root.ship(Ship.viper) 
+      return if this.style.fill == '#000066'
+      root.ship(Ship.viper()) 
       root.bullet_stroke = "none"
       root.bullet_fill   = "#fff"
       root.bullet_size   = 2
@@ -128,10 +164,20 @@ class @Dronewar extends Game
       sidewinder.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
-    fang = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", @width / 2 - 320).attr("y", @height / 4 + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    fang = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @height / 4 + 140)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
     fang.text("FANG")
     fang.on("click", -> 
-      root.ship(Ship.fang)
+      return if this.style.fill == '#000066'
+      root.ship(Ship.fang())
       root.bullet_stroke = "#FFF"
       root.bullet_fill   = "none"
       root.bullet_size   = 4
@@ -142,9 +188,27 @@ class @Dronewar extends Game
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
     )
-    go = @g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", @root.r.x - 60).attr("y", @root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    go = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "#FF2")
+      .attr("font-size", "36")
+      .attr("x", @root.r.x - 60)
+      .attr("y", @root.r.y + 100)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
     go.text("START")
-    how = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", @width / 2 - 320).attr("y", @root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
+    how = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @root.r.y + 130)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
     how.text("Use the mouse for controlling movement, scrollwheel for rotation")
     go.on("click", => 
       dur = 500
