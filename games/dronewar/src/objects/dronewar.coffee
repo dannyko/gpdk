@@ -90,8 +90,10 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
+    Gameprez.end(Gamescore.value) if Gameprez?
 
   start: -> # start new game
+    Gameprez.start() if Gameprez? # start score tracking 
     @root.draw()
     @root.go = true # e.g. to start bullets firing without allowing root movement   
     title = @g.append("text")
@@ -199,17 +201,6 @@ class @Dronewar extends Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     go.text("START")
-    how = @g.append("text")
-      .text("")
-      .attr("stroke", "none")
-      .attr("fill", "white")
-      .attr("font-size", "18")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @root.r.y + 130)
-      .attr('font-family', 'arial')
-      .attr('font-weight', 'bold')
-      .style("cursor", "pointer")
-    how.text("Use the mouse for controlling movement, scrollwheel for rotation")
     go.on("click", => 
       dur = 500
       title.transition().duration(dur).style("opacity", 0).remove()
@@ -221,6 +212,17 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       d3.timer(@progress)
     )
+    how = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @root.r.y + 130)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
+    how.text("Use the mouse for controlling movement, scrollwheel for rotation")
     
   progress: =>  # set a timer to monitor game progress
     @scoretxt.text('SCORE: ' + Gamescore.value)
