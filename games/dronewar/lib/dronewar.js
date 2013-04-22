@@ -820,7 +820,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: "../assets/images/viper_1.png",
+        url: GameAssetsUrl + "viper_1.png",
         offset: {
           x: 0,
           y: 19
@@ -916,7 +916,7 @@
             react: true
           }
         ],
-        url: "../assets/images/fang_1.png",
+        url: GameAssetsUrl + "fang_1.png",
         offset: {
           x: 0,
           y: 25
@@ -991,7 +991,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: "../assets/images/sidewinder_1.png",
+        url: GameAssetsUrl + "sidewinder_1.png",
         offset: {
           x: 0,
           y: 0
@@ -1037,7 +1037,7 @@
       this.config = config != null ? config : {};
       Drone.__super__.constructor.apply(this, arguments);
       this.image.remove();
-      this.image = this.g.append("image").attr("xlink:href", "../assets/images/drone_1.png").attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.image = this.g.append("image").attr("xlink:href", GameAssetsUrl + "drone_1.png").attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
     Drone.prototype.death = function() {
