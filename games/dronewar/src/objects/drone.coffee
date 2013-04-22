@@ -3,7 +3,7 @@ class @Drone extends Circle
     super
     @image.remove()
     @image = @g.append("image")
-      .attr("xlink:href", "../assets/images/drone_1.png")
+      .attr("xlink:href", GameAssetsUrl + "drone_1.png")
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
