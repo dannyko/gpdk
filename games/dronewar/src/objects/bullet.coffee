@@ -9,4 +9,5 @@ class @Bullet extends Circle
     @death()
     n.death()
     Gamescore.increment_value() 
+    Gameprez.score(Gamescore.value) if Gameprez?
     true
