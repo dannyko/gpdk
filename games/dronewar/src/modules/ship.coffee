@@ -8,7 +8,7 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
              {pathSegTypeAsLetter: 'L', x: -9,  y: 58, react: true},
              {pathSegTypeAsLetter: 'L', x: -24,  y:38, react: true},
              {pathSegTypeAsLetter: 'Z'}
-          ], url: "assets/images/viper_1.png", offset: {x: 0, y: 19}}
+          ], url: "../assets/images/viper_1.png", offset: {x: 0, y: 19}}
 
   @fang: -> {path: [
             {pathSegTypeAsLetter: 'M', x: 10,  y: -20, react: true}, 
@@ -28,7 +28,7 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
             {pathSegTypeAsLetter: 'L', x: -5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'L', x: 5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'Z', react: true}
-          ], url: "assets/images/fang_1.png", offset: {x: 0, y: 25}}
+          ], url: "../assets/images/fang_1.png", offset: {x: 0, y: 25}}
 
   @sidewinder: -> {path: [{pathSegTypeAsLetter: 'M', x:  8,  y: -26, react: true},  
                         {pathSegTypeAsLetter: 'L', x:  32, y: -14, react: true}, 
@@ -43,4 +43,4 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
                         {pathSegTypeAsLetter: 'L', x: -8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'L', x:  8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'Z'}
-		   	        ], url: "assets/images/sidewinder_1.png", offset: {x: 0, y: 0}}
+		   	        ], url: "../assets/images/sidewinder_1.png", offset: {x: 0, y: 0}}
