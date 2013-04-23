@@ -1224,9 +1224,9 @@
         root.ship(Ship.fang());
         root.bullet_stroke = "#FFF";
         root.bullet_fill = "none";
-        root.bullet_size = 4;
-        root.bullet_speed = 8 / root.dt;
-        root.wait = 40;
+        root.bullet_size = 5;
+        root.bullet_speed = 10 / root.dt;
+        root.wait = 30;
         root.fire();
         d3.select(this).transition().duration(dur).style("fill", "#006");
         viper.style("fill", "#FFF");
