@@ -28,4 +28,8 @@ class @Drone extends Circle
       .duration(dur * 2)
       .ease('sqrt')
       .style("opacity", "0")
-      .remove()
+      .remove() 
+
+  draw: ->
+    @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
+    super

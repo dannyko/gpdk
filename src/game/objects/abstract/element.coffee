@@ -37,16 +37,14 @@ class @Element
   reaction: (n = undefined) -> # abstract reaction with neighbor n
     n.reaction() if n?
           
-  integrate: () =>
+  integrate: () => # default update assumes force is independent of velocity i.e. f(x, v) = f(x)
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
     return if @fixed
-    r    = new Vec(@r) # clone the current position vector object for later comparison
-    f    = @force.f(r)
-    @r.x = @r.x + @v.x * @dt + 0.5 * f.x * @dt * @dt # update position
-    @r.y = @r.y + @v.y * @dt + 0.5 * f.y * @dt * @dt # update position
-    @f   = @force.f(@r)
-    @v.x = @v.x + 0.5 * (@f.x + f.x) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
-    @v.y = @v.y + 0.5 * (@f.y + f.y) * @dt # Verlet velocity draw, assuming that the force is velocity-independent
+    r = new Vec(@r) # clone the current position vector object for later comparison
+    f = @force.f(r)
+    @r.add(new Vec(@v).scale(@dt)).add(new Vec(f).scale(0.5 * @dt * @dt)) # update position
+    @f = @force.f(@r)
+    @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity draw, assuming that the force is velocity-independent
     if r.x isnt @r.x or r.y isnt @r.y
       @draw()
       @collision_detect() # check for collisions if position changes

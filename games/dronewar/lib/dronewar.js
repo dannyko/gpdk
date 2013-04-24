@@ -202,11 +202,9 @@
       }
       r = new Vec(this.r);
       f = this.force.f(r);
-      this.r.x = this.r.x + this.v.x * this.dt + 0.5 * f.x * this.dt * this.dt;
-      this.r.y = this.r.y + this.v.y * this.dt + 0.5 * f.y * this.dt * this.dt;
+      this.r.add(new Vec(this.v).scale(this.dt)).add(new Vec(f).scale(0.5 * this.dt * this.dt));
       this.f = this.force.f(this.r);
-      this.v.x = this.v.x + 0.5 * (this.f.x + f.x) * this.dt;
-      this.v.y = this.v.y + 0.5 * (this.f.y + f.y) * this.dt;
+      this.v.add(f.add(this.f).scale(0.5 * this.dt));
       if (r.x !== this.r.x || r.y !== this.r.y) {
         this.draw();
         this.collision_detect();
@@ -1048,6 +1046,11 @@
       fill = "hsl(" + Math.random() * N + ", 50%, 70%)";
       this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).transition().duration(dur).ease('sqrt').attr("fill", fill).remove();
       return this.g.attr("class", "").transition().delay(dur).duration(dur * 2).ease('sqrt').style("opacity", "0").remove();
+    };
+
+    Drone.prototype.draw = function() {
+      this.angle = -Math.atan2(this.f.x, this.f.y);
+      return Drone.__super__.draw.apply(this, arguments);
     };
 
     return Drone;
