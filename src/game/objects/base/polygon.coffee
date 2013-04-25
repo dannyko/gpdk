@@ -2,7 +2,6 @@ class @Polygon extends Element # simplest path-based shape by default involving 
   constructor: (@config = {}) ->
     super
     @type = 'Polygon'
-    @size = if @config.size? then @config.size else 15 # default size for polygon
     invsqrt3 = 1 / Math.sqrt(3) # to handle symmetry of the default equilateral triangle
     @path = # use an equilateral triangle as the default polygonal shape
       [
@@ -26,10 +25,10 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     return
 
   set_path: (@path = @path) -> # update path data and metadata
-    @pathref = @path.map((d) -> _.clone(d)) # original path array for reference
+    @pathref  = @path.map((d) -> _.clone(d)) # original path array for reference
     @polygon_path() # set path metadata
-    @maxnode    = new Vec(_.max @path, (node) -> node.d = node.x * node.x + node.y * node.y) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
-    @radius     = @maxnode.length()
+    @maxnode  = new Vec(_.max @path, (node) -> node.d = node.x * node.x + node.y * node.y) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
+    @size     = @maxnode.length()
     @pathBB()
     @image.attr("d", @d())
   

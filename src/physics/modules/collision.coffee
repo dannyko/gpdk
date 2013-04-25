@@ -50,7 +50,7 @@ class @Collision
     d           = new Vec(m.r).subtract(n.r)
     d.dist      = d.length()    
     d.collision = false
-    d.dmin      = m.radius + n.radius
+    d.dmin      = m.size + n.size
     if d.dist <= d.dmin # avoid calling lnieseg_intersect function if intercentroid distance is greater than the sum of the radii of their bounding circles
       for i in [0..m.path.length - 2]
         for j in [0..n.path.length - 2]

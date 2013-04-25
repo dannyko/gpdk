@@ -331,7 +331,6 @@
       this.config = config != null ? config : {};
       Polygon.__super__.constructor.apply(this, arguments);
       this.type = 'Polygon';
-      this.size = this.config.size != null ? this.config.size : 15;
       invsqrt3 = 1 / Math.sqrt(3);
       this.path = [
         {
@@ -385,7 +384,7 @@
       this.maxnode = new Vec(_.max(this.path, function(node) {
         return node.d = node.x * node.x + node.y * node.y;
       }));
-      this.radius = this.maxnode.length();
+      this.size = this.maxnode.length();
       this.pathBB();
       return this.image.attr("d", this.d());
     };
@@ -493,7 +492,7 @@
       d = new Vec(m.r).subtract(n.r);
       d.dist = d.length();
       d.collision = false;
-      d.dmin = m.radius + n.radius;
+      d.dmin = m.size + n.size;
       if (d.dist <= d.dmin) {
         for (i = _i = 0, _ref = m.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
           for (j = _j = 0, _ref1 = n.path.length - 2; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
@@ -1282,7 +1281,7 @@
       this.leveltxt.text("");
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
-      this.score = 0;
+      Gamescore.value = 0;
       this.root = new Root();
       Gamescore.lives = Gamescore.initialLives;
       return this.start();
@@ -1318,7 +1317,7 @@
       this.fixed = true;
       this.size = 90;
       this.r.x = this.width / 2;
-      this.r.y = this.height - this.size * 2;
+      this.r.y = this.height - 180;
       this.angleStep = 2 * Math.PI / 60;
       this.bullet_stroke = "none";
       this.bullet_fill = "#000";

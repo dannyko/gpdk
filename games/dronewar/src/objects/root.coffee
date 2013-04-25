@@ -5,7 +5,7 @@ class @Root extends Polygon
     @fixed         = true    
     @size          = 90
     @r.x           = @width / 2
-    @r.y           = @height - @size * 2
+    @r.y           = @height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @bullet_stroke = "none"
     @bullet_fill   = "#000"

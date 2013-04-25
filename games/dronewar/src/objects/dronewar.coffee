@@ -250,7 +250,7 @@ class @Dronewar extends Game
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    @score = 0
+    Gamescore.value = 0
     @root = new Root()
     Gamescore.lives = Gamescore.initialLives
     @start()
