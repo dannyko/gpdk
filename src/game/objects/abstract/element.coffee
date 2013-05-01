@@ -46,10 +46,11 @@ class @Element
         p = node.point 
         if p isnt null
           if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+            console.log(@, p.d)
             Collision.check(@, p.d)
         x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
       )
-    else # old neighbor detection - exhaustive (slowZZZZz)
+    else # old neighbor detection - exhaustive (slow)
       for n in @n
         continue unless n.react
         Collision.check(@, n)
