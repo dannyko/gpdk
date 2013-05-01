@@ -6,9 +6,6 @@ class @Polygontest
     @g        = d3.select("#game_g")
     @width    = @svg.attr("width")
     @height   = @svg.attr("height")
-    @zoomTick = 0 # 5000 # ms spacing between zoom draws    
-    @tzoom    = 0 # integer counter for tracking zoom timer
-    @scale    = 1 # initialize zoom level
     @size     = 10 # polygon size
     for i in [0..@numel - 1] # create element list
       newPolygon = new TestPolygon({size: @size})
