@@ -38,15 +38,17 @@ class @Element
       @quadtree = d3.geom.quadtree(data)
       @lastquad = Utils.timestamp()
     if @quadtree 
-      x0 = @r.x - 3 * @size - 1
-      x3 = @r.x + 3 * @size + 1
-      y0 = @r.y - 3 * @size - 1
-      y3 = @r.y + 3 * @size + 1
+      size = Math.max(3 * @size, 100)
+      x0 = @r.x - size
+      x3 = @r.x + size
+      y0 = @r.y - size
+      y3 = @r.y + size
       @quadtree.visit( (node, x1, y1, x2, y2) =>
         p = node.point 
         if p isnt null
+          return false unless p.d.react
           if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
-            console.log(@, p.d)
+            # console.log(@, p.d)
             Collision.check(@, p.d)
         x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
       )
