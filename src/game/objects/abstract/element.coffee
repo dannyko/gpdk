@@ -31,6 +31,9 @@ class @Element
         
   collision_detect: -> # default collision detection
     return unless @react
+    data = @n.map((d) -> d.r)
+    console.log(data)
+    @quadtree = d3.geom.quadtree(data)
     if @quadtree 
       x0 = -@size - 1
       x3 = @size + 1
@@ -38,7 +41,7 @@ class @Element
       y3 = @size + 1
       @quadtree.visit( (node, x1, y1, x2, y2) =>
         p = node.point 
-        console.log(node, this, x0, x3, y0, y3, x1, y1, x2, y2)
+        # console.log(node, this, x0, x3, y0, y3, x1, y1, x2, y2)
         if p isnt null
           if (p.r.x >= x0) and (p.r.x < x3) and (p.r.y >= y0) and (p.r.y < y3)
             Collision.check(@, p)
@@ -56,16 +59,16 @@ class @Element
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
     return if @fixed
     r = new Vec(@r) # clone the current position vector object for later comparison
-    f = @force.f(r)
+    f = @force.f(r) # evaluate the force at the current position
     @r.add(new Vec(@v).scale(@dt)).add(new Vec(f).scale(0.5 * @dt * @dt)) # update position
-    @f = @force.f(@r)
-    @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity draw, assuming that the force is velocity-independent
-    if r.x isnt @r.x or r.y isnt @r.y
-      @draw()
+    @f = @force.f(@r) # evaluate and store force value with respect to the updated position
+    @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity update, assuming that the force is velocity-independent
+    if r.x isnt @r.x or r.y isnt @r.y # check for position change
+      @draw() # force draw before checking for collision
       @collision_detect() # check for collisions if position changes
     if @go
       return
-    else
+    else # stop the d3.timer by returning true
       true      
 
   draw: ->

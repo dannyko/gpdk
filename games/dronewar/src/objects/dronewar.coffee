@@ -57,7 +57,6 @@ class @Dronewar extends Game
     for element in @element # add root to the element neighbor lists but not to element list itself
       @root.n.push(element)
       element.n.push(@root) 
-      element.quadtree = d3.geom.quadtree().x((d) -> d.r.x).y((d) -> d.r.y)(element.n)
       element.draw() 
     @root.attacker = @element
     @root.update_attacker()
