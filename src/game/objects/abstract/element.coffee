@@ -26,28 +26,30 @@ class @Element
     @quadtree  = @config.quadtree  || null
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
+    @lastquad  = Utils.timestamp()
+    @quadwait  = @config.quadwait  || 500 # don't update the quadtree too often
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
   collision_detect: -> # default collision detection
     return unless @react
-    data = @n.map((d) -> d.r)
-    console.log(data)
-    @quadtree = d3.geom.quadtree(data)
+    if @quadtree is null or Utils.timestamp() - @lastquad > @quadwait
+      data = @n.map((d) -> {x: d.r.x, y: d.r.y, d: d})
+      @quadtree = d3.geom.quadtree(data)
+      @lastquad = Utils.timestamp()
     if @quadtree 
-      x0 = -@size - 1
-      x3 = @size + 1
-      y0 = -@size - 1
-      y3 = @size + 1
+      x0 = @r.x - 3 * @size - 1
+      x3 = @r.x + 3 * @size + 1
+      y0 = @r.y - 3 * @size - 1
+      y3 = @r.y + 3 * @size + 1
       @quadtree.visit( (node, x1, y1, x2, y2) =>
         p = node.point 
-        # console.log(node, this, x0, x3, y0, y3, x1, y1, x2, y2)
         if p isnt null
-          if (p.r.x >= x0) and (p.r.x < x3) and (p.r.y >= y0) and (p.r.y < y3)
-            Collision.check(@, p)
+          if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+            Collision.check(@, p.d)
         x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
       )
-    else
+    else # old neighbor detection - exhaustive (slowZZZZz)
       for n in @n
         continue unless n.react
         Collision.check(@, n)
