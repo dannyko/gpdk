@@ -26,36 +26,30 @@ class @Element
     @quadtree  = @config.quadtree  || null
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
-    @lastquad  = Utils.timestamp()
-    @quadwait  = @config.quadwait  || 500 # don't update the quadtree too often
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
   collision_detect: -> # default collision detection
     return unless @react
-    if @quadtree is null or Utils.timestamp() - @lastquad > @quadwait
-      data = @n.map((d) -> {x: d.r.x, y: d.r.y, d: d})
-      @quadtree = d3.geom.quadtree(data)
-      @lastquad = Utils.timestamp()
-    if @quadtree 
-      size = Math.max(3 * @size, 100)
-      x0 = @r.x - size
-      x3 = @r.x + size
-      y0 = @r.y - size
-      y3 = @r.y + size
-      @quadtree.visit( (node, x1, y1, x2, y2) =>
-        p = node.point 
-        if p isnt null
-          return false unless p.d.react
-          if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
-            # console.log(@, p.d)
-            Collision.check(@, p.d)
-        x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
-      )
-    else # old neighbor detection - exhaustive (slow)
-      for n in @n
-        continue unless n.react
-        Collision.check(@, n)
+    Collision.update_quadtree()
+    size = Math.max(3 * @size, 100)
+    x0 = @r.x - size
+    x3 = @r.x + size
+    y0 = @r.y - size
+    y3 = @r.y + size
+    Collision.quadtree.visit( (node, x1, y1, x2, y2) =>
+      p = node.point 
+      if p isnt null
+        return false unless this isnt p.d and p.d.react # skip this point and continue searching lower levels of the hierarchy
+        if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+          # console.log(@, p.d)
+          Collision.check(@, p.d)
+      x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
+    )
+#    else # old neighbor detection - exhaustive (slow)
+ #     for n in @n
+  #      continue unless n.react
+   #     Collision.check(@, n)
 
   reaction: (n = undefined) -> # abstract reaction with neighbor n
     n.reaction() if n?
