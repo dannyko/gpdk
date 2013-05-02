@@ -2,18 +2,19 @@ class @Polygon extends Element # simplest path-based shape by default involving 
   constructor: (@config = {}) ->
     super
     @type = 'Polygon'
-    invsqrt3 = 1 / Math.sqrt(3) # to handle symmetry of the default equilateral triangle
-    @path = # use an equilateral triangle as the default polygonal shape
-      [
-        {pathSegTypeAsLetter: 'M', x: -@size, y: @size * invsqrt3, react: true},
-        {pathSegTypeAsLetter: 'L', x: 0,      y: -2 * @size * invsqrt3, react: true},
-        {pathSegTypeAsLetter: 'L', x: @size,  y:  @size * invsqrt3, react: true},
-        {pathSegTypeAsLetter: 'Z'} # close the path by default
-      ]
-    @path  = @config.path || @path
+    @path  = @config.path || @default_path() # use an equilateral triangle as the default polygonal shape
     @image = @g.append("path") # render default polygon image   
     @set_path()
   
+  default_path: ->
+    invsqrt3 = 1 / Math.sqrt(3) # to handle symmetry of the default equilateral triangle
+    [
+      {pathSegTypeAsLetter: 'M', x: -@size, y: @size * invsqrt3, react: true},
+      {pathSegTypeAsLetter: 'L', x: 0,      y: -2 * @size * invsqrt3, react: true},
+      {pathSegTypeAsLetter: 'L', x: @size,  y:  @size * invsqrt3, react: true},
+      {pathSegTypeAsLetter: 'Z'} # close the path by default
+    ]
+
   d: -> # generate path "d" attribute
     Utils.d(@path)
     
