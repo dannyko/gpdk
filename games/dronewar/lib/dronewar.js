@@ -142,7 +142,7 @@
       this.integrate = function() {
         return Element.prototype.integrate.apply(_this, arguments);
       };
-      this.dt = this.config.dt || 0.4;
+      this.dt = this.config.dt || 0.8;
       this.r = this.config.r || new Vec();
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
@@ -1153,7 +1153,7 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
-      this.initialN = this.config.initialN || 50;
+      this.initialN = this.config.initialN || 5;
       this.N = this.initialN;
       this.root = new Root();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');

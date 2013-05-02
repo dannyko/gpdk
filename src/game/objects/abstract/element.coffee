@@ -26,7 +26,7 @@ class @Element
     @quadtree  = @config.quadtree  || null
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
-    @tick      = 20 # minimum time between ticks
+    @tick      = 10 # minimum time between ticks
     @lasttick  = Utils.timestamp()
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')

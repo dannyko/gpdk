@@ -8,7 +8,7 @@ class @Root extends Polygon
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @lastfire      = Utils.timestamp()
     @attacker      = [] # no attackers by default
-    @charge        = 5e4 
+    @charge        = 1e5
     @stroke("none")
     @fill("#000")
     @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')

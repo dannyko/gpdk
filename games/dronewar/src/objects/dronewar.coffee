@@ -1,7 +1,7 @@
 class @Dronewar extends Game
   constructor: ->
     super
-    @initialN = @config.initialN || 50
+    @initialN = @config.initialN || 5
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
