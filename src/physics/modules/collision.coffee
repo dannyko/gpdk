@@ -1,4 +1,17 @@
 class @Collision
+  @lastquad  = Utils.timestamp()
+  @quadwait  = 33 + 1/3 # don't update the quadtree too often
+  @list = [] # initialize list of elements
+
+  @update_quadtree: (force_update = false) -> 
+    return unless @list.length > 0
+    if force_update or Utils.timestamp() - @lastquad > @quadwait or not @quadtree?
+      data = @list.map((d) -> {x: d.r.x, y: d.r.y, d: d})
+      @quadtree = d3.geom.quadtree(data)
+      @lastquad = Utils.timestamp()
+
+  @quadtree = @update_quadtree() # initialize
+
   @check: (ei, ej) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
     name = [ei.type, ej.type]

@@ -31,14 +31,9 @@ class @Dronewar extends Game
     dur = 600
     d3.select('#game_div').transition(dur).style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
     @element = [] # reinitialize element list
-    @root.n  = [] # reinitialize root neighbor list
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone()
       newAttacker.g.attr("class", "attacker")
-      for j in [0..@element.length - 1] # loop over all elements and add a new Circle to their neighbor lists
-        continue if not @element[j]?
-        newAttacker.n.push(@element[j]) # add the newly created element to the neighbor list
-        @element[j].n.push(newAttacker) # add the newly created element to the neighbor list
       @element.push(newAttacker) # extend the array of all elements in this game
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
@@ -54,10 +49,8 @@ class @Dronewar extends Game
         dy /= d
         @element[i].v.x = 0.1 * @N * dx 
         @element[i].v.y = 0.1 * @N * dy
-    for element in @element # add root to the element neighbor lists but not to element list itself
-      @root.n.push(element)
-      element.n.push(@root) 
-      element.draw() 
+    element.draw() for element in @element
+    @init()
     @root.attacker = @element
     @root.update_attacker()
     @root.start()
@@ -70,7 +63,7 @@ class @Dronewar extends Game
       .delay( (d, i) -> i / n * dur )
       .duration(dur)
       .style("opacity", 1)
-      .each("end", (d, i) -> d.start()) # start element timers
+      .each("end", (d, i) -> d.activate()) # start element timers
 
   keydown: () =>
     switch d3.event.keyCode 

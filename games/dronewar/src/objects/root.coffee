@@ -50,8 +50,10 @@ class @Root extends Polygon
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet.n.push(n) for n in @n
-    element.n.push(bullet) for element in @n
+    bullet.quadtree = @quadtree
+    # element.quadtree.add(bullet) for element in @n
+    #bullet.n.push(n) for n in @n
+    #element.n.push(bullet) for element in @n
     bullet.start()
     return
 

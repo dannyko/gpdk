@@ -23,17 +23,34 @@ class @Element
                   .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
     @g         = @config.g         || @g
     @svg       = @config.svg       || d3.select("#game_svg")
+    @quadtree  = @config.quadtree  || null
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
   collision_detect: -> # default collision detection
-    return unless @react
-    for n in @n
-      continue unless n.react
-      Collision.check(@, n)
-      
+    return unless @react and Collision.list.length > 0
+    Collision.update_quadtree()
+    size = Math.max(2 * @size + @tol, 50)
+    x0 = @r.x - size
+    x3 = @r.x + size
+    y0 = @r.y - size
+    y3 = @r.y + size
+    Collision.quadtree.visit( (node, x1, y1, x2, y2) =>
+      p = node.point 
+      if p isnt null
+        return false unless this isnt p.d and p.d.react # skip this point and continue searching lower levels of the hierarchy
+        if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+          # console.log(@, p.d)
+          Collision.check(@, p.d)
+      x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
+    )
+#    else # old neighbor detection - exhaustive (slow)
+ #     for n in @n
+  #      continue unless n.react
+   #     Collision.check(@, n)
+
   reaction: (n = undefined) -> # abstract reaction with neighbor n
     n.reaction() if n?
           
@@ -41,16 +58,16 @@ class @Element
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
     return if @fixed
     r = new Vec(@r) # clone the current position vector object for later comparison
-    f = @force.f(r)
+    f = @force.f(r) # evaluate the force at the current position
     @r.add(new Vec(@v).scale(@dt)).add(new Vec(f).scale(0.5 * @dt * @dt)) # update position
-    @f = @force.f(@r)
-    @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity draw, assuming that the force is velocity-independent
-    if r.x isnt @r.x or r.y isnt @r.y
-      @draw()
+    @f = @force.f(@r) # evaluate and store force value with respect to the updated position
+    @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity update, assuming that the force is velocity-independent
+    if r.x isnt @r.x or r.y isnt @r.y # check for position change
+      @draw() # force draw before checking for collision
       @collision_detect() # check for collisions if position changes
     if @go
       return
-    else
+    else # stop the d3.timer by returning true
       true      
 
   draw: ->
