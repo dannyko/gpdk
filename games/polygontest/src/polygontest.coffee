@@ -2,16 +2,7 @@ class @Polygontest extends Game
   constructor: (@config = {}) ->
     super
     @numel    = @config.numel || 64
-<<<<<<< HEAD
-    @element  = [] # initialize
-    @svg      = d3.select("#game_svg")
-    @g        = d3.select("#game_g")
-    @width    = @svg.attr("width")
-    @height   = @svg.attr("height")
-    @size     = 10 # polygon size
-=======
     @size     = 15 # polygon size
->>>>>>> 8_optimize_collision_detection
     for i in [0..@numel - 1] # create element list
       newPolygon = new TestPolygon({size: @size})
       @element.push(newPolygon) # extend the array of all elements in this game

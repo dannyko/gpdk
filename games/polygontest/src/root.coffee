@@ -45,11 +45,6 @@ class @Root extends Polygon
     bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
     bullet.v.x    = speed * x
     bullet.v.y    = speed * y
-<<<<<<< HEAD
-    bullet.n.push(n) for n in @n
-    element.n.push(bullet) for element in @n
-=======
->>>>>>> 8_optimize_collision_detection
     bullet.draw()
     bullet.start()
   
