@@ -163,27 +163,40 @@
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
+      this.quadtree = this.config.quadtree || null;
       this.width = this.svg.attr("width");
       this.height = this.svg.attr("height");
+      this.tick = 20;
+      this.lasttick = Utils.timestamp();
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
     }
 
     Element.prototype.collision_detect = function() {
-      var n, _i, _len, _ref, _results;
-      if (!this.react) {
+      var size, x0, x3, y0, y3,
+        _this = this;
+      if (!(this.react && Collision.list.length > 0)) {
         return;
       }
-      _ref = this.n;
-      _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        n = _ref[_i];
-        if (!n.react) {
-          continue;
+      Collision.update_quadtree();
+      size = Math.max(2 * this.size + this.tol, 50);
+      x0 = this.r.x - size;
+      x3 = this.r.x + size;
+      y0 = this.r.y - size;
+      y3 = this.r.y + size;
+      return Collision.quadtree.visit(function(node, x1, y1, x2, y2) {
+        var p;
+        p = node.point;
+        if (p !== null) {
+          if (!(_this !== p.d && p.d.react)) {
+            return false;
+          }
+          if ((p.x >= x0) && (p.x < x3) && (p.y >= y0) && (p.y < y3)) {
+            Collision.check(_this, p.d);
+          }
         }
-        _results.push(Collision.check(this, n));
-      }
-      return _results;
+        return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
+      });
     };
 
     Element.prototype.reaction = function(n) {
@@ -196,8 +209,9 @@
     };
 
     Element.prototype.integrate = function() {
-      var f, r;
-      if (this.fixed) {
+      var f, r, timestamp;
+      timestamp = Utils.timestamp();
+      if (this.fixed || timestamp - this.lasttick <= this.tick) {
         return;
       }
       r = new Vec(this.r);
@@ -205,6 +219,7 @@
       this.r.add(new Vec(this.v).scale(this.dt)).add(new Vec(f).scale(0.5 * this.dt * this.dt));
       this.f = this.force.f(this.r);
       this.v.add(f.add(this.f).scale(0.5 * this.dt));
+      this.lasttick = timestamp;
       if (r.x !== this.r.x || r.y !== this.r.y) {
         this.draw();
         this.collision_detect();
@@ -278,7 +293,21 @@
       this.scale = 1;
     }
 
-    Game.prototype.start = function() {};
+    Game.prototype.init = function() {
+      Collision.list = this.element;
+      return Collision.update_quadtree();
+    };
+
+    Game.prototype.start = function() {
+      var element, _i, _len, _ref, _results;
+      _ref = this.element;
+      _results = [];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        element = _ref[_i];
+        _results.push(element.start());
+      }
+      return _results;
+    };
 
     Game.prototype.stop = function() {
       var element, _i, _len, _ref, _results;
@@ -327,12 +356,18 @@
     __extends(Polygon, _super);
 
     function Polygon(config) {
-      var invsqrt3;
       this.config = config != null ? config : {};
       Polygon.__super__.constructor.apply(this, arguments);
       this.type = 'Polygon';
+      this.path = this.config.path || this.default_path();
+      this.image = this.g.append("path");
+      this.set_path();
+    }
+
+    Polygon.prototype.default_path = function() {
+      var invsqrt3;
       invsqrt3 = 1 / Math.sqrt(3);
-      this.path = [
+      return [
         {
           pathSegTypeAsLetter: 'M',
           x: -this.size,
@@ -352,10 +387,7 @@
           pathSegTypeAsLetter: 'Z'
         }
       ];
-      this.path = this.config.path || this.path;
-      this.image = this.g.append("path");
-      this.set_path();
-    }
+    };
 
     Polygon.prototype.d = function() {
       return Utils.d(this.path);
@@ -425,6 +457,36 @@
     var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, z_check;
 
     function Collision() {}
+
+    Collision.lastquad = Utils.timestamp();
+
+    Collision.quadwait = 33 + 1 / 3;
+
+    Collision.list = [];
+
+    Collision.update_quadtree = function(force_update) {
+      var data, timestamp;
+      if (force_update == null) {
+        force_update = false;
+      }
+      if (!(this.list.length > 0)) {
+        return;
+      }
+      timestamp = Utils.timestamp();
+      if (force_update || timestamp - this.lastquad > this.quadwait || (this.quadtree == null)) {
+        data = this.list.map(function(d) {
+          return {
+            x: d.r.x,
+            y: d.r.y,
+            d: d
+          };
+        });
+        this.quadtree = d3.geom.quadtree(data);
+        return this.lastquad = timestamp;
+      }
+    };
+
+    Collision.quadtree = Collision.update_quadtree();
 
     Collision.check = function(ei, ej) {
       var d, m, n, name, sort;
@@ -821,7 +883,12 @@
         offset: {
           x: 0,
           y: 19
-        }
+        },
+        bullet_stroke: 'none',
+        bullet_fill: '#fff',
+        bullet_size: 2,
+        bullet_speed: 20,
+        bullet_tick: 40
       };
     };
 
@@ -917,7 +984,12 @@
         offset: {
           x: 0,
           y: 25
-        }
+        },
+        bullet_stroke: '#fff',
+        bullet_fill: 'none',
+        bullet_size: 6,
+        bullet_speed: 12,
+        bullet_tick: 40
       };
     };
 
@@ -992,7 +1064,12 @@
         offset: {
           x: 0,
           y: 0
-        }
+        },
+        bullet_stroke: 'none',
+        bullet_fill: '#000',
+        bullet_size: 4,
+        bullet_speed: 15,
+        bullet_tick: 40
       };
     };
 
@@ -1013,6 +1090,9 @@
     }
 
     Bullet.prototype.death_check = function(n) {
+      if (n.is_root) {
+        return true;
+      }
       this.death();
       n.death();
       Gamescore.increment_value();
@@ -1035,6 +1115,7 @@
       Drone.__super__.constructor.apply(this, arguments);
       this.image.remove();
       this.image = this.g.append("image").attr("xlink:href", GameAssetsUrl + "drone_1.png").attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.react = false;
     }
 
     Drone.prototype.death = function() {
@@ -1072,7 +1153,7 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
-      this.initialN = this.config.initialN || 5;
+      this.initialN = this.config.initialN || 50;
       this.N = this.initialN;
       this.root = new Root();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
@@ -1082,28 +1163,20 @@
     }
 
     Dronewar.prototype.level = function() {
-      var d, dur, dx, dy, element, i, j, k, n, newAttacker, speed, _i, _j, _k, _l, _len, _m, _ref, _ref1, _ref2, _ref3, _ref4;
+      var d, dur, dx, dy, element, i, j, k, n, newAttacker, speed, _i, _j, _k, _l, _len, _ref, _ref1, _ref2, _ref3;
       this.svg.style("cursor", "none");
       dur = 600;
       d3.select('#game_div').transition(dur).style("background-color", function() {
         return "hsl(" + Math.random() * 360 + ", 15%, 20%)";
       });
       this.element = [];
-      this.root.n = [];
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = new Drone();
         newAttacker.g.attr("class", "attacker");
-        for (j = _j = 0, _ref1 = this.element.length - 1; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
-          if (this.element[j] == null) {
-            continue;
-          }
-          newAttacker.n.push(this.element[j]);
-          this.element[j].n.push(newAttacker);
-        }
         this.element.push(newAttacker);
       }
-      for (k = _k = 0, _ref2 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref2 ? _k <= _ref2 : _k >= _ref2; k = 0 <= _ref2 ? ++_k : --_k) {
-        for (j = _l = 0, _ref3 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref3 ? _l <= _ref3 : _l >= _ref3; j = 0 <= _ref3 ? ++_l : --_l) {
+      for (k = _j = 0, _ref1 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; k = 0 <= _ref1 ? ++_j : --_j) {
+        for (j = _k = 0, _ref2 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref2 ? _k <= _ref2 : _k >= _ref2; j = 0 <= _ref2 ? ++_k : --_k) {
           i = k * Math.floor(Math.sqrt(this.element.length)) + j;
           if (i > this.element.length - 1) {
             break;
@@ -1120,11 +1193,9 @@
           this.element[i].v.y = 0.1 * this.N * dy;
         }
       }
-      _ref4 = this.element;
-      for (_m = 0, _len = _ref4.length; _m < _len; _m++) {
-        element = _ref4[_m];
-        this.root.n.push(element);
-        element.n.push(this.root);
+      _ref3 = this.element;
+      for (_l = 0, _len = _ref3.length; _l < _len; _l++) {
+        element = _ref3[_l];
         element.draw();
       }
       this.root.attacker = this.element;
@@ -1132,11 +1203,13 @@
       this.root.start();
       dur = 400;
       n = this.element.length * 2;
-      return d3.selectAll(".attacker").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
+      d3.selectAll(".attacker").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
         return i / n * dur;
       }).duration(dur).style("opacity", 1).each("end", function(d, i) {
-        return d.start();
+        return d.activate();
       });
+      this.element.push(this.root);
+      return this.init();
     };
 
     Dronewar.prototype.keydown = function() {
@@ -1190,12 +1263,6 @@
           return;
         }
         root.ship(Ship.sidewinder());
-        root.bullet_stroke = "none";
-        root.bullet_fill = "#000";
-        root.bullet_size = 3;
-        root.bullet_speed = 12 / root.dt;
-        root.wait = 30;
-        root.fire();
         d3.select(this).transition().duration(dur).style("fill", "#006");
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
@@ -1207,12 +1274,6 @@
           return;
         }
         root.ship(Ship.viper());
-        root.bullet_stroke = "none";
-        root.bullet_fill = "#fff";
-        root.bullet_size = 2;
-        root.bullet_speed = 15 / root.dt;
-        root.wait = 20;
-        root.fire();
         d3.select(this).transition().duration(dur).style("fill", "#006");
         sidewinder.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
@@ -1224,12 +1285,6 @@
           return;
         }
         root.ship(Ship.fang());
-        root.bullet_stroke = "#FFF";
-        root.bullet_fill = "none";
-        root.bullet_size = 5;
-        root.bullet_speed = 10 / root.dt;
-        root.wait = 30;
-        root.fire();
         d3.select(this).transition().duration(dur).style("fill", "#006");
         viper.style("fill", "#FFF");
         return sidewinder.style("fill", "#FFF");
@@ -1265,7 +1320,7 @@
         return true;
       }
       inactive = this.element.every(function(element) {
-        return element.react === false && element.fixed === true;
+        return element.is_root || (element.react === false && element.fixed === true);
       });
       if (inactive) {
         this.N++;
@@ -1315,23 +1370,16 @@
       Root.__super__.constructor.call(this, this.config);
       this.is_root = true;
       this.fixed = true;
-      this.size = 90;
       this.r.x = this.width / 2;
       this.r.y = this.height - 180;
       this.angleStep = 2 * Math.PI / 60;
-      this.bullet_stroke = "none";
-      this.bullet_fill = "#000";
-      this.bullet_size = 4;
-      this.bullet_speed = 10 / this.dt;
       this.lastfire = Utils.timestamp();
-      this.wait = 20;
       this.attacker = [];
       this.charge = 5e4;
       this.stroke("none");
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
-      d3.timer(this.fire);
     }
 
     Root.prototype.update = function(xy) {
@@ -1359,7 +1407,7 @@
     };
 
     Root.prototype.fire = function() {
-      var bullet, element, n, timestamp, x, y, _i, _j, _len, _len1, _ref, _ref1;
+      var bullet, timestamp, x, y;
       timestamp = Utils.timestamp();
       if (!(this.go && timestamp - this.lastfire > this.wait)) {
         return;
@@ -1375,16 +1423,7 @@
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
-      _ref = this.n;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        n = _ref[_i];
-        bullet.n.push(n);
-      }
-      _ref1 = this.n;
-      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-        element = _ref1[_j];
-        element.n.push(bullet);
-      }
+      bullet.quadtree = this.quadtree;
       bullet.start();
     };
 
@@ -1422,13 +1461,22 @@
       if (dur == null) {
         dur = 500;
       }
+      this.go = false;
+      this.bullet_stroke = ship.bullet_stroke;
+      this.bullet_fill = ship.bullet_fill;
+      this.bullet_size = ship.bullet_size;
+      this.bullet_speed = ship.bullet_speed / this.dt;
+      this.wait = ship.bullet_tick;
       this.path = ship.path;
+      console.log(this.wait);
       this.pathBB();
       endPath = this.d();
       this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();
       this.image.attr("opacity", 1).data([endPath]).transition().duration(dur).attrTween("d", Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
       return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.pathwidth * 0.5 + ship.offset.x).attr("y", -this.pathheight * 0.5 + ship.offset.y).attr("width", this.pathwidth).attr("height", this.pathheight).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {
-        return _this.set_path();
+        _this.set_path();
+        _this.go = true;
+        return d3.timer(_this.fire);
       });
     };
 
@@ -1447,6 +1495,9 @@
     };
 
     Root.prototype.death_check = function(n) {
+      if (n.is_bullet) {
+        return true;
+      }
       n.death();
       this.death();
       Gamescore.lives -= 1;

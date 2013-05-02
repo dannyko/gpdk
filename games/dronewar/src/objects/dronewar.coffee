@@ -1,7 +1,7 @@
 class @Dronewar extends Game
   constructor: ->
     super
-    @initialN = @config.initialN || 5
+    @initialN = @config.initialN || 50
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
@@ -50,7 +50,6 @@ class @Dronewar extends Game
         @element[i].v.x = 0.1 * @N * dx 
         @element[i].v.y = 0.1 * @N * dy
     element.draw() for element in @element
-    @init()
     @root.attacker = @element
     @root.update_attacker()
     @root.start()
@@ -64,6 +63,8 @@ class @Dronewar extends Game
       .duration(dur)
       .style("opacity", 1)
       .each("end", (d, i) -> d.activate()) # start element timers
+    @element.push(@root)
+    @init()
 
   keydown: () =>
     switch d3.event.keyCode 
@@ -126,12 +127,6 @@ class @Dronewar extends Game
     sidewinder.on("click", -> 
       return if this.style.fill == '#000066'
       root.ship(Ship.sidewinder()) 
-      root.bullet_stroke = "none"
-      root.bullet_fill   = "#000"
-      root.bullet_size   = 3
-      root.bullet_speed  = 12 / root.dt
-      root.wait          = 30
-      root.fire() 
       d3.select(this).transition().duration(dur).style("fill", "#006") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -149,12 +144,6 @@ class @Dronewar extends Game
     viper.on("click", -> 
       return if this.style.fill == '#000066'
       root.ship(Ship.viper()) 
-      root.bullet_stroke = "none"
-      root.bullet_fill   = "#fff"
-      root.bullet_size   = 2
-      root.bullet_speed  = 15 / root.dt
-      root.wait          = 20
-      root.fire()
       d3.select(this).transition().duration(dur).style("fill", "#006") 
       sidewinder.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -173,12 +162,6 @@ class @Dronewar extends Game
     fang.on("click", -> 
       return if this.style.fill == '#000066'
       root.ship(Ship.fang())
-      root.bullet_stroke = "#FFF"
-      root.bullet_fill   = "none"
-      root.bullet_size   = 5
-      root.bullet_speed  = 10 / root.dt
-      root.wait          = 30
-      root.fire()
       d3.select(this).transition().duration(dur).style("fill", "#006")
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
@@ -229,7 +212,7 @@ class @Dronewar extends Game
       @stop()
       return true
     inactive = @element.every (element) -> 
-      element.react == false and element.fixed == true 
+      element.is_root or (element.react == false and element.fixed == true)
     if inactive # all inactive
       @N++
       @charge *= 10

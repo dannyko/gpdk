@@ -13,7 +13,7 @@ class @Circletest extends Game
         @element[i].r.y = @height * 0.25 + j  * @element[i].size  * 2  + @element[i].tol
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
-    # @element.push(@root) # add the newly created root element to the array of all elements
+    @element.push(@root) # add the newly created root element to the array of all elements
     @init()
 
   start: () ->

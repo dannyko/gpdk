@@ -6,6 +6,7 @@ class @Bullet extends Circle
     @fill("#000")
     
   death_check: (n) -> # bullet handles score value updates 
+    return true if n.is_root
     @death()
     n.death()
     Gamescore.increment_value() 

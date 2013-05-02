@@ -8,7 +8,7 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
              {pathSegTypeAsLetter: 'L', x: -9,  y: 58, react: true},
              {pathSegTypeAsLetter: 'L', x: -24,  y:38, react: true},
              {pathSegTypeAsLetter: 'Z'}
-          ], url: GameAssetsUrl + "viper_1.png", offset: {x: 0, y: 19}}
+          ], url: GameAssetsUrl + "viper_1.png", offset: {x: 0, y: 19}, bullet_stroke: 'none', bullet_fill: '#fff', bullet_size: 2, bullet_speed: 20, bullet_tick: 40}
 
   @fang: -> {path: [
             {pathSegTypeAsLetter: 'M', x: 10,  y: -20, react: true}, 
@@ -28,7 +28,7 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
             {pathSegTypeAsLetter: 'L', x: -5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'L', x: 5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'Z', react: true}
-          ], url: GameAssetsUrl + "fang_1.png", offset: {x: 0, y: 25}}
+          ], url: GameAssetsUrl + "fang_1.png", offset: {x: 0, y: 25}, bullet_stroke: '#fff', bullet_fill: 'none', bullet_size: 6, bullet_speed: 12, bullet_tick: 40}
 
   @sidewinder: -> {path: [{pathSegTypeAsLetter: 'M', x:  8,  y: -26, react: true},  
                         {pathSegTypeAsLetter: 'L', x:  32, y: -14, react: true}, 
@@ -43,4 +43,4 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
                         {pathSegTypeAsLetter: 'L', x: -8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'L', x:  8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'Z'}
-		   	        ], url: GameAssetsUrl + "sidewinder_1.png", offset: {x: 0, y: 0}}
+		   	        ], url: GameAssetsUrl + "sidewinder_1.png", offset: {x: 0, y: 0}, bullet_stroke: 'none', bullet_fill: '#000', bullet_size: 4, bullet_speed: 15, bullet_tick: 40}

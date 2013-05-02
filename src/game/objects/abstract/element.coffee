@@ -26,6 +26,8 @@ class @Element
     @quadtree  = @config.quadtree  || null
     @width     = @svg.attr("width")
     @height    = @svg.attr("height")
+    @tick      = 20 # minimum time between ticks
+    @lasttick  = Utils.timestamp()
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
@@ -56,12 +58,14 @@ class @Element
           
   integrate: () => # default update assumes force is independent of velocity i.e. f(x, v) = f(x)
     # simulate Newtonian dynamics using approximate velocity Verlet algorithm: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
-    return if @fixed
+    timestamp = Utils.timestamp()
+    return if @fixed or timestamp - @lasttick <= @tick
     r = new Vec(@r) # clone the current position vector object for later comparison
     f = @force.f(r) # evaluate the force at the current position
     @r.add(new Vec(@v).scale(@dt)).add(new Vec(f).scale(0.5 * @dt * @dt)) # update position
     @f = @force.f(@r) # evaluate and store force value with respect to the updated position
     @v.add(f.add(@f).scale(0.5 * @dt)) # Verlet velocity update, assuming that the force is velocity-independent
+    @lasttick = timestamp
     if r.x isnt @r.x or r.y isnt @r.y # check for position change
       @draw() # force draw before checking for collision
       @collision_detect() # check for collisions if position changes

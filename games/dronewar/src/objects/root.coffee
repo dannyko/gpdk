@@ -3,23 +3,16 @@ class @Root extends Polygon
     super(@config)
     @is_root       = true
     @fixed         = true    
-    @size          = 90
     @r.x           = @width / 2
     @r.y           = @height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @bullet_stroke = "none"
-    @bullet_fill   = "#000"
-    @bullet_size   = 4
-    @bullet_speed  = 10 / @dt
     @lastfire      = Utils.timestamp()
-    @wait          = 20 # ms between bullets
     @attacker      = [] # no attackers by default
     @charge        = 5e4 
     @stroke("none")
     @fill("#000")
     @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
-    d3.timer(@fire)
 
   update: (xy = d3.mouse(@svg.node())) =>
     return unless @react # don't draw if not active
@@ -71,7 +64,14 @@ class @Root extends Polygon
     @start()  
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
-    @path    = ship.path
+    @go = false
+    @bullet_stroke = ship.bullet_stroke
+    @bullet_fill   = ship.bullet_fill
+    @bullet_size   = ship.bullet_size
+    @bullet_speed  = ship.bullet_speed / @dt
+    @wait          = ship.bullet_tick # ms between bullets
+    @path          = ship.path
+    console.log(@wait)
     @pathBB() # set the rectangular bounding box for this path
     endPath  = @d() # new end-path to morph to
     @bitmap.attr('opacity', 1)
@@ -96,7 +96,7 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => @set_path())
+      .each('end', () => @set_path() ; @go = true ; d3.timer(@fire))
       
   start: ->
     super
@@ -112,6 +112,7 @@ class @Root extends Polygon
     @svg.on("mousewheel", null) # default scroll wheel listener
 
   death_check: (n) ->
+    return true if n.is_bullet
     n.death()
     @death()
     Gamescore.lives -= 1 # decrement lives for this game
