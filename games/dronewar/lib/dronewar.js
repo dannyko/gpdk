@@ -142,7 +142,7 @@
       this.integrate = function() {
         return Element.prototype.integrate.apply(_this, arguments);
       };
-      this.dt = this.config.dt || 0.8;
+      this.dt = this.config.dt || 0.4;
       this.r = this.config.r || new Vec();
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
@@ -166,7 +166,7 @@
       this.quadtree = this.config.quadtree || null;
       this.width = this.svg.attr("width");
       this.height = this.svg.attr("height");
-      this.tick = 20;
+      this.tick = 10;
       this.lasttick = Utils.timestamp();
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -887,8 +887,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#fff',
         bullet_size: 2,
-        bullet_speed: 20,
-        bullet_tick: 40
+        bullet_speed: 15,
+        bullet_tick: 25
       };
     };
 
@@ -987,8 +987,8 @@
         },
         bullet_stroke: '#fff',
         bullet_fill: 'none',
-        bullet_size: 6,
-        bullet_speed: 12,
+        bullet_size: 5,
+        bullet_speed: 10,
         bullet_tick: 40
       };
     };
@@ -1068,8 +1068,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#000',
         bullet_size: 4,
-        bullet_speed: 15,
-        bullet_tick: 40
+        bullet_speed: 10,
+        bullet_tick: 30
       };
     };
 
@@ -1249,7 +1249,6 @@
         Gameprez.start();
       }
       this.root.draw();
-      this.root.go = true;
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", this.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
       prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold');
