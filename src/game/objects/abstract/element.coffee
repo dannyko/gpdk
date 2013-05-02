@@ -30,7 +30,7 @@ class @Element
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
   collision_detect: -> # default collision detection
-    return unless @react
+    return unless @react and Collision.list.length > 0
     Collision.update_quadtree()
     size = Math.max(3 * @size, 100)
     x0 = @r.x - size
