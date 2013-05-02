@@ -50,8 +50,7 @@ class @Dronewar extends Game
         @element[i].v.x = 0.1 * @N * dx 
         @element[i].v.y = 0.1 * @N * dy
     element.draw() for element in @element
-    Collision.list = @element # update the list of elements to use for collision detection
-    Collision.update_quadtree()
+    @init()
     @root.attacker = @element
     @root.update_attacker()
     @root.start()
@@ -64,7 +63,7 @@ class @Dronewar extends Game
       .delay( (d, i) -> i / n * dur )
       .duration(dur)
       .style("opacity", 1)
-      .each("end", (d, i) -> d.start()) # start element timers
+      .each("end", (d, i) -> d.activate()) # start element timers
 
   keydown: () =>
     switch d3.event.keyCode 

@@ -1,14 +1,7 @@
-class @Circletest 
+class @Circletest extends Game
   constructor: (@config = {}) ->
+    super
     @numel    = @config.numel || 64
-    @element  = [] # initialize
-    @svg      = d3.select("#game_svg")
-    @g        = d3.select("#game_g")
-    @width    = @svg.attr("width")
-    @height   = @svg.attr("height")
-    @zoomTick = 0 # 5000 # ms spacing between zoom draws    
-    @tzoom    = 0 # integer counter for tracking zoom timer
-    @scale    = 1 # initialize zoom level
     for i in [0..@numel - 1] # create element list
       newCircle = new TestCircle()
       @element.push(newCircle) # extend the array of all elements in this game
@@ -21,11 +14,10 @@ class @Circletest
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
     # @element.push(@root) # add the newly created root element to the array of all elements
-    Collision.list = @element # update the list of elements to use for collision detection
-    Collision.update_quadtree()
+    @init()
 
   start: () ->
-    element.start() for element in @element # start element timers
+    super
     @svg.style("cursor", "none")
     # @zoom() # set initial zoom level for the elements to fill the available space
     # d3.timer((d) => @zoom(d)) # start the zoom timer after the element timers 

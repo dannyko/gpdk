@@ -32,7 +32,7 @@ class @Element
   collision_detect: -> # default collision detection
     return unless @react and Collision.list.length > 0
     Collision.update_quadtree()
-    size = Math.max(3 * @size, 100)
+    size = Math.max(2 * @size + @tol, 50)
     x0 = @r.x - size
     x3 = @r.x + size
     y0 = @r.y - size

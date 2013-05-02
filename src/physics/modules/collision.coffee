@@ -1,6 +1,6 @@
 class @Collision
   @lastquad  = Utils.timestamp()
-  @quadwait  = 250 # don't update the quadtree too often
+  @quadwait  = 33 + 1/3 # don't update the quadtree too often
   @list = [] # initialize list of elements
 
   @update_quadtree: (force_update = false) -> 
