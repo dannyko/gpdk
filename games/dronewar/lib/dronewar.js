@@ -1417,7 +1417,7 @@
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
       bullet.r.x = this.r.x + x * (this.size / 3 + bullet.size);
-      bullet.r.y = this.r.y + y * (this.size / 6);
+      bullet.r.y = this.r.y + y * 14;
       bullet.v.x = this.bullet_speed * x;
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
