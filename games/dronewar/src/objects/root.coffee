@@ -38,7 +38,7 @@ class @Root extends Polygon
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
     bullet.r.x  = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y  = @r.y + y * (@size / 6)
+    bullet.r.y  = @r.y + y * 14
     bullet.v.x  = @bullet_speed * x  
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
