@@ -5,8 +5,7 @@ class @Collision
   @update_quadtree: (force_update = false) -> 
     return unless @list.length > 0
     timestamp = Utils.timestamp()
-    quadtick = _.min(@list, (d) -> d.tick).tick * @list.length
-    if force_update or timestamp - @lastquad > quadtick or not @quadtree?
+    if force_update or timestamp - @lastquad > @list.length or not @quadtree?
       data = @list.map((d) -> {x: d.r.x, y: d.r.y, d: d})
       @quadtree = d3.geom.quadtree(data)
       @lastquad = timestamp

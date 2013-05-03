@@ -460,8 +460,6 @@
 
     Collision.lastquad = Utils.timestamp();
 
-    Collision.quadwait = 33 + 1 / 3;
-
     Collision.list = [];
 
     Collision.update_quadtree = function(force_update) {
@@ -473,7 +471,7 @@
         return;
       }
       timestamp = Utils.timestamp();
-      if (force_update || timestamp - this.lastquad > this.quadwait || (this.quadtree == null)) {
+      if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
         data = this.list.map(function(d) {
           return {
             x: d.r.x,
