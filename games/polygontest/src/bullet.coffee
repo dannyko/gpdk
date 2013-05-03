@@ -9,5 +9,4 @@ class @Bullet extends Circle
     return true if n.is_root
     @death()
     n.death()
-    Gamescore.increment_value() 
     true
