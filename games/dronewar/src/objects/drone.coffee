@@ -3,10 +3,11 @@ class @Drone extends Circle
     super
     @image.remove()
     @image = @g.append("image")
-      .attr("xlink:href", "assets/images/drone_1.png")
+      .attr("xlink:href", GameAssetsUrl + "drone_1.png")
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
+    @react = false
         
   death: ->
     @deactivate()
@@ -21,10 +22,15 @@ class @Drone extends Circle
       .duration(dur)
       .ease('sqrt')
       .attr("fill", fill)
+      .remove()
     @g.attr("class", "")
       .transition()
       .delay(dur)
       .duration(dur * 2)
       .ease('sqrt')
       .style("opacity", "0")
-      .remove()
+      .remove() 
+
+  draw: ->
+    @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
+    super
