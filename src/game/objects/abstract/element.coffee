@@ -7,6 +7,12 @@ class @Element
     @n         = @config.n         || [] # array of references to neighbor elements that this element interacts with
     @force     = @config.force     || new Force() # object for computing force vectors: force.f() = [fx, fy]
     @size      = @config.size      || 0 # zero default size in units of pixels for abstract class
+    @bb_width  = @config.bb_width  || 0 # bounding box width
+    @bb_height = @config.bb_height || 0 # bounding box height
+    @left      = @config.bb_width  || 0 # bounding box left
+    @right     = @config.bb_height || 0 # bounding box right
+    @top       = @config.top       || 0 # bounding box top
+    @bottom    = @config.bottom    || 0 # bounding box bottom
     @go        = @config.go        || false # timer is not immediately on by default
     @react     = @config.true      || true # boolean switching the element readiness for reactions to collisions
     @tol       = @config.tol       || 0.5 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
@@ -73,6 +79,12 @@ class @Element
       return
     else # stop the d3.timer by returning true
       true      
+  
+  BB: ->
+    @left      = @r.x - 0.5 * @bb_width
+    @right     = @r.x + 0.5 * @bb_width
+    @top       = @r.y - 0.5 * @bb_height
+    @bottom    = @r.y + 0.5 * @bb_height  
 
   draw: ->
     @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
@@ -100,14 +112,14 @@ class @Element
     @start()  
     return
 
-  death_check: (n) ->
+  destroy_check: (n) ->
     if @is_root # check if root
-      return n.death_check(@) # call root death check
+      return n.destroy_check(@) # call root destroy check
     if @is_bullet # check if bullet after root in order of precedence
-      return n.death_check(@) # call bullet death check
+      return n.destroy_check(@) # call bullet destroy check
     false
 
-  death: -> 
+  destroy: -> 
     @deactivate()
     @g.remove() # avoids accumulating indefinite numbers of dead elements
     return

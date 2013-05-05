@@ -14,10 +14,9 @@ class @Circletest extends Game
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
     @element.push(@root) # add the newly created root element to the array of all elements
-    @init()
+    @default_collision()
 
   start: () ->
     super
     @svg.style("cursor", "none")
-    # @zoom() # set initial zoom level for the elements to fill the available space
-    # d3.timer((d) => @zoom(d)) # start the zoom timer after the element timers 
+    d3.select('#use_bb').on( 'click', () -> Collision.use_bb = if Collision.use_bb then false else true )

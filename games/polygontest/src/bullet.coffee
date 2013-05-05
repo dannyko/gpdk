@@ -5,8 +5,8 @@ class @Bullet extends Circle
     @size = 3 # bullets should be set smaller than default elements
     @fill("#000")
     
-  death_check: (n) -> # bullet handles score value updates 
+  destroy_check: (n) -> # bullet handles score value updates 
     return true if n.is_root
-    @death()
-    n.death()
+    @destroy()
+    n.destroy()
     true

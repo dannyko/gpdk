@@ -2,22 +2,22 @@ class @Reaction # reaction module with no class variables only class methods
 
   ## class methods:
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
-    return if m.death_check(n) || n.death_check(m)
+    return if m.destroy_check(n) || n.destroy_check(m)
     line   = new Vec(d)
     line.x = line.x / d.dist # normalize to get a unit vector
     line.y = line.y / d.dist # normalize to get a unit vector
-    shift  = (d.dmin + Math.max(m.tol, n.tol) - d.dist) * 0.5 # shift both by an equal amount adding up to satisfy tolerance
+    shift  = 0.5 * Math.max(m.tol, n.tol) # shift both by an equal amount adding up to satisfy tolerance
     elastic_collision(m, n, line, shift)
     m.reaction(n)
     return  
     
   @circle_polygon: (circle, polygon, d) ->
-    return if circle.death_check(polygon) || polygon.death_check(circle)
+    return if circle.destroy_check(polygon) || polygon.destroy_check(circle)
     console.log('Reaction.circle_polygon not implemented yet')
     return
     
   @polygon_polygon: (m, n, d) -> # perfectly elastic default collision type
-    return if m.death_check(n) || n.death_check(m)
+    return if m.destroy_check(n) || n.destroy_check(m)
     # exhange the velocities parallel to the normal vector most collinear with the line joining the centroids
     mseg   = m.path[d.i]
     nseg   = n.path[d.j]
@@ -27,7 +27,7 @@ class @Reaction # reaction module with no class variables only class methods
     shift  = 0.5 * Math.max(m.tol, n.tol)
     elastic_collision(m, n, normal, shift)
     m.reaction(n)
-    return 
+    return
     
   elastic_collision = (m, n, line, shift) ->
     lshift  = new Vec(line).scale(shift)

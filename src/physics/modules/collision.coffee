@@ -1,6 +1,7 @@
 class @Collision
-  @lastquad  = Utils.timestamp()
-  @list = [] # initialize list of elements
+  @use_bb   = false # don't use bounding box for all collisions and reactions by default
+  @lastquad = Utils.timestamp()
+  @list     = [] # initialize list of elements
 
   @update_quadtree: (force_update = false) -> 
     return unless @list.length > 0
@@ -44,37 +45,74 @@ class @Collision
           )
       )
     return 
-      
+  
+  @rectangle_rectangle: (m, n) ->
+    m.BB() # update bounding box 
+    n.BB() # update bounding box 
+    not_intersect = n.left > m.right or n.right < m.left or n.top > m.bottom or n.bottom < m.top
+    not not_intersect # return true if collision occurs
+
   @circle_circle: (m, n) ->
-    d           = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
-    d.collision = if d.dist <= d.dmin then true else false 
+    if @use_bb 
+      if @rectangle_rectangle(m, n)
+        d = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
+        d.collision = true
+      else d = collision: false
+    else
+      d           = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
+      d.collision = if d.dist <= d.dmin then true else false 
     d
       
   @circle_polygon: (circle, polygon) ->
-    for i in [0..polygon.path.length - 2] # SVG Path segments are defined relative to previous nodes starting from an "M"-type zeroth node 
-      continue unless polygon.path[i].react # use 1st node to toggle reactions of this segment on/off
-      d = circle_lineseg_dist(circle, polygon, i) 
-      continue if d.dist > circle.size # circle is too far to collide with this polygon segment
-      d.collision = true
-      break # stop for loop since we can only react with one segment per collision
+    if @use_bb # bounding box approximation switch
+      if @rectangle_rectangle(circle, polygon)
+        i = nearest_node(polygon, circle) # polygon node closest to circle's center
+        d = circle_lineseg_dist(circle, polygon, i)
+        d.i = i
+        d.collision = true
+      else d = collision: false
+    else
+      for i in [0..polygon.path.length - 2] # don't include the terminal "Z" node of the Path definition
+        continue unless polygon.path[i].react # use 1st node to toggle reactions of this segment on/off
+        d = circle_lineseg_dist(circle, polygon, i) 
+        continue if d.dist > circle.size # circle is too far to collide with this polygon segment
+        d.i = i
+        d.collision = true
+        break # stop for loop since we can only react with one segment per collision
     d
   
   @polygon_polygon: (m, n) -> 
-    d           = new Vec(m.r).subtract(n.r)
-    d.dist      = d.length()    
-    d.collision = false
-    d.dmin      = m.size + n.size
-    if d.dist <= d.dmin # avoid calling lnieseg_intersect function if intercentroid distance is greater than the sum of the radii of their bounding circles
-      for i in [0..m.path.length - 2]
-        for j in [0..n.path.length - 2]
-          continue unless lineseg_intersect(m, n, i, j)
-          d.i = i
-          d.j = j
-          d.collision = true
-          break
-        break if d.collision
+    if @use_bb 
+      if @rectangle_rectangle(m, n)
+        d = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
+        d.i = nearest_node(m, n) # polygon node closest to the other polygon's center
+        d.j = nearest_node(n, m) # node closest to the other polygon's center
+        d.collision = true
+      else d = collision: false
+    else
+      d = circle_circle_dist(m, n) # initialize output object
+      d.collision = false # initialize
+      if d.dist <= d.dmin # avoid calling lineseg_intersect function if intercentroid distance is greater than the sum of the radii of their bounding circles
+        for i in [0..m.path.length - 2]
+          for j in [0..n.path.length - 2]
+            continue unless lineseg_intersect(m, n, i, j)
+            d.i = i
+            d.j = j
+            d.collision = true
+            break
+          break if d.collision
     d
     
+  nearest_node = (m, n) -> 
+    init    = _.initial(m.path)
+    nearest = _.min(init, (d) -> 
+      dd = new Vec(d).add(m.r).subtract(n.r).length2()
+      console.log(dd)
+      dd
+    )
+    console.log(nearest)
+    _.indexOf(m.path, nearest) # node of polygon m closest to the other element n's center
+
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
     d      = new Vec(m.r).subtract(n.r)
     d.dist = d.length() # Euclidean distance i.e. Pythagorean theorem

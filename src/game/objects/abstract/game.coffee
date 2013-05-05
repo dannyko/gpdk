@@ -7,7 +7,7 @@ class @Game
     @height  = @svg.attr("height")
     @scale   = 1 # initialize zoom level
 
-  init: -> # initialize collision lists
+  default_collision: -> # default collision setup 
     Collision.list = @element # update the list of elements to use for collision detection
     Collision.update_quadtree()  
 

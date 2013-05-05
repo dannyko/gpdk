@@ -16,7 +16,7 @@ class @TestCircle extends Circle
       .ease('linear')
       .attr("fill", circle.fill())
       
-  death: () ->
+  destroy: () ->
     @deactivate()
     dur = 100
     N = 320

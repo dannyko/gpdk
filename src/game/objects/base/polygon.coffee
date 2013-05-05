@@ -23,6 +23,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
       continue if @path[i].pathSegTypeAsLetter == 'Z' || @path[i].pathSegTypeAsLetter == 'z'
       @path[i].r = new Vec(@path[i]).subtract(@path[i + 1 % @path.length - 1]) # vector pointing to this node from the subsequent node
       @path[i].n = new Vec({x: -@path[i].y, y: @path[i].x}).normalize() # unit normal vector 
+    @BB()
     return
 
   set_path: (@path = @path) -> # update path data and metadata
@@ -30,12 +31,12 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     @polygon_path() # set path metadata
     @maxnode  = new Vec(_.max @path, (node) -> node.d = node.x * node.x + node.y * node.y) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size     = @maxnode.length()
-    @pathBB()
     @image.attr("d", @d())
   
-  pathBB: () ->
-    @pathwidth  = _.max(@path, (node) -> node.x).x - _.min(@path, (node) -> node.x).x
-    @pathheight = _.max(@path, (node) -> node.y).y - _.min(@path, (node) -> node.y).y
+  BB: () ->
+    @bb_width  = _.max(@path, (node) -> node.x).x - _.min(@path, (node) -> node.x).x
+    @bb_height = _.max(@path, (node) -> node.y).y - _.min(@path, (node) -> node.y).y
+    super
     
   rotate_path: -> # transform original path coordinates based on the angle of rotation
     for i in [0..@path.length - 1]

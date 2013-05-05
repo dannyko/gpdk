@@ -71,8 +71,7 @@ class @Root extends Polygon
     @bullet_speed  = ship.bullet_speed / @dt
     @wait          = ship.bullet_tick # ms between bullets
     @path          = ship.path
-    console.log(@wait)
-    @pathBB() # set the rectangular bounding box for this path
+    @BB() # set the rectangular bounding box for this path
     endPath  = @d() # new end-path to morph to
     @bitmap.attr('opacity', 1)
       .transition()
@@ -88,9 +87,9 @@ class @Root extends Polygon
       .duration(dur * 0.5)
       .attr("opacity", 0)
     @bitmap.attr("xlink:href", ship.url)
-      .attr("x", -@pathwidth * 0.5 + ship.offset.x).attr("y", -@pathheight * 0.5 + ship.offset.y)
-      .attr("width", @pathwidth)
-      .attr("height", @pathheight)
+      .attr("x", -@bb_width * 0.5 + ship.offset.x).attr("y", -@bb_height * 0.5 + ship.offset.y)
+      .attr("width", @bb_width)
+      .attr("height", @bb_height)
       .attr("opacity", 0)
       .transition()
       .delay(dur)
@@ -111,14 +110,14 @@ class @Root extends Polygon
     @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
 
-  death_check: (n) ->
+  destroy_check: (n) ->
     return true if n.is_bullet
-    n.death()
-    @death()
+    n.destroy()
+    @destroy()
     Gamescore.lives -= 1 # decrement lives for this game
     true # return true to prevent default reaction from triggering
     
-  death: -> # drone death effect to run when we kill a drone
+  destroy: -> # drone destroy effect to run when we kill a drone
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter

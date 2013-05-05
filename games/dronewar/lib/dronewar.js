@@ -262,17 +262,17 @@
       this.start();
     };
 
-    Element.prototype.death_check = function(n) {
+    Element.prototype.destroy_check = function(n) {
       if (this.is_root) {
-        return n.death_check(this);
+        return n.destroy_check(this);
       }
       if (this.is_bullet) {
-        return n.death_check(this);
+        return n.destroy_check(this);
       }
       return false;
     };
 
-    Element.prototype.death = function() {
+    Element.prototype.destroy = function() {
       this.deactivate();
       this.g.remove();
     };
@@ -656,7 +656,7 @@
 
     Reaction.circle_circle = function(m, n, d) {
       var line, shift;
-      if (m.death_check(n) || n.death_check(m)) {
+      if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
       line = new Vec(d);
@@ -668,7 +668,7 @@
     };
 
     Reaction.circle_polygon = function(circle, polygon, d) {
-      if (circle.death_check(polygon) || polygon.death_check(circle)) {
+      if (circle.destroy_check(polygon) || polygon.destroy_check(circle)) {
         return;
       }
       console.log('Reaction.circle_polygon not implemented yet');
@@ -676,7 +676,7 @@
 
     Reaction.polygon_polygon = function(m, n, d) {
       var dot1, dot2, mseg, normal, nseg, shift;
-      if (m.death_check(n) || n.death_check(m)) {
+      if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
       mseg = m.path[d.i];
@@ -1087,12 +1087,12 @@
       this.fill("#000");
     }
 
-    Bullet.prototype.death_check = function(n) {
+    Bullet.prototype.destroy_check = function(n) {
       if (n.is_root) {
         return true;
       }
-      this.death();
-      n.death();
+      this.destroy();
+      n.destroy();
       Gamescore.increment_value();
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.score(Gamescore.value);
@@ -1116,7 +1116,7 @@
       this.react = false;
     }
 
-    Drone.prototype.death = function() {
+    Drone.prototype.destroy = function() {
       var N, dur, fill;
       this.deactivate();
       dur = 100;
@@ -1491,17 +1491,17 @@
       return this.svg.on("mousewheel", null);
     };
 
-    Root.prototype.death_check = function(n) {
+    Root.prototype.destroy_check = function(n) {
       if (n.is_bullet) {
         return true;
       }
-      n.death();
-      this.death();
+      n.destroy();
+      this.destroy();
       Gamescore.lives -= 1;
       return true;
     };
 
-    Root.prototype.death = function() {
+    Root.prototype.destroy = function() {
       var N, dur, fill;
       N = 240;
       fill = '#ff0';

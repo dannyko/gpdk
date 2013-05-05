@@ -10,15 +10,14 @@ class @Polygontest extends Game
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
-        @element[i].r.x = @width  * 0.5 +  k  * (@element[i].pathwidth + 2 * @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.25 + j  * (@element[i].pathheight + 1 * @element[i].tol)
+        @element[i].r.x = @width  * 0.5 +  k  * (@element[i].bb_width + 2 * @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = @height * 0.25 + j  * (@element[i].bb_height + 1 * @element[i].tol)
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
     @element.push(@root)
-    @init()
+    @default_collision()
 
   start: () ->
     element.start() for element in @element # start element timers
     @svg.style("cursor", "none")
-    # @zoom() # set initial zoom level for the elements to fill the available space
-    # d3.timer((d) => @zoom(d)) # start the zoom timer after the element timers 
+    d3.select('#use_bb').on( 'click', () -> Collision.use_bb = if Collision.use_bb then false else true )

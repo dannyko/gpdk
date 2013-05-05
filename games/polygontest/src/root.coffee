@@ -3,11 +3,11 @@ class @Root extends Polygon
     super
     @is_root   = true
     @fixed     = true    
-    @fill("#FFF")
     @size      = 13
-    @path = @default_path()
+    @path      = @default_path()
     @angle     = 0 # Math.PI 
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
+    @fill("#FFF")
     @svg.on("mousemove", @draw) # default mouse behavior is to control the root element position
     d3.select(window).on("keydown", @keydown) # default keyboard listener
     @svg.on("mousedown", @fire) # default mouse button listener
@@ -37,18 +37,18 @@ class @Root extends Polygon
     return
     
   fire: () =>
-    bullet      = new Bullet()
-    speed       = 10 / @dt
-    x           = Math.cos(@angle - Math.PI * 0.5)
-    y           = Math.sin(@angle - Math.PI * 0.5)
-    bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
-    bullet.v.x    = speed * x
-    bullet.v.y    = speed * y
+    bullet     = new Bullet()
+    speed      = 10 / @dt
+    x          = Math.cos(@angle - Math.PI * 0.5)
+    y          = Math.sin(@angle - Math.PI * 0.5)
+    bullet.r.x = @r.x + x * (@size / 3 + bullet.size)
+    bullet.r.y = @r.y + y * (@size / 3 + bullet.size)
+    bullet.v.x = speed * x
+    bullet.v.y = speed * y
     bullet.draw()
     bullet.start()
   
-  death_check: (n) ->
+  destroy_check: (n) ->
     bump = 0.1 / @dt
     d = new Vec(n.r).subtract(@r).normalize().scale(bump)
     n.v.add(d)

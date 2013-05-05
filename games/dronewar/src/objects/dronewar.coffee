@@ -64,7 +64,7 @@ class @Dronewar extends Game
       .style("opacity", 1)
       .each("end", (d, i) -> d.activate()) # start element timers
     @element.push(@root)
-    @init()
+    @default_collision()
 
   keydown: () =>
     switch d3.event.keyCode 

@@ -40,7 +40,7 @@ class @Root extends Circle
     bullet.draw()
     bullet.start()
   
-  death_check: (n) ->
+  destroy_check: (n) ->
     d = new Vec(n.r).subtract(@r).normalize()
     bump = 0.1 / @dt
     n.v.add(d.scale(bump))

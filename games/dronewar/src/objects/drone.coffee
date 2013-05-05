@@ -9,7 +9,7 @@ class @Drone extends Circle
       .attr("height", @size * 2)
     @react = false
         
-  death: ->
+  destroy: ->
     @deactivate()
     dur = 100
     N = 320
