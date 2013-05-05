@@ -8,6 +8,10 @@ class @Rectangle extends Element
     @posy  = @config.y || '0'
     @width = @config.width || '10'
     @height = @config.height || '5'
+    @maxx = @posx
+    @maxy = @posy 
+    @minx = @posx - @width
+    @miny = @posy - @height
     @stroke = @config.stroke || @_stroke
     @_fill = @config.fill || "#FFF"
     # Call the draw fuction to allow svg or canvas
@@ -41,6 +45,18 @@ class @Rectangle extends Element
   getY: ->
     @posy
 
+  getTop:->
+    @maxy
+
+  getLeft:->
+    @maxx
+
+  getBottom:->
+    @miny
+
+  getRight:->
+    @minx
+
   getWidth:->
     @width 
 
@@ -50,6 +66,7 @@ class @Rectangle extends Element
   getFill:->
     @_fill
   
+
   draw:->
     super
     # if using svg engine draw. Might need a better check
@@ -66,6 +83,7 @@ class @Rectangle extends Element
             @image.attr("fill", "#FFF")
     # if canvas engine draw 
     #else @canvas etc
+    #did this change?
 
 
 
