@@ -149,6 +149,12 @@
       this.n = this.config.n || [];
       this.force = this.config.force || new Force();
       this.size = this.config.size || 0;
+      this.bb_width = this.config.bb_width || 0;
+      this.bb_height = this.config.bb_height || 0;
+      this.left = this.config.bb_width || 0;
+      this.right = this.config.bb_height || 0;
+      this.top = this.config.top || 0;
+      this.bottom = this.config.bottom || 0;
       this.go = this.config.go || false;
       this.react = this.config["true"] || true;
       this.tol = this.config.tol || 0.5;
@@ -231,6 +237,13 @@
       }
     };
 
+    Element.prototype.BB = function() {
+      this.left = this.r.x - 0.5 * this.bb_width;
+      this.right = this.r.x + 0.5 * this.bb_width;
+      this.top = this.r.y - 0.5 * this.bb_height;
+      return this.bottom = this.r.y + 0.5 * this.bb_height;
+    };
+
     Element.prototype.draw = function() {
       this.g.attr("transform", "translate(" + this.r.x + "," + this.r.y + ") rotate(" + (360 * 0.5 * this.angle / Math.PI) + ")");
     };
@@ -293,7 +306,7 @@
       this.scale = 1;
     }
 
-    Game.prototype.init = function() {
+    Game.prototype.default_collision = function() {
       Collision.list = this.element;
       return Collision.update_quadtree();
     };
@@ -333,6 +346,7 @@
       Circle.__super__.constructor.apply(this, arguments);
       this.type = 'Circle';
       this.size = 15;
+      this.BB();
       this.image = this.g.append("circle");
       this.image.attr("stroke", this._stroke);
       this.image.attr("fill", this._fill);
@@ -345,6 +359,12 @@
         this.deactivate();
         return this.g.remove();
       }
+    };
+
+    Circle.prototype.BB = function() {
+      this.bb_width = 2 * this.size;
+      this.bb_height = 2 * this.size;
+      return Circle.__super__.BB.apply(this, arguments);
     };
 
     return Circle;
@@ -405,6 +425,7 @@
           y: this.path[i].x
         }).normalize();
       }
+      this.BB();
     };
 
     Polygon.prototype.set_path = function(path) {
@@ -417,21 +438,21 @@
         return node.d = node.x * node.x + node.y * node.y;
       }));
       this.size = this.maxnode.length();
-      this.pathBB();
       return this.image.attr("d", this.d());
     };
 
-    Polygon.prototype.pathBB = function() {
-      this.pathwidth = _.max(this.path, function(node) {
+    Polygon.prototype.BB = function() {
+      this.bb_width = _.max(this.path, function(node) {
         return node.x;
       }).x - _.min(this.path, function(node) {
         return node.x;
       }).x;
-      return this.pathheight = _.max(this.path, function(node) {
+      this.bb_height = _.max(this.path, function(node) {
         return node.y;
       }).y - _.min(this.path, function(node) {
         return node.y;
       }).y;
+      return Polygon.__super__.BB.apply(this, arguments);
     };
 
     Polygon.prototype.rotate_path = function() {
@@ -453,10 +474,119 @@
 
   })(Element);
 
+  this.Rectangle = (function(_super) {
+
+    __extends(Rectangle, _super);
+
+    function Rectangle(config) {
+      this.config = config != null ? config : {};
+      Rectangle.__super__.constructor.apply(this, arguments);
+      this.type = 'Rectangle';
+      this.posx = this.config.x || '0';
+      this.posy = this.config.y || '0';
+      this.width = this.config.width || '10';
+      this.height = this.config.height || '5';
+      this.maxx = this.posx;
+      this.maxy = this.posy;
+      this.minx = this.posx - this.width;
+      this.miny = this.posy - this.height;
+      this.stroke = this.config.stroke || this._stroke;
+      this._fill = this.config.fill || "#FFF";
+      this.draw();
+    }
+
+    Rectangle.prototype.setX = function(xpos) {
+      if (xpos) {
+        return this.posx = xpos;
+      }
+    };
+
+    Rectangle.prototype.setY = function(ypos) {
+      if (ypos) {
+        return this.posy = ypos;
+      }
+    };
+
+    Rectangle.prototype.setWidth = function(width) {
+      if (width) {
+        return this.width = width;
+      }
+    };
+
+    Rectangle.prototype.setHeight = function(height) {
+      if (height) {
+        return this.height = height;
+      }
+    };
+
+    Rectangle.prototype.setFill = function(fill) {
+      if (fill) {
+        return this._fill = fill;
+      }
+    };
+
+    Rectangle.prototype.getX = function() {
+      return this.posx;
+    };
+
+    Rectangle.prototype.getY = function() {
+      return this.posy;
+    };
+
+    Rectangle.prototype.getTop = function() {
+      return this.maxy;
+    };
+
+    Rectangle.prototype.getLeft = function() {
+      return this.maxx;
+    };
+
+    Rectangle.prototype.getBottom = function() {
+      return this.miny;
+    };
+
+    Rectangle.prototype.getRight = function() {
+      return this.minx;
+    };
+
+    Rectangle.prototype.getWidth = function() {
+      return this.width;
+    };
+
+    Rectangle.prototype.getHeight = function() {
+      return this.height;
+    };
+
+    Rectangle.prototype.getFill = function() {
+      return this._fill;
+    };
+
+    Rectangle.prototype.draw = function() {
+      Rectangle.__super__.draw.apply(this, arguments);
+      if (this.svg) {
+        if (!this.image) {
+          this.image = this.g.append("rect");
+          this.image.attr("stroke", this._stroke);
+          this.image.attr("fill", "#FFF");
+          this.image.attr("x", this.posx);
+          this.image.attr("y", this.posy);
+          this.image.attr("height", this.height);
+          this.image.attr("width", this.width);
+          return this.image.attr("fill", "#FFF");
+        }
+      }
+    };
+
+    return Rectangle;
+
+  })(Element);
+
   this.Collision = (function() {
-    var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, z_check;
+    var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, nearest_node, z_check;
 
     function Collision() {}
+
+    Collision.use_bb = false;
 
     Collision.lastquad = Utils.timestamp();
 
@@ -524,52 +654,109 @@
       }
     };
 
+    Collision.rectangle_rectangle = function(m, n) {
+      var not_intersect;
+      m.BB();
+      n.BB();
+      not_intersect = n.left > m.right || n.right < m.left || n.top > m.bottom || n.bottom < m.top;
+      return !not_intersect;
+    };
+
     Collision.circle_circle = function(m, n) {
       var d;
-      d = circle_circle_dist(m, n);
-      d.collision = d.dist <= d.dmin ? true : false;
+      if (this.use_bb) {
+        if (this.rectangle_rectangle(m, n)) {
+          d = circle_circle_dist(m, n);
+          d.collision = true;
+        } else {
+          d = {
+            collision: false
+          };
+        }
+      } else {
+        d = circle_circle_dist(m, n);
+        d.collision = d.dist <= d.dmin ? true : false;
+      }
       return d;
     };
 
     Collision.circle_polygon = function(circle, polygon) {
       var d, i, _i, _ref;
-      for (i = _i = 0, _ref = polygon.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (!polygon.path[i].react) {
-          continue;
+      if (this.use_bb) {
+        if (this.rectangle_rectangle(circle, polygon)) {
+          i = nearest_node(polygon, circle);
+          d = circle_lineseg_dist(circle, polygon, i);
+          d.i = i;
+          d.collision = true;
+        } else {
+          d = {
+            collision: false
+          };
         }
-        d = circle_lineseg_dist(circle, polygon, i);
-        if (d.dist > circle.size) {
-          continue;
+      } else {
+        for (i = _i = 0, _ref = polygon.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          if (!polygon.path[i].react) {
+            continue;
+          }
+          d = circle_lineseg_dist(circle, polygon, i);
+          if (d.dist > circle.size) {
+            continue;
+          }
+          d.i = i;
+          d.collision = true;
+          break;
         }
-        d.collision = true;
-        break;
       }
       return d;
     };
 
     Collision.polygon_polygon = function(m, n) {
       var d, i, j, _i, _j, _ref, _ref1;
-      d = new Vec(m.r).subtract(n.r);
-      d.dist = d.length();
-      d.collision = false;
-      d.dmin = m.size + n.size;
-      if (d.dist <= d.dmin) {
-        for (i = _i = 0, _ref = m.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-          for (j = _j = 0, _ref1 = n.path.length - 2; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
-            if (!lineseg_intersect(m, n, i, j)) {
-              continue;
+      if (this.use_bb) {
+        if (this.rectangle_rectangle(m, n)) {
+          d = circle_circle_dist(m, n);
+          d.i = nearest_node(m, n);
+          d.j = nearest_node(n, m);
+          d.collision = true;
+        } else {
+          d = {
+            collision: false
+          };
+        }
+      } else {
+        d = circle_circle_dist(m, n);
+        d.collision = false;
+        if (d.dist <= d.dmin) {
+          for (i = _i = 0, _ref = m.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+            for (j = _j = 0, _ref1 = n.path.length - 2; 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
+              if (!lineseg_intersect(m, n, i, j)) {
+                continue;
+              }
+              d.i = i;
+              d.j = j;
+              d.collision = true;
+              break;
             }
-            d.i = i;
-            d.j = j;
-            d.collision = true;
-            break;
-          }
-          if (d.collision) {
-            break;
+            if (d.collision) {
+              break;
+            }
           }
         }
       }
       return d;
+    };
+
+    nearest_node = function(m, n) {
+      var init, nearest;
+      init = _.initial(m.path);
+      nearest = _.min(init, function(d) {
+        var dd;
+        dd = new Vec(d).add(m.r).subtract(n.r).length2();
+        console.log(dd);
+        return dd;
+      });
+      console.log(nearest);
+      return _.indexOf(m.path, nearest);
     };
 
     circle_circle_dist = function(m, n) {
@@ -662,7 +849,7 @@
       line = new Vec(d);
       line.x = line.x / d.dist;
       line.y = line.y / d.dist;
-      shift = (d.dmin + Math.max(m.tol, n.tol) - d.dist) * 0.5;
+      shift = 0.5 * Math.max(m.tol, n.tol);
       elastic_collision(m, n, line, shift);
       m.reaction(n);
     };
@@ -1207,7 +1394,7 @@
         return d.activate();
       });
       this.element.push(this.root);
-      return this.init();
+      return this.default_collision();
     };
 
     Dronewar.prototype.keydown = function() {
@@ -1465,12 +1652,11 @@
       this.bullet_speed = ship.bullet_speed / this.dt;
       this.wait = ship.bullet_tick;
       this.path = ship.path;
-      console.log(this.wait);
-      this.pathBB();
+      this.BB();
       endPath = this.d();
       this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();
       this.image.attr("opacity", 1).data([endPath]).transition().duration(dur).attrTween("d", Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
-      return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.pathwidth * 0.5 + ship.offset.x).attr("y", -this.pathheight * 0.5 + ship.offset.y).attr("width", this.pathwidth).attr("height", this.pathheight).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {
+      return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {
         _this.set_path();
         _this.go = true;
         return d3.timer(_this.fire);
