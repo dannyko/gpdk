@@ -15,13 +15,11 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
 
   update: (xy = d3.mouse(@svg.node())) =>
-    return unless @react # don't draw if not active
+    return unless @active # don't draw if not active
     @r.x = xy[0]
     @r.y = xy[1]
     @draw()
-    @collision_detect()
-    if @attacker?
-      @update_attacker()
+    @update_attacker() if @attacker?
 
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
@@ -31,7 +29,7 @@ class @Root extends Polygon
 
   fire: () =>
     timestamp   = Utils.timestamp()
-    return unless @go and timestamp - @lastfire > @wait
+    return unless @active and timestamp - @lastfire > @wait
     @lastfire   = timestamp
     bullet      = new Bullet()
     bullet.size = @bullet_size
@@ -43,11 +41,7 @@ class @Root extends Polygon
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet.quadtree = @quadtree
-    # element.quadtree.add(bullet) for element in @n
-    #bullet.n.push(n) for n in @n
-    #element.n.push(bullet) for element in @n
-    bullet.start()
+    bullet.on()
     return
 
   update_attacker: ->
@@ -58,13 +52,9 @@ class @Root extends Polygon
       cy: @r.y
       q:  @charge # charge
     attacker.force.params = @params for attacker in @attacker
-
-  activate: ->
-    @react = true
-    @start()  
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
-    @go = false
+    @active = false
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill
     @bullet_size   = ship.bullet_size
@@ -95,7 +85,7 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => @set_path() ; @go = true ; d3.timer(@fire))
+      .each('end', () => @set_path() ; @active = true ; d3.timer(@fire))
       
   start: ->
     super

@@ -5,14 +5,10 @@ class @Game
     @g       = d3.select("#game_g")
     @width   = @svg.attr("width")
     @height  = @svg.attr("height")
-    @scale   = 1 # initialize zoom level
+    @scale   = 1 # initialize zoom level (implementation still pending)
 
-  default_collision: -> # default collision setup 
-    Collision.list = @element # update the list of elements to use for collision detection
-    Collision.update_quadtree()  
+  default_collision: -> Collision.list = @element # default collision setup: update the list of elements to use for collision detection
 
-  start: -> # start new game
-    element.start() for element in @element # start element timers
+  start: -> Integration.start() # start all elements
     
-  stop: ->
-    element.deactivate() for element in @element # stop all element timers
+  stop: -> Integration.stop() # stop all elements

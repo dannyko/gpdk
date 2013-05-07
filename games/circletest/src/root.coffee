@@ -11,15 +11,17 @@ class @Root extends Circle
     d3.select(window).on("keydown", @keydown) # default keyboard listener
     @svg.on("mousedown", @fire) # default mouse button listener
     @svg.on("mousewheel", @spin) # default scroll wheel listener
+
   draw: (node = @svg.node()) =>
     xy = d3.mouse(node)
     @r.x = xy[0]
     @r.y = xy[1]
     super()
-    @collision_detect()
+
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
+
   keydown: () =>
     switch d3.event.keyCode 
       when 70 then @fire() # f key fires bullets
@@ -28,6 +30,7 @@ class @Root extends Circle
       when 38 then @fire() # up arrow fires bullet
       when 40 then @angle += Math.PI # down arrow reverses direction of firing angle 
     return
+
   fire: () =>
     bullet      = new Bullet()
     speed       = 10 / @dt
@@ -38,9 +41,11 @@ class @Root extends Circle
     bullet.v.x    = speed * x
     bullet.v.y    = speed * y
     bullet.draw()
-    bullet.start()
+    bullet.on()
+    Collision.list.push(bullet)
   
   destroy_check: (n) ->
     d = new Vec(n.r).subtract(@r).normalize()
     bump = 0.1 / @dt
     n.v.add(d.scale(bump))
+    true

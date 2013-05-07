@@ -7,11 +7,32 @@ class @Collision
     return unless @list.length > 0
     timestamp = Utils.timestamp()
     if force_update or timestamp - @lastquad > @list.length or not @quadtree?
-      data = @list.map((d) -> {x: d.r.x, y: d.r.y, d: d})
+      data = _.filter(@list, (d) -> d.active).map((d) -> {x: d.r.x, y: d.r.y, d: d})
       @quadtree = d3.geom.quadtree(data)
       @lastquad = timestamp
 
   @quadtree = @update_quadtree() # initialize
+
+  @detect: -> # execute default collision detection using quadtree for accelerated iterations over active elements
+    return unless @list.length > 0
+    @update_quadtree() # update the quadtree for collision detection after all moveable elements have been moved
+    quadtree = @quadtree # copy for access inside inner function
+    _.each(_.filter(@list, (d) -> d.active), (d) -> 
+      size = 2 * (d.size + d.tol) # define size of selection box using the size of this element
+      # define the selection box to use for searching the quadtree: 
+      x0 = d.r.x - size
+      x3 = d.r.x + size
+      y0 = d.r.y - size
+      y3 = d.r.y + size
+      quadtree.visit( (node, x1, y1, x2, y2) ->
+        p = node.point 
+        if p isnt null
+          return false unless d isnt p.d and p.d.active # skip this point and continue searching lower levels of the hierarchy
+          if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+            Collision.check(d, p.d)
+        x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
+      )
+    )
 
   @check: (ei, ej) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not

@@ -52,7 +52,7 @@ class @Dronewar extends Game
     element.draw() for element in @element
     @root.attacker = @element
     @root.update_attacker()
-    @root.start()
+    @root.activate()
     dur = 400
     n = @element.length * 2
     d3.selectAll(".attacker")
@@ -62,7 +62,7 @@ class @Dronewar extends Game
       .delay( (d, i) -> i / n * dur )
       .duration(dur)
       .style("opacity", 1)
-      .each("end", (d, i) -> d.activate()) # start element timers
+      .each("end", (d, i) -> d.activate()) # enable collisions
     @element.push(@root)
     @default_collision()
 
@@ -211,7 +211,7 @@ class @Dronewar extends Game
       @stop()
       return true
     inactive = @element.every (element) -> 
-      element.is_root or (element.react == false and element.fixed == true)
+      element.is_root or element.fixed
     if inactive # all inactive
       @N++
       @charge *= 10

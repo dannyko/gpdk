@@ -19,7 +19,6 @@ class @Root extends Polygon
     @r.x = xy[0]
     @r.y = xy[1]
     super()
-    @collision_detect()
     
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
@@ -46,7 +45,7 @@ class @Root extends Polygon
     bullet.v.x = speed * x
     bullet.v.y = speed * y
     bullet.draw()
-    bullet.start()
+    bullet.on()
   
   destroy_check: (n) ->
     bump = 0.1 / @dt

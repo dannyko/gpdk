@@ -18,6 +18,6 @@ class @Polygontest extends Game
     @default_collision()
 
   start: () ->
-    element.start() for element in @element # start element timers
+    element.on() for element in @element # bind elements to the physics engine
     @svg.style("cursor", "none")
     d3.select('#use_bb').on( 'click', () -> Collision.use_bb = if Collision.use_bb then false else true )
