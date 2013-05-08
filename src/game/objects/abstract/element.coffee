@@ -35,7 +35,7 @@ class @Element
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
-  reaction: () -> # abstract reaction with neighbor n
+  reaction: -> element.draw() # interface for reactions after a collision event with another element occurs 
 
   BB: ->
     @left   = @r.x - 0.5 * @bb_width

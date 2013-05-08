@@ -33,16 +33,15 @@ class @Root extends Circle
 
   fire: () =>
     bullet      = new Bullet()
-    speed       = 10 / @dt
+    speed       = 5.5 / @dt
     x           = Math.cos(@angle)
     y           = Math.sin(@angle)
     bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
     bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
     bullet.v.x    = speed * x
     bullet.v.y    = speed * y
-    bullet.draw()
-    bullet.on()
     Collision.list.push(bullet)
+    bullet.on()
   
   destroy_check: (n) ->
     d = new Vec(n.r).subtract(@r).normalize()

@@ -6,9 +6,10 @@ class @Reaction # reaction module with no class variables only class methods
     line   = new Vec(d)
     line.x = line.x / d.dist # normalize to get a unit vector
     line.y = line.y / d.dist # normalize to get a unit vector
-    shift  = Math.max(m.tol, n.tol) # shift both by an equal amount adding up to satisfy tolerance
+    shift  = 0.5 * (Math.max(d.dmin - d.dist, 0) + Math.max(m.tol, n.tol)) # shift both by an equal amount adding up to satisfy tolerance while taking into account overstep
     elastic_collision(m, n, line, shift)
     m.reaction(n)
+    n.reaction(m)
     return  
     
   @circle_polygon: (circle, polygon, d) ->
@@ -24,9 +25,10 @@ class @Reaction # reaction module with no class variables only class methods
     dot1   = mseg.n.dot(d)
     dot2   = nseg.n.dot(d)
     normal = if Math.abs(dot1) > Math.abs(dot2) then new Vec(mseg.n).scale(dot1 / Math.abs(dot1)) else new Vec(nseg.n).scale(dot2 / Math.abs(dot2)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
-    shift  = Math.max(m.tol, n.tol)
+    shift  = 0.5 * (Math.max(m.tol, n.tol) + overstep)
     elastic_collision(m, n, normal, shift)
     m.reaction(n)
+    n.reaction(m)
     return
     
   elastic_collision = (m, n, line, shift) ->
