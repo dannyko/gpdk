@@ -11,7 +11,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     [
       {pathSegTypeAsLetter: 'M', x: -@size, y: @size * invsqrt3, react: true},
       {pathSegTypeAsLetter: 'L', x: 0,      y: -2 * @size * invsqrt3, react: true},
-      {pathSegTypeAsLetter: 'L', x: @size,  y:  @size * invsqrt3, react: true},
+      {pathSegTypeAsLetter: 'L', x: @size,  y: @size * invsqrt3, react: true},
       {pathSegTypeAsLetter: 'Z'} # close the path by default
     ]
 
@@ -19,9 +19,8 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     Utils.d(@path)
     
   polygon_path: -> # assign path metadata
-    for i in [0..@path.length - 1]
-      continue if @path[i].pathSegTypeAsLetter == 'Z' || @path[i].pathSegTypeAsLetter == 'z'
-      @path[i].r = new Vec(@path[i]).subtract(@path[i + 1 % @path.length - 1]) # vector pointing to this node from the subsequent node
+    for i in [0..@path.length - 2] # set edge vectors: path.r
+      @path[i].r = new Vec(@path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
       @path[i].n = new Vec({x: -@path[i].y, y: @path[i].x}).normalize() # unit normal vector 
     @BB()
     return
@@ -33,7 +32,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     @size     = @maxnode.length()
     @image.attr("d", @d())
   
-  BB: () ->
+  BB: ->
     @bb_width  = _.max(@path, (node) -> node.x).x - _.min(@path, (node) -> node.x).x
     @bb_height = _.max(@path, (node) -> node.y).y - _.min(@path, (node) -> node.y).y
     super

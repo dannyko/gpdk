@@ -11,13 +11,11 @@ class @Polygontest extends Game
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
         @element[i].r.x = @width  * 0.5 +  k  * (@element[i].bb_width + 2 * @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.25 + j  * (@element[i].bb_height + 1 * @element[i].tol)
+        @element[i].r.y = @height * 0.25 + j  * (@element[i].bb_height + 2 * @element[i].tol)
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
-    @element.push(@root)
-    @default_collision()
 
-  start: () ->
-    element.on() for element in @element # bind elements to the physics engine
+  start: ->
+    super
     @svg.style("cursor", "none")
-    d3.select('#use_bb').on( 'click', () -> Collision.use_bb = if Collision.use_bb then false else true )
+    d3.select('#use_bb').on( 'click', -> Collision.use_bb = if Collision.use_bb then false else true )

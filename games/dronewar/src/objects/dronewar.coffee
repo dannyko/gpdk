@@ -63,8 +63,6 @@ class @Dronewar extends Game
       .duration(dur)
       .style("opacity", 1)
       .each("end", (d, i) -> d.activate()) # enable collisions
-    @element.push(@root)
-    @default_collision()
 
   keydown: () =>
     switch d3.event.keyCode 
@@ -198,6 +196,7 @@ class @Dronewar extends Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     how.text("Use the mouse for controlling movement, scrollwheel for rotation")
+    super
     
   progress: =>  # set a timer to monitor game progress
     @scoretxt.text('SCORE: ' + Gamescore.value)

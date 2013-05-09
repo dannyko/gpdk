@@ -34,7 +34,7 @@ class @Collision
       )
     )
 
-  @check: (ei, ej) -> # check for collision between Elements i and j
+  @check: (ei, ej, reaction = true) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
     name = [ei.type, ej.type]
     sort = [ei.type, ej.type].sort() # sort names in alphabetical order
@@ -51,21 +51,21 @@ class @Collision
         switch n.type 
           when 'Circle' then (
             d = @circle_circle(m, n) 
-            Reaction.circle_circle(m, n, d) if d.collision
+            Reaction.circle_circle(m, n, d) if d.collision and reaction
           )
           when 'Polygon' then (
             d =  @circle_polygon(m, n) 
-            Reaction.circle_polygon(m, n, d) if d.collision
+            Reaction.circle_polygon(m, n, d) if d.collision and reaction
           )
       )
       when 'Polygon' then (
         switch n.type 
           when 'Polygon' then (
             d =  @polygon_polygon(m, n) 
-            Reaction.polygon_polygon(m, n, d) if d.collision
+            Reaction.polygon_polygon(m, n, d) if d.collision and reaction
           )
       )
-    return 
+    d
   
   @rectangle_rectangle: (m, n) ->
     m.BB() # update bounding box 

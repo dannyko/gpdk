@@ -7,8 +7,6 @@ class @Game
     @height  = @svg.attr("height")
     @scale   = 1 # initialize zoom level (implementation still pending)
 
-  default_collision: -> Collision.list = @element # default collision setup: update the list of elements to use for collision detection
-
   start: -> Integration.start() # start all elements
     
   stop: -> Integration.stop() # stop all elements

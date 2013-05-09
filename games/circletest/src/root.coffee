@@ -40,7 +40,6 @@ class @Root extends Circle
     bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
     bullet.v.x    = speed * x
     bullet.v.y    = speed * y
-    Collision.list.push(bullet)
     bullet.on()
   
   destroy_check: (n) ->

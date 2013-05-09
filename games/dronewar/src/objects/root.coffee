@@ -41,7 +41,9 @@ class @Root extends Polygon
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet.on()
+    bullet.draw()
+    #console.log(bullet)
+    #car
     return
 
   update_attacker: ->

@@ -2,8 +2,9 @@ class @Element
   constructor: (@config = {}) ->      
     @dt        = @config.dt        || 0.4 # controls animation smoothness relative to d3.timer queue update rate
     @r         = @config.r         || new Vec() # position vector (rx, ry)
+    @dr        = @config.dr        || new Vec() # displacement vector (dx, dy)
     @v         = @config.v         || new Vec() # velocity vector (vx, vy)
-    @f         = @config.f         || new Vec() # force    vector (fx, fy)
+    @f         = @config.f         || new Vec() # force vector (fx, fy)
     @n         = @config.n         || [] # array of references to neighbor elements that this element interacts with
     @force     = @config.force     || new Force() # object for computing force vectors: force.f() = [fx, fy]
     @size      = @config.size      || 0 # zero default size in units of pixels for abstract class
@@ -34,8 +35,11 @@ class @Element
     @height    = @svg.attr("height")
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
+    Collision.list.push(@) # add element to collision list by default
         
-  reaction: -> element.draw() # interface for reactions after a collision event with another element occurs 
+  reaction: (element) -> # interface for reactions after a collision event with another element occurs 
+    @draw()
+    element.reaction() # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
 
   BB: ->
     @left   = @r.x - 0.5 * @bb_width

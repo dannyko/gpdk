@@ -13,10 +13,8 @@ class @Circletest extends Game
         @element[i].r.y = @height * 0.25 + j  * (@element[i].size  * 2 + @element[i].tol)
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
-    @element.push(@root) # add the newly created root element to the array of all elements
-    @default_collision()
 
-  start: () ->
+  start: ->
     super
     @svg.style("cursor", "none")
-    d3.select('#use_bb').on( 'click', () -> Collision.use_bb = if Collision.use_bb then false else true )
+    d3.select('#use_bb').on( 'click', -> Collision.use_bb = if Collision.use_bb then false else true )

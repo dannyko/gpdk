@@ -16,7 +16,7 @@ class @TestPolygon extends Polygon
       .ease('linear')
       .attr("fill", polygon.fill())
 
-  destroy: () ->
+  destroy: ->
     @deactivate()
     dur = 100
     N = 320
