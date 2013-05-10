@@ -26,11 +26,11 @@ class @Vec # two-dimensional vectors {x, y}
   dot: (v) ->
     @x * v.x + @y * v.y
 
-  length2: ->
+  length_squared: ->
     @dot(@)
    
   length: ->
-    Math.sqrt(@length2())
+    Math.sqrt(@length_squared())
     
   normalize: ->
     inverseLength = 1 / @length()
@@ -38,8 +38,8 @@ class @Vec # two-dimensional vectors {x, y}
     @y *= inverseLength
     @
 
-  dist2: (v) ->
-    new Vec(@).subtract(v).length2()
+  dist_squared: (v) ->
+    new Vec(@).subtract(v).length_squared()
     
   dist: (v) ->
-    Math.sqrt(@dist2(v))
+    Math.sqrt(@dist_squared(v))

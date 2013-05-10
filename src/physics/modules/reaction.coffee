@@ -30,8 +30,7 @@ class @Reaction # reaction module with no class variables only class methods
     else 
       normal = new Vec(nseg.n).scale(dot2 / Math.abs(dot2)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
       segj   = mseg
-    overstep = 0 # normal.dot(segj.r)
-    shift  = Math.max(m.tol, n.tol)
+    shift  = 0.5 * Math.max(m.tol, n.tol)
     elastic_collision(m, n, normal, shift)
     m.reaction(n) # should give the same effects as n.reaction(m) by symmetry
     return
@@ -39,9 +38,9 @@ class @Reaction # reaction module with no class variables only class methods
   elastic_collision = (m, n, line, shift) ->
     lshift   = new Vec(line).scale(shift)
     reaction = false
-    maxiter  = 8
+    maxiter  = 32
     iter     = 1
-    while Collision.check(m, n, reaction).collision or iter > maxiter
+    while Collision.check(m, n, reaction).collision and iter <= maxiter
       m.r     = m.r.add(lshift) # update position to resolve conflict
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 
       iter++

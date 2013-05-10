@@ -7,7 +7,7 @@ class @Force
       when 'spring'            then fx = -(r.x - @params.cx) ; fy = -(r.y - @params.cy)
       when 'charge', 'gravity' then (
         dr = new Vec({x: @params.cx - r.x, y: @params.cy - r.y})
-        r2 = dr.length2()
+        r2 = dr.length_squared()
         r3 = r2 * Math.sqrt(r2)
         fx = @params.q * dr.x / r3
         fy = @params.q * dr.y / r3

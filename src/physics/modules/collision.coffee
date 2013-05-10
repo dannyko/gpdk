@@ -128,7 +128,7 @@ class @Collision
   nearest_node = (m, n) -> 
     init    = _.initial(m.path)
     nearest = _.min(init, (d) -> 
-      dd = new Vec(d).add(m.r).subtract(n.r).length2()
+      dd = new Vec(d).add(m.r).subtract(n.r).length_squared()
       dd
     )
     _.indexOf(m.path, nearest) # node of polygon m closest to the other element n's center
@@ -143,7 +143,7 @@ class @Collision
     ri = polygon.path[i]
     rj = z_check(polygon.path, i)
     r  = new Vec(rj).subtract(ri)
-    rr = r.length2() 
+    rr = r.length_squared() 
     dr = new Vec(circle.r).subtract(ri).subtract(polygon.r)
     t  = r.dot(dr) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
     if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
