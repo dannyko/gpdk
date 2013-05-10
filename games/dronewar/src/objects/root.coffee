@@ -7,7 +7,6 @@ class @Root extends Polygon
     @r.y           = @height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @lastfire      = Utils.timestamp()
-    @attacker      = [] # no attackers by default
     @charge        = 5e4
     @stroke("none")
     @fill("#000")
@@ -19,7 +18,6 @@ class @Root extends Polygon
     @r.x = xy[0]
     @r.y = xy[1]
     @draw()
-    @update_attacker() if @attacker?
 
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
@@ -45,15 +43,6 @@ class @Root extends Polygon
     #console.log(bullet)
     #car
     return
-
-  update_attacker: ->
-    return unless @attacker.length > 0
-    @params = 
-      type: 'charge'
-      cx: @r.x
-      cy: @r.y
-      q:  @charge # charge
-    attacker.force.params = @params for attacker in @attacker
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
     @active = false
@@ -90,26 +79,22 @@ class @Root extends Polygon
       .each('end', () => @set_path() ; @active = true ; d3.timer(@fire))
       
   start: ->
-    super
+    @activate() # don't call super.start() to avoid setting fixed = false (the default behavior)
     @svg.on("mousemove", @update) # default mouse behavior is to control the root element position
     @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
     
   stop: ->
-    super
+    @deactivate() # don't call super.stop() to avoid setting fixed = true (the default beahavior)
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
     @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
-
-  destroy_check: (n) ->
-    return true if n.is_bullet
-    n.destroy()
-    @destroy()
-    Gamescore.lives -= 1 # decrement lives for this game
-    true # return true to prevent default reaction from triggering
     
-  destroy: -> # drone destroy effect to run when we kill a drone
+  reaction: (n) -> # what happens when root gets hit by a drone
+    return if n.is_bullet # bullets don't hurt the ship
+    Gamescore.lives -= 1 # decrement lives for this game
+    n.destroy()
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter

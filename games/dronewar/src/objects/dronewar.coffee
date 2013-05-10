@@ -5,9 +5,12 @@ class @Dronewar extends Game
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
-      .attr("stroke", "none").attr("fill", "white")
-      .attr("font-size", "18").attr("x", "20")
-      .attr("y", "40").attr('font-family', 'arial black')
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", "20")
+      .attr("y", "40")
+      .attr('font-family', 'arial black')
     @lives    = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -33,7 +36,6 @@ class @Dronewar extends Game
     @element = [] # reinitialize element list
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone()
-      newAttacker.g.attr("class", "attacker")
       @element.push(newAttacker) # extend the array of all elements in this game
     for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
@@ -49,20 +51,26 @@ class @Dronewar extends Game
         dy /= d
         @element[i].v.x = 0.1 * @N * dx 
         @element[i].v.y = 0.1 * @N * dy
-    element.draw() for element in @element
-    @root.attacker = @element
-    @root.update_attacker()
-    @root.activate()
+        @element[i].draw()
     dur = 400
     n = @element.length * 2
-    d3.selectAll(".attacker")
+    d3.selectAll(".drone")
       .data(@element)
       .style("opacity", 0)
       .transition()
       .delay( (d, i) -> i / n * dur )
       .duration(dur)
       .style("opacity", 1)
-      .each("end", (d, i) -> d.activate()) # enable collisions
+      .each('end', (d) -> d.on())
+
+  update_drone: ->
+    return unless @element.length > 0
+    @params = 
+      type: 'charge'
+      cx: @root.r.x
+      cy: @root.r.y
+      q:  @root.charge # charge
+    drone.force.params = @params for drone in @element
 
   keydown: () =>
     switch d3.event.keyCode 
@@ -183,6 +191,7 @@ class @Dronewar extends Game
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
+      @root.start()
       d3.timer(@progress)
     )
     how = @g.append("text")
@@ -199,6 +208,7 @@ class @Dronewar extends Game
     super
     
   progress: =>  # set a timer to monitor game progress
+    @update_drone()
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
     if Gamescore.lives >= 0
@@ -209,9 +219,8 @@ class @Dronewar extends Game
       @lives.text("GAME OVER, PRESS 'R' TO RESTART")
       @stop()
       return true
-    inactive = @element.every (element) -> 
-      element.is_root or element.fixed
-    if inactive # all inactive
+    all_destroyed = @element.every (element) -> element.destroyed
+    if all_destroyed # i.e. went offscreen or hit by bullet
       @N++
       @charge *= 10
       @level()

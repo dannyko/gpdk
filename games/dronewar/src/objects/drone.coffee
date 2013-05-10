@@ -1,15 +1,17 @@
 class @Drone extends Circle
   constructor: (@config = {}) ->
     super
+    @off()
     @image.remove()
+    @g.attr("class", "drone")
     @image = @g.append("image")
       .attr("xlink:href", GameAssetsUrl + "drone_1.png")
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
         
-  destroy: ->
-    @deactivate()
+  destroy: (remove = false) ->
+    super(remove)
     dur = 100
     N = 320
     fill = "hsl(" + Math.random() * N + ", 50%, 70%)"
@@ -29,7 +31,7 @@ class @Drone extends Circle
       .ease('sqrt')
       .style("opacity", "0")
       .remove() 
-
+    
   draw: ->
     @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
     super

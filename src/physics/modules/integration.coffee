@@ -13,7 +13,7 @@ class @Integration # numerical integration module for solving differential equat
       element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
       return      
 
-  @integrate: =>
+  @integrate: (cleanup = true) =>
     return true if @off
     timestamp = Utils.timestamp()
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast
@@ -22,6 +22,8 @@ class @Integration # numerical integration module for solving differential equat
     element.tick() for element in moveable # update each element by one tick of its timestep element.dt
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     element.draw() for element in moveable # redraw elements after their reactions have been taken into account
+    offscreen = _.filter(moveable, (d) -> d.offscreen()) # select elements that are offscreen
+    _.each(offscreen, (d) -> d.destroy()) if cleanup # remove offscreen elements by default
     return 
   
   @start: (delay = 0) -> 

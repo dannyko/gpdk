@@ -16,8 +16,8 @@ class @TestCircle extends Circle
       .ease('linear')
       .attr("fill", circle.fill())
       
-  destroy: ->
-    @deactivate()
+  destroy: (remove = false) ->
+    super(remove)
     dur = 100
     N = 320
     fill = "hsl(" + Math.random() * N + ", 50%, 70%)"

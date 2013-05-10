@@ -31,15 +31,15 @@ class @Element
     @svg       = @config.svg       || d3.select("#game_svg")
     @quadtree  = @config.quadtree  || null
     @tick      = @config.tick      || Integration.verlet(@) # default update assumes force is independent of velocity i.e. f(x, v) = f(x)
-    @width     = @svg.attr("width")
-    @height    = @svg.attr("height")
+    @width     = Number(@svg.attr("width"))
+    @height    = Number(@svg.attr("height"))
+    @destroyed = false
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
-    Collision.list.push(@) # add element to collision list by default
+    @add()
         
   reaction: (element) -> # interface for reactions after a collision event with another element occurs 
-    @draw()
-    element.reaction() # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
+    element.reaction() if element?  # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
 
   BB: ->
     @left   = @r.x - 0.5 * @bb_width
@@ -76,13 +76,25 @@ class @Element
     @deactivate()
 
   destroy_check: (n) ->
-    if @is_root # check if root
-      return n.destroy_check(@) # root reaction takes precedence over all other types of elements
-    if @is_bullet # bullet reaction is second after root in order of precedence
-      return n.destroy_check(@) # call bullet destroy check
+    if @is_root || @is_bullet
+      @reaction(n) 
+      return true
     false
 
-  destroy: -> 
-    @deactivate()
-    @g.remove() # avoids accumulating indefinite numbers of dead elements
+  offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > @width + @size or @r.y > @height + @size
+
+  add: ->  
+    Collision.list.push(@) # add element to collision list by default
+    return
+
+  remove: -> 
+    index = _.indexOf(Collision.list, @)
+    Collision.list.splice(index, 1) if index > -1
+    return
+
+  destroy: (remove = true) -> 
+    @off()
+    @remove()
+    @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
+    @destroyed = true
     return
