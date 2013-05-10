@@ -1,7 +1,7 @@
 class @Drone extends Circle
   constructor: (@config = {}) ->
     super
-    @off()
+    @stop()
     @image.remove()
     @g.attr("class", "drone")
     @image = @g.append("image")

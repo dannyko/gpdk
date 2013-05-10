@@ -40,7 +40,7 @@ class @Root extends Circle
     bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
     bullet.v.x    = speed * x
     bullet.v.y    = speed * y
-    bullet.on()
+    bullet.start()
   
   destroy_check: (n) ->
     d = new Vec(n.r).subtract(@r).normalize()

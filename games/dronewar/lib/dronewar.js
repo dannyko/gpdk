@@ -263,13 +263,13 @@
       this.go = false;
     };
 
-    Element.prototype.deactivate = function() {
+    Element.prototype.stop_collision = function() {
       this.react = false;
       this.fixed = true;
       this.stop();
     };
 
-    Element.prototype.activate = function() {
+    Element.prototype.start_collision = function() {
       this.react = true;
       this.fixed = false;
       this.start();
@@ -286,7 +286,7 @@
     };
 
     Element.prototype.destroy = function() {
-      this.deactivate();
+      this.stop_collision();
       this.g.remove();
     };
 
@@ -328,7 +328,7 @@
       _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         element = _ref[_i];
-        _results.push(element.deactivate());
+        _results.push(element.stop_collision());
       }
       return _results;
     };
@@ -356,7 +356,7 @@
       Circle.__super__.draw.apply(this, arguments);
       this.image.attr("r", this.size);
       if (this.r.x < 0 || this.r.x > this.width || this.r.y < 0 || this.r.y > this.height) {
-        this.deactivate();
+        this.stop_collision();
         return this.g.remove();
       }
     };
@@ -1305,7 +1305,7 @@
 
     Drone.prototype.destroy = function() {
       var N, dur, fill;
-      this.deactivate();
+      this.stop_collision();
       dur = 100;
       N = 320;
       fill = "hsl(" + Math.random() * N + ", 50%, 70%)";
@@ -1391,7 +1391,7 @@
       d3.selectAll(".attacker").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
         return i / n * dur;
       }).duration(dur).style("opacity", 1).each("end", function(d, i) {
-        return d.activate();
+        return d.start_collision();
       });
       this.element.push(this.root);
       return this.default_collision();
@@ -1631,7 +1631,7 @@
       return _results;
     };
 
-    Root.prototype.activate = function() {
+    Root.prototype.start_collision = function() {
       this.react = true;
       return this.start();
     };

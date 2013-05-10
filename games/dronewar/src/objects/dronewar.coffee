@@ -61,7 +61,7 @@ class @Dronewar extends Game
       .delay( (d, i) -> i / n * dur )
       .duration(dur)
       .style("opacity", 1)
-      .each('end', (d) -> d.on())
+      .each('end', (d) -> d.start())
 
   update_drone: ->
     return unless @element.length > 0

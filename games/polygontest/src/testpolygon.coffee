@@ -17,7 +17,7 @@ class @TestPolygon extends Polygon
       .attr("fill", polygon.fill())
 
   destroy: ->
-    @deactivate()
+    @stop_collision()
     dur = 100
     N = 320
     fill = "hsl(" + Math.random() * N + ", 50%, 70%)"

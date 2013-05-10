@@ -51,29 +51,29 @@ class @Element
     @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
     return
     
-  start: ->
+  start_physics: ->
     @fixed = false
     return
     
-  stop: ->
+  stop_physics: ->
     @fixed = true
     return  
     
-  deactivate: ->
+  stop_collision: ->
     @active = false
     return
     
-  activate: ->
+  start_collision: ->
     @active = true # boolean identifying start state i.e. activity on/off
     return
 
-  on: ->
-    @activate()
-    @start()
+  start: ->
+    @start_collision() # turn on collisions
+    @start_physics()
 
-  off: ->
-    @stop()
-    @deactivate()
+  stop: ->
+    @stop_collision() # turn off collisions
+    @stop_physics()
 
   destroy_check: (n) ->
     if @is_root || @is_bullet
@@ -93,7 +93,7 @@ class @Element
     return
 
   destroy: (remove = true) -> 
-    @off()
+    @stop()
     @remove()
     @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     @destroyed = true

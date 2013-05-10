@@ -79,14 +79,14 @@ class @Root extends Polygon
       .each('end', () => @set_path() ; @active = true ; d3.timer(@fire))
       
   start: ->
-    @activate() # don't call super.start() to avoid setting fixed = false (the default behavior)
+    @start_collision() # instead of super to avoid setting fixed = false (the default behavior)
     @svg.on("mousemove", @update) # default mouse behavior is to control the root element position
     @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
     
   stop: ->
-    @deactivate() # don't call super.stop() to avoid setting fixed = true (the default beahavior)
+    @stop_collision() # don't call super.stop() to avoid setting fixed = true (the default beahavior)
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
     @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener

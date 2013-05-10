@@ -12,7 +12,7 @@ class @Circle extends Element
     super
     @image.attr("r", @size)
     if @r.x < 0 or @r.x > @width or @r.y < 0 or @r.y > @height
-      @deactivate() # bullets that go offscreen are removed automatically
+      @stop_collision() # bullets that go offscreen are removed automatically
       @g.remove() # clean up the DOM by removing unnecessary SVG tags for bullets that go offscreen\
 
   BB: -> # sets the bounding box for the circle element based on its size

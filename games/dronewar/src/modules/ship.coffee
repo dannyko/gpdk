@@ -28,7 +28,7 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
             {pathSegTypeAsLetter: 'L', x: -5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'L', x: 5,  y: 40, react: true}, 
             {pathSegTypeAsLetter: 'Z', react: true}
-          ], url: GameAssetsUrl + "fang_1.png", offset: {x: 0, y: 25}, bullet_stroke: '#fff', bullet_fill: 'none', bullet_size: 5, bullet_speed: 10, bullet_tick: 40}
+          ], url: GameAssetsUrl + "fang_1.png", offset: {x: 0, y: 25}, bullet_stroke: '#fff', bullet_fill: 'none', bullet_size: 5, bullet_speed: 10, bullet_tick: 20}
 
   @sidewinder: -> {path: [{pathSegTypeAsLetter: 'M', x:  8,  y: -26, react: true},  
                         {pathSegTypeAsLetter: 'L', x:  32, y: -14, react: true}, 
