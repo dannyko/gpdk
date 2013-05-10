@@ -1,4 +1,4 @@
-class @Reaction # reaction module with no class variables only class methods
+class @Reaction # reaction module with no class variables only class and private methods
 
   ## class methods:
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
@@ -22,13 +22,13 @@ class @Reaction # reaction module with no class variables only class methods
     # exhange the velocities parallel to the normal vector most collinear with the line joining the centroids
     mseg   = m.path[d.i]
     nseg   = n.path[d.j]
-    dot1   = mseg.n.dot(d)
-    dot2   = nseg.n.dot(d)
-    if Math.abs(dot1) > Math.abs(dot2) 
-      normal = new Vec(mseg.n).scale(dot1 / Math.abs(dot1)) 
+    dot_a   = mseg.n.dot(d)
+    dot_b   = nseg.n.dot(d)
+    if Math.abs(dot_a) > Math.abs(dot_b) 
+      normal = new Vec(mseg.n).scale(dot_a / Math.abs(dot_a)) 
       segj     = nseg
     else 
-      normal = new Vec(nseg.n).scale(dot2 / Math.abs(dot2)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
+      normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
       segj   = mseg
     shift  = 0.5 * Math.max(m.tol, n.tol)
     elastic_collision(m, n, normal, shift)
@@ -36,14 +36,14 @@ class @Reaction # reaction module with no class variables only class methods
     return
     
   elastic_collision = (m, n, line, shift) ->
-    lshift   = new Vec(line).scale(shift)
-    reaction = false
-    maxiter  = 32
-    iter     = 1
-    while Collision.check(m, n, reaction).collision and iter <= maxiter
+    lshift   = new Vec(line).scale(shift) # the amount to shift the elements by for each iteration as a 2D Vector
+    reaction = false # input for collision check to prevent reaction being called while the while loop executes
+    maxiter  = 32 # should not occur under normal conditions
+    iter     = 1 # initialize
+    while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.r     = m.r.add(lshift) # update position to resolve conflict
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 
-      iter++
+      iter++ # increment the iteration counter
     cPar    = m.v.dot(line) # projection of velocity onto the line (dot/inner-product of two vectors)
     vPar    = new Vec(line).scale(cPar) # the parallel component of the velocity to the line
     vPerp   = new Vec(m.v).subtract(vPar) # the perpendicular component of the velocity to the line 

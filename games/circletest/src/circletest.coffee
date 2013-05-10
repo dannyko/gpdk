@@ -18,3 +18,4 @@ class @Circletest extends Game
     super
     @svg.style("cursor", "none")
     d3.select('#use_bb').on( 'click', -> Collision.use_bb = if Collision.use_bb then false else true )
+    return

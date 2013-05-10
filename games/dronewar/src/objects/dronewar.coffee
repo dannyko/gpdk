@@ -62,6 +62,7 @@ class @Dronewar extends Game
       .duration(dur)
       .style("opacity", 1)
       .each('end', (d) -> d.start())
+    return
 
   update_drone: ->
     return unless @element.length > 0
@@ -71,6 +72,7 @@ class @Dronewar extends Game
       cy: @root.r.y
       q:  @root.charge # charge
     drone.force.params = @params for drone in @element
+    return
 
   keydown: () =>
     switch d3.event.keyCode 
@@ -91,6 +93,7 @@ class @Dronewar extends Game
     super
     @root.stop()
     Gameprez.end(Gamescore.value) if Gameprez?
+    return
 
   start: -> # start new game
     Gameprez.start() if Gameprez? # start score tracking 
@@ -206,6 +209,7 @@ class @Dronewar extends Game
       .style("cursor", "pointer")
     how.text("Use the mouse for controlling movement, scrollwheel for rotation")
     super
+    return
     
   progress: =>  # set a timer to monitor game progress
     @update_drone()
@@ -237,3 +241,4 @@ class @Dronewar extends Game
     @root = new Root()
     Gamescore.lives = Gamescore.initialLives
     @start()
+    return

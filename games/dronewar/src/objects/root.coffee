@@ -40,8 +40,6 @@ class @Root extends Polygon
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
     bullet.draw()
-    #console.log(bullet)
-    #car
     return
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
