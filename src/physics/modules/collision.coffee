@@ -17,9 +17,8 @@ class @Collision
     return unless @list.length > 0
     @update_quadtree() # update the quadtree for collision detection after all moveable elements have been moved
     quadtree = @quadtree # copy for access inside inner function
-    minsize = 100
     _.each(_.filter(@list, (d) -> d.active), (d) -> 
-      size = Math.max(4 * (d.size + d.tol), minsize) # define size of selection box using the size of this element
+      size = 2 * (d.size + d.tol) # define size of selection box using the size of this element
       # define the selection box to use for searching the quadtree: 
       x0 = d.r.x - size
       x3 = d.r.x + size
