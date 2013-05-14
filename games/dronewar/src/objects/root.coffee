@@ -27,6 +27,7 @@ class @Root extends Polygon
 
   fire: () =>
     timestamp   = Utils.timestamp()
+    return true if @destroyed
     return unless @collision and timestamp - @lastfire > @wait
     @lastfire   = timestamp
     bullet      = new Bullet()
@@ -123,4 +124,4 @@ class @Root extends Polygon
       .duration(dur * 0.25 )
       .ease('sqrt')
       .style("opacity", 0)
-    @bitmap.transition().duration(dur).attr('opacity', 0)  
+    @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @destroy())
