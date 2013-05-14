@@ -152,8 +152,8 @@
       this.right = this.config.bb_height || 0;
       this.top = this.config.top || 0;
       this.bottom = this.config.bottom || 0;
-      this.active = this.config.active || true;
-      this.fixed = this.config.fixed || false;
+      this.collision = this.config.collision || true;
+      this.physics = this.config.physics || false;
       this.tol = this.config.tol || 0.5;
       this._stroke = this.config.stroke || "none";
       this._fill = this.config.fill || "black";
@@ -193,19 +193,19 @@
     };
 
     Element.prototype.start_physics = function() {
-      this.fixed = false;
+      this.physics = false;
     };
 
     Element.prototype.stop_physics = function() {
-      this.fixed = true;
+      this.physics = true;
     };
 
     Element.prototype.stop_collision = function() {
-      this.active = false;
+      this.collision = false;
     };
 
     Element.prototype.start_collision = function() {
-      this.active = true;
+      this.collision = true;
     };
 
     Element.prototype.start = function() {
@@ -545,7 +545,7 @@
       timestamp = Utils.timestamp();
       if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
         data = _.filter(this.list, function(d) {
-          return d.active;
+          return d.collision;
         }).map(function(d) {
           return {
             x: d.r.x,
@@ -569,7 +569,7 @@
       quadtree = this.quadtree;
       minsize = 100;
       return _.each(_.filter(this.list, function(d) {
-        return d.active;
+        return d.collision;
       }), function(d) {
         var size, x0, x3, y0, y3;
         size = Math.max(4 * (d.size + d.tol), minsize);
@@ -581,7 +581,7 @@
           var p;
           p = node.point;
           if (p !== null) {
-            if (!(d !== p.d && p.d.active)) {
+            if (!(d !== p.d && p.d.collision)) {
               return false;
             }
             if ((p.x >= x0) && (p.x < x3) && (p.y >= y0) && (p.y < y3)) {
@@ -850,7 +850,7 @@
       }
       Integration.timestamp = timestamp;
       moveable = _.filter(Collision.list, function(d) {
-        return !d.fixed;
+        return !d.physics;
       });
       for (_i = 0, _len = moveable.length; _i < _len; _i++) {
         element = moveable[_i];
@@ -1632,7 +1632,7 @@
       };
       Root.__super__.constructor.call(this, this.config);
       this.is_root = true;
-      this.fixed = true;
+      this.physics = true;
       this.r.x = this.width / 2;
       this.r.y = this.height - 180;
       this.angleStep = 2 * Math.PI / 60;
@@ -1648,7 +1648,7 @@
       if (xy == null) {
         xy = d3.mouse(this.svg.node());
       }
-      if (!this.active) {
+      if (!this.collision) {
         return;
       }
       this.r.x = xy[0];
@@ -1667,7 +1667,7 @@
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       timestamp = Utils.timestamp();
-      if (!(this.active && timestamp - this.lastfire > this.wait)) {
+      if (!(this.collision && timestamp - this.lastfire > this.wait)) {
         return;
       }
       this.lastfire = timestamp;
@@ -1693,7 +1693,7 @@
       if (dur == null) {
         dur = 500;
       }
-      this.active = false;
+      this.collision = false;
       this.bullet_stroke = ship.bullet_stroke;
       this.bullet_fill = ship.bullet_fill;
       this.bullet_size = ship.bullet_size;
@@ -1706,7 +1706,7 @@
       this.image.attr("opacity", 1).data([endPath]).transition().duration(dur).attrTween("d", Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
       return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {
         _this.set_path();
-        _this.active = true;
+        _this.collision = true;
         return d3.timer(_this.fire);
       });
     };

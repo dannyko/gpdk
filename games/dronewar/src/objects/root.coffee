@@ -2,7 +2,7 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
-    @fixed         = true    
+    @physics         = true    
     @r.x           = @width / 2
     @r.y           = @height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
@@ -14,7 +14,7 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
 
   update: (xy = d3.mouse(@svg.node())) =>
-    return unless @active # don't draw if not active
+    return unless @collision # don't draw if not active
     @r.x = xy[0]
     @r.y = xy[1]
     @draw()
@@ -27,7 +27,7 @@ class @Root extends Polygon
 
   fire: () =>
     timestamp   = Utils.timestamp()
-    return unless @active and timestamp - @lastfire > @wait
+    return unless @collision and timestamp - @lastfire > @wait
     @lastfire   = timestamp
     bullet      = new Bullet()
     bullet.size = @bullet_size
@@ -43,7 +43,7 @@ class @Root extends Polygon
     return
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
-    @active = false
+    @collision = false
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill
     @bullet_size   = ship.bullet_size
@@ -74,7 +74,7 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => @set_path() ; @active = true ; d3.timer(@fire))
+      .each('end', () => @set_path() ; @collision = true ; d3.timer(@fire))
       
   start: ->
     @start_collision() # instead of super to avoid setting fixed = false (the default behavior)

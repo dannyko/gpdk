@@ -2,7 +2,7 @@ class @Root extends Circle
   constructor: (@config = {}) ->
     super
     @is_root   = true
-    @fixed     = true    
+    @physics     = true    
     @image.attr("fill", "#FFF")
     @size      = 13
     @angle     = -Math.PI * 0.5 # initialize bullet angle

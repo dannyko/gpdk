@@ -18,12 +18,13 @@ class @Integration # numerical integration module for solving differential equat
     timestamp = Utils.timestamp()
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast
     @timestamp = timestamp
-    moveable = _.filter(Collision.list, (d) -> not d.fixed) # select elements bound to the physics engine that are subject to some physical laws of motion 
+    moveable = _.filter(Collision.list, (d) -> not d.physics) # select elements bound to the physics engine that are subject to some physical laws of motion 
     element.tick() for element in moveable # update each element by one tick of its timestep element.dt
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
-    element.draw() for element in moveable # redraw elements after their reactions have been taken into account
-    offscreen = _.filter(moveable, (d) -> d.offscreen()) # select elements that are offscreen
-    _.each(offscreen, (d) -> d.destroy()) if cleanup # remove offscreen elements by default
+    _.each(moveable, (d) -> # redraw and cleanup
+      d.draw() # redraw elements after their reactions have been taken into account
+      d.cleanup() # cleanup elements that are set to autoremove after going offscreen
+    )
     return 
   
   @start: (delay = 0) -> 

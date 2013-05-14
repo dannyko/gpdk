@@ -14,8 +14,8 @@ class @Element
     @right     = @config.bb_height || 0 # bounding box right
     @top       = @config.top       || 0 # bounding box top
     @bottom    = @config.bottom    || 0 # bounding box bottom
-    @active    = @config.active    || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
-    @fixed     = @config.fixed     || false # can it move without external control or not
+    @collision = @config.collision || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
+    @physics     = @config.physics     || false # can it move without external control or not
     @tol       = @config.tol       || 0.5 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
     @_stroke   = @config.stroke    || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill     = @config.fill      || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
@@ -34,6 +34,7 @@ class @Element
     @width     = Number(@svg.attr("width"))
     @height    = Number(@svg.attr("height"))
     @destroyed = false
+    @_cleanup = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
     @add()
@@ -52,19 +53,19 @@ class @Element
     return
     
   start_physics: ->
-    @fixed = false
+    @physics = false
     return
     
   stop_physics: ->
-    @fixed = true
+    @physics = true
     return  
     
   stop_collision: ->
-    @active = false
+    @collision = false
     return
     
   start_collision: ->
-    @active = true # boolean identifying start state i.e. activity on/off
+    @collision = true # boolean identifying start state i.e. activity on/off
     return
 
   start: ->
@@ -91,6 +92,9 @@ class @Element
     index = _.indexOf(Collision.list, @)
     Collision.list.splice(index, 1) if index > -1
     return
+
+  cleanup: ->
+    @destroy() if @_cleanup and @offscreen()
 
   destroy: (remove = true) -> 
     @stop()

@@ -2,7 +2,7 @@ class @Root extends Polygon
   constructor: (@config = {}) ->
     super
     @is_root   = true
-    @fixed     = true    
+    @physics     = true    
     @size      = 13
     @path      = @default_path()
     @angle     = 0 # Math.PI 
