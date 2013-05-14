@@ -2,21 +2,21 @@ class @Root extends Circle
   constructor: (@config = {}) ->
     super
     @is_root   = true
-    @physics     = true    
+    @tick      = -> return
     @image.attr("fill", "#FFF")
     @size      = 13
     @angle     = -Math.PI * 0.5 # initialize bullet angle
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @svg.on("mousemove", @draw) # default mouse behavior is to control the root element position
+    @svg.on("mousemove", @move) # default mouse behavior is to control the root element position
     d3.select(window).on("keydown", @keydown) # default keyboard listener
     @svg.on("mousedown", @fire) # default mouse button listener
     @svg.on("mousewheel", @spin) # default scroll wheel listener
 
-  draw: (node = @svg.node()) =>
+  move: (node = @svg.node()) =>
     xy = d3.mouse(node)
     @r.x = xy[0]
     @r.y = xy[1]
-    super()
+    @draw() 
 
   spin: () =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)

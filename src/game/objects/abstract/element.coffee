@@ -15,7 +15,6 @@ class @Element
     @top       = @config.top       || 0 # bounding box top
     @bottom    = @config.bottom    || 0 # bounding box bottom
     @collision = @config.collision || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
-    @physics     = @config.physics     || false # can it move without external control or not
     @tol       = @config.tol       || 0.5 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
     @_stroke   = @config.stroke    || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill     = @config.fill      || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
@@ -37,7 +36,7 @@ class @Element
     @_cleanup = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
-    @add()
+    @start()
         
   reaction: (element) -> # interface for reactions after a collision event with another element occurs 
     element.reaction() if element?  # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
@@ -52,14 +51,6 @@ class @Element
     @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
     return
     
-  start_physics: ->
-    @physics = false
-    return
-    
-  stop_physics: ->
-    @physics = true
-    return  
-    
   stop_collision: ->
     @collision = false
     return
@@ -67,14 +58,6 @@ class @Element
   start_collision: ->
     @collision = true # boolean identifying start state i.e. activity on/off
     return
-
-  start: ->
-    @start_collision() # turn on collisions
-    @start_physics()
-
-  stop: ->
-    @stop_collision() # turn off collisions
-    @stop_physics()
 
   destroy_check: (n) ->
     if @is_root || @is_bullet
@@ -84,11 +67,11 @@ class @Element
 
   offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > @width + @size or @r.y > @height + @size
 
-  add: ->  
+  start: ->  
     Collision.list.push(@) # add element to collision list by default
     return
 
-  remove: -> 
+  stop: -> 
     index = _.indexOf(Collision.list, @)
     Collision.list.splice(index, 1) if index > -1
     return
@@ -98,7 +81,6 @@ class @Element
 
   destroy: (remove = true) -> 
     @stop()
-    @remove()
     @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     @destroyed = true
     return

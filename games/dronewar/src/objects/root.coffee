@@ -2,7 +2,6 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
-    @physics         = true    
     @r.x           = @width / 2
     @r.y           = @height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
@@ -12,6 +11,7 @@ class @Root extends Polygon
     @fill("#000")
     @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
+    @tick = -> return
 
   update: (xy = d3.mouse(@svg.node())) =>
     return unless @collision # don't draw if not active
@@ -77,14 +77,14 @@ class @Root extends Polygon
       .each('end', () => @set_path() ; @collision = true ; d3.timer(@fire))
       
   start: ->
-    @start_collision() # instead of super to avoid setting fixed = false (the default behavior)
+    super
     @svg.on("mousemove", @update) # default mouse behavior is to control the root element position
     @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
     
   stop: ->
-    @stop_collision() # don't call super.stop() to avoid setting fixed = true (the default beahavior)
+    super
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
     @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener

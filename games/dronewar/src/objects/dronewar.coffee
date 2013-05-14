@@ -98,6 +98,7 @@ class @Dronewar extends Game
   start: -> # start new game
     Gameprez.start() if Gameprez? # start score tracking 
     @root.draw()
+    @root.stop()
     title = @g.append("text")
       .text("")
       .attr("stroke", "none")
