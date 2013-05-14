@@ -93,7 +93,7 @@ class @Element
     Collision.list.splice(index, 1) if index > -1
     return
 
-  cleanup: ->
+  cleanup: (@_cleanup = @_cleanup) ->
     @destroy() if @_cleanup and @offscreen()
 
   destroy: (remove = true) -> 
