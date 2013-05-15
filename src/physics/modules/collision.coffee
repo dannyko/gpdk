@@ -16,23 +16,29 @@ class @Collision
   @detect: -> # execute default collision detection using quadtree for accelerated iterations over active elements
     return unless @list.length > 0
     @update_quadtree() # update the quadtree for collision detection after all moveable elements have been moved
-    quadtree = @quadtree # copy for access inside inner function
-    _.each(_.filter(@list, (d) -> d.collision), (d) -> 
-      size = 2 * (d.size + d.tol) # define size of selection box using the size of this element
-      # define the selection box to use for searching the quadtree: 
-      x0 = d.r.x - size
-      x3 = d.r.x + size
-      y0 = d.r.y - size
-      y3 = d.r.y + size
-      quadtree.visit( (node, x1, y1, x2, y2) ->
-        p = node.point 
-        if p isnt null
-          return false unless d isnt p.d and p.d.collision # skip this point and continue searching lower levels of the hierarchy
-          if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
-            Collision.check(d, p.d)
-        x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
-      )
-    )
+    length = @list.length
+    i = 0
+    while i < length
+      d = @list[i]
+      if d.collision
+        size = 2 * (d.size + d.tol) # define size of selection box using the size of this element
+        # define the selection box to use for searching the quadtree: 
+        x0 = d.r.x - size
+        x3 = d.r.x + size
+        y0 = d.r.y - size
+        y3 = d.r.y + size
+        @quadtree.visit( (node, x1, y1, x2, y2) ->
+          p = node.point 
+          if p isnt null
+            return false unless d isnt p.d and p.d.collision # skip this point and continue searching lower levels of the hierarchy
+            if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
+              Collision.check(d, p.d) # check for collision and run reactions if collision occurred
+          x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
+        )
+      d.draw() # put this inside the collision detection for loop for efficiency to avoid extra loops
+      d.cleanup() # ditto - put cleanup inside the same loop as collision detection for efficiency
+      length = @list.length
+      i++
 
   @check: (ei, ej, reaction = true) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not

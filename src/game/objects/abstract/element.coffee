@@ -78,6 +78,7 @@ class @Element
 
   cleanup: (@_cleanup = @_cleanup) ->
     @destroy() if @_cleanup and @offscreen()
+    return
 
   destroy: (remove = true) -> 
     @stop()

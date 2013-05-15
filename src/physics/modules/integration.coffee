@@ -20,10 +20,6 @@ class @Integration # numerical integration module for solving differential equat
     @timestamp = timestamp
     element.tick() for element in Collision.list # update each element by one tick of its timestep element.dt
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
-    _.each(Collision.list, (d) -> # redraw and cleanup
-      d.draw() # redraw elements after their reactions have been taken into account
-      d.cleanup() # cleanup elements that are set to autoremove after going offscreen
-    )
     return 
   
   @start: (delay = 0) -> 
