@@ -30,6 +30,7 @@ class @Collision
         @quadtree.visit( (node, x1, y1, x2, y2) ->
           p = node.point 
           if p isnt null
+            return false if p.destroyed # this node got cleaned up
             return false unless d isnt p.d and p.d.collision # skip this point and continue searching lower levels of the hierarchy
             if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
               Collision.check(d, p.d) # check for collision and run reactions if collision occurred
