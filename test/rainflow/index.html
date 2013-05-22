@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+    <script type="text/javascript" src="../../lib/underscore-min.js"></script><!-- http://coffeescript.org/extras/-->
+    <script type="text/javascript" src="../../lib/d3.min.js"></script><!-- http://d3js.org/-->
+    <script type="text/javascript" src="../../lib/coffee-script.js"></script><!-- http://coffeescript.org/extras/-->
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <style type="text/css">
+
+body {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  background-image: url('earth_elevation4.png');
+  background-position: center center ;
+  background-repeat: no-repeat;
+}
+
+svg {
+  display: block;
+  margin:auto;
+}
+    </style>
+  </head>
+
+  <body>
+    <div id="map">
+      <svg id="game_svg" width="360" height="180">
+      </svg>
+    </div>
+
+    <!-- for development use only: load and compile coffeescript code in the browser -->
+<script type="text/coffeescript" src="../../src/game/modules/gamescore.coffee"></script>
+<script type="text/coffeescript" src="../../src/game/modules/utils.coffee"></script>
+<script type="text/coffeescript" src="../../src/physics/modules/collision.coffee"></script>
+<script type="text/coffeescript" src="../../src/physics/modules/reaction.coffee"></script>
+<script type="text/coffeescript" src="../../src/physics/modules/integration.coffee"></script>
+<script type="text/coffeescript" src="../../src/physics/objects/vec.coffee"></script>
+<script type="text/coffeescript" src="../../src/physics/objects/force.coffee"></script>
+<script type="text/coffeescript" src="../../src/game/objects/abstract/element.coffee"></script>
+<script type="text/coffeescript" src="../../src/game/objects/base/circle.coffee"></script>
+<script type="text/coffeescript" src="../../src/game/objects/base/polygon.coffee"></script>
+<script type="text/coffeescript" src="../../src/game/objects/abstract/game.coffee"></script>
+<script type="text/coffeescript" src="testcircle.coffee"></script>
+    <script type="text/coffeescript">
+
+class @Rainflow extends Game
+  constructor: (@config = {}) ->
+    super
+    @numel    = @config.numel || 64
+    for i in [0..@numel - 1] # create element list
+      newCircle = new TestCircle()
+      @element.push(newCircle) # extend the array of all elements in this game
+    for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
+      for j in [0..Math.ceil(Math.sqrt(@element.length))]
+        i = k * Math.floor(Math.sqrt(@element.length)) + j
+        break if i > @element.length - 1
+        @element[i].r.x = @width  * 0.5  + k  * (@element[i].size * 2 + @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = @height * 0.25 + j  * (@element[i].size * 2 + @element[i].tol)
+        @element[i].draw()
+    # console.log(d3.selectAll('g'), @element.map (d) -> [d.height, d.width])
+    # @root = new Root() # default root element i.e. under user control
+
+  start: ->
+    @svg.style("cursor", "none")
+    elevation = []
+    
+    V = (r) -> # energy evaluation function
+      # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
+      # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
+      x   = r.x
+      y   = r.y
+      x   = elevation[0].length - 1 + x % (elevation[0].length - 1) if x < 0 
+      x   = x % (elevation[0].length - 1) if x > elevation[0].length - 1
+      y   = elevation.length - 1 + y % (elevation.length - 1) if y < 0
+      y   = y % (elevation.length - 1) if y > elevation.length - 1
+      tol = 1e-12 # small number for offset in case x = Math.floor(x)
+      xf  = Math.floor(x)
+      xc  = Math.ceil(x + tol)
+      yf  = Math.floor(y)
+      yc  = Math.ceil(y + tol)
+      dxf = x - xf
+      dxc = xc - x
+      dyf = y - yf
+      dyc = yc - y
+      v_r = elevation[yf][xf] * dxc * dyc + elevation[yf][xc] * dxf * dyc + elevation[yc][xf] * dxc * dyf + elevation[yc][xc] * dxf * dyf
+      v_r *= 1 / ((xc - xf) * (yc - yf)) # bilinear approximation of scalar energy value from discrete data array
+
+    drops = (text) => # callback to execute after text file loads
+      row = text.split('\n') 
+      elevation = row.map( (d) -> return d.split(',').map( (d) -> return Number(d) ) ) # matrix rows (m = 180) of elevations indexed by matrix column (n = 360)
+      param =
+        tol: 0.01 # for computing numerical gradient using a centered finite difference approximation
+        energy: V
+        type: 'gradient'
+      _.each @element, (d) -> d.force = new Force(param)
+      Integration.start()
+
+
+    d3.text('topo_flip.csv', drops) # load text data and execute callback
+
+new Rainflow().start()
+
+    </script>
+
+  </body>
+</html>

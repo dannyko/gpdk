@@ -1,23 +1,41 @@
-class @Force
-  constructor: (@params = {type: 'constant', fx: 0, fy: 0}) ->
+class @Force # this simple object does one job: return the value of the force f(x)
+  constructor: (@param = {type: 'constant', fx: 0, fy: 0}) ->
 
   f: (r) -> 
-    switch @params.type
-      when 'constant'          then fx = @params.x ; fy = @params.y
-      when 'spring'            then fx = -(r.x - @params.cx) ; fy = -(r.y - @params.cy)
+    switch @param.type
+      when 'constant'          then fx = @param.x ; fy = @param.y
+      when 'spring'            then fx = -(r.x - @param.cx) ; fy = -(r.y - @param.cy)
       when 'charge', 'gravity' then (
-        dr = new Vec({x: @params.cx - r.x, y: @params.cy - r.y})
+        dr = new Vec({x: @param.cx - r.x, y: @param.cy - r.y})
         r2 = dr.length_squared()
         r3 = r2 * Math.sqrt(r2)
-        fx = @params.q * dr.x / r3
-        fy = @params.q * dr.y / r3
+        fx = @param.q * dr.x / r3
+        fy = @param.q * dr.y / r3
       )
       when 'random' then(
-        fx = 2 * (Math.random() - 0.5) * @params.xScale
-        fy = 2 * (Math.random() - 0.5) * @params.yScale
-        fx = -@params.fxBound if r.x > @params.xBound # enforce boundary
-        fy = -@params.fyBound if r.y > @params.yBound # enforce boundary
-        fx =  @params.fxBound if r.x < 0 # enforce boundary
-        fy =  @params.fyBound if r.y < 0 # enforce boundary
+        fx = 2 * (Math.random() - 0.5) * @param.xScale
+        fy = 2 * (Math.random() - 0.5) * @param.yScale
+        fx = -@param.fxBound if r.x > @param.xBound # enforce boundary
+        fy = -@param.fyBound if r.y > @param.yBound # enforce boundary
+        fx =  @param.fxBound if r.x < 0 # enforce boundary
+        fy =  @param.fyBound if r.y < 0 # enforce boundary
+      )
+
+      when 'gradient' then ( # evaluate the force as the negative gradient of a scalar potential energy function V(x, y)
+        rpx = new Vec(r).add({x:  @param.tol, y: 0}) # r + dx
+        rmx = new Vec(r).add({x: -@param.tol, y: 0}) # r - dx
+        rpy = new Vec(r).add({y:  @param.tol, x: 0}) # r + dy
+        rmy = new Vec(r).add({y: -@param.tol, x: 0}) # r - dy
+        epx = @param.energy(rpx) # V(r + dx)
+        emx = @param.energy(rmx) # V(r - dx)
+        epy = @param.energy(rpy) # V(r + dy)
+        emy = @param.energy(rmy) # V(r - dy)
+        unless epx? and emx? and epy? and emy? # make sure energy is defined or else default to zero force to prevent failure
+          fx = 0
+          fy = 0
+          break
+        # compute the numerical gradient using a centered finite-difference approximation:
+        fx  = -0.5 * (epx - emx) / @param.tol # fx = -dV / dx 
+        fy  = -0.5 * (epy - emy) / @param.tol # fy = -dV / dy
       )
     new Vec({x: fx, y: fy})

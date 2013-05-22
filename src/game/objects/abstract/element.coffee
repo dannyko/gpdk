@@ -29,14 +29,14 @@ class @Element
     @g         = @config.g         || @g
     @svg       = @config.svg       || d3.select("#game_svg")
     @quadtree  = @config.quadtree  || null
-    @tick      = @config.tick      || Integration.verlet(@) # default update assumes force is independent of velocity i.e. f(x, v) = f(x)
+    @tick      = @config.tick      || Integration.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @width     = Number(@svg.attr("width"))
     @height    = Number(@svg.attr("height"))
     @destroyed = false
-    @_cleanup = true # call destroy() when element goes offscreen by default
+    @_cleanup  = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
-    @start()
+    @start() # constructor calls start() by default, binding the element to the physics engine (which may not be on yet)
         
   reaction: (element) -> # interface for reactions after a collision event with another element occurs 
     element.reaction() if element?  # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
@@ -51,14 +51,6 @@ class @Element
     @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
     return
     
-  stop_collision: ->
-    @collision = false
-    return
-    
-  start_collision: ->
-    @collision = true # boolean identifying start state i.e. activity on/off
-    return
-
   destroy_check: (n) ->
     if @is_root || @is_bullet
       @reaction(n) 
@@ -82,6 +74,6 @@ class @Element
 
   destroy: (remove = true) -> 
     @stop()
-    @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     @destroyed = true
+    @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     return
