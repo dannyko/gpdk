@@ -2,44 +2,15 @@ class @TestCircle extends Circle
   constructor: (@config = {}) ->
     super
     @dt = 1e-2
-    @size = 3
-    @BB()
+    @size = 2.5
+    @fill('lightgray')
+    @image.attr('opacity', '0.8')
+    # @BB() to allow bounding boxes to be used for collision detection
 
-  reaction: (n) ->  
-    N    = 240 # random color parameter
-    fill = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"
-    flash(@, fill)
-    flash(n, fill)
-    
-  flash = (circle, fill) ->
-    dur     = 120 # color effect transition duration parameter
-    circle.image.transition()
-      .duration(dur)
-      .ease('sqrt')
-      .attr("fill", fill)
-      .transition()
-      .duration(dur * 3)
-      .ease('linear')
-      .attr("fill", circle.fill())
-      
-  destroy: (remove = false) ->
-    super(remove)
-    dur = 100
-    N = 320
-    fill = "hsl(" + Math.random() * N + ", 50%, 70%)"
-    @g.append("circle")
-      .attr("r", @size)
-      .attr("x", 0)
-      .attr("y", 0)
-      .transition()
-      .duration(dur)
-      .ease('sqrt')
-      .attr("fill", fill)
-      .remove()
-    @g.attr("class", "")
-      .transition()
-      .delay(dur)
-      .duration(dur * 2)
-      .ease('sqrt')
-      .style("opacity", "0")
-      .remove()
+  cleanup: (@_cleanup = @_cleanup) ->
+    if @offscreen() # periodic wrapping
+      if @r.x > @width then @r.x = @r.x % @width
+      if @r.x < 0 then @r.x = @width + @r.x
+      if @r.y > @height then @r.y = @r.y % @height 
+      if @r.y < 0 then @r.y = @height + @r.y
+    return    

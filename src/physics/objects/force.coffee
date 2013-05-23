@@ -1,12 +1,13 @@
 class @Force # this simple object does one job: return the value of the force f(x)
   constructor: (@param = {type: 'constant', fx: 0, fy: 0}) ->
 
-  f: (r) -> 
+  f: (element) -> 
     switch @param.type
       when 'constant'          then fx = @param.x ; fy = @param.y
-      when 'spring'            then fx = -(r.x - @param.cx) ; fy = -(r.y - @param.cy)
+      when 'friction'          then fx = -@param.alpha * element.v.x ; fy = -@param.alpha * element.v.y
+      when 'spring'            then fx = -(element.r.x - @param.cx) ; fy = -(element.r.y - @param.cy)
       when 'charge', 'gravity' then (
-        dr = new Vec({x: @param.cx - r.x, y: @param.cy - r.y})
+        dr = new Vec({x: @param.cx - element.r.x, y: @param.cy - element.r.y})
         r2 = dr.length_squared()
         r3 = r2 * Math.sqrt(r2)
         fx = @param.q * dr.x / r3
@@ -15,17 +16,17 @@ class @Force # this simple object does one job: return the value of the force f(
       when 'random' then(
         fx = 2 * (Math.random() - 0.5) * @param.xScale
         fy = 2 * (Math.random() - 0.5) * @param.yScale
-        fx = -@param.fxBound if r.x > @param.xBound # enforce boundary
-        fy = -@param.fyBound if r.y > @param.yBound # enforce boundary
-        fx =  @param.fxBound if r.x < 0 # enforce boundary
-        fy =  @param.fyBound if r.y < 0 # enforce boundary
+        fx = -@param.fxBound if element.r.x > @param.xBound # enforce boundary
+        fy = -@param.fyBound if element.r.y > @param.yBound # enforce boundary
+        fx =  @param.fxBound if element.r.x < 0 # enforce boundary
+        fy =  @param.fyBound if element.r.y < 0 # enforce boundary
       )
 
       when 'gradient' then ( # evaluate the force as the negative gradient of a scalar potential energy function V(x, y)
-        rpx = new Vec(r).add({x:  @param.tol, y: 0}) # r + dx
-        rmx = new Vec(r).add({x: -@param.tol, y: 0}) # r - dx
-        rpy = new Vec(r).add({y:  @param.tol, x: 0}) # r + dy
-        rmy = new Vec(r).add({y: -@param.tol, x: 0}) # r - dy
+        rpx = new Vec(element.r).add({x:  @param.tol, y: 0}) # r + dx
+        rmx = new Vec(element.r).add({x: -@param.tol, y: 0}) # r - dx
+        rpy = new Vec(element.r).add({y:  @param.tol, x: 0}) # r + dy
+        rmy = new Vec(element.r).add({y: -@param.tol, x: 0}) # r - dy
         epx = @param.energy(rpx) # V(r + dx)
         emx = @param.energy(rmx) # V(r - dx)
         epy = @param.energy(rpy) # V(r + dy)
