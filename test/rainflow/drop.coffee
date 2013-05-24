@@ -1,13 +1,15 @@
-class @TestCircle extends Circle
+class @Drop extends Circle
   constructor: (@config = {}) ->
     super
-    @dt = 1e-2
+    @dt = 5e-3
     @size = 2.5
-    @fill('lightgray')
-    @image.attr('opacity', '0.8')
+    @fill('deepskyblue')
+    @stroke('white')
+    @image.attr('opacity', '0.6')
     # @BB() to allow bounding boxes to be used for collision detection
 
   cleanup: (@_cleanup = @_cleanup) ->
+    # console.log(@width, @height, @r.x, @r.y)
     if @offscreen() # periodic wrapping
       if @r.x > @width then @r.x = @r.x % @width
       if @r.x < 0 then @r.x = @width + @r.x

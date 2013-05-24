@@ -30,8 +30,8 @@ class @Element
     @svg       = @config.svg       || d3.select("#game_svg")
     @quadtree  = @config.quadtree  || null
     @tick      = @config.tick      || Integration.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
-    @width     = parseInt(@svg.attr("width"))
-    @height    = parseInt(@svg.attr("height"))
+    @width     = @config.width     || parseInt(@svg.attr("width"))
+    @height    = @config.height    || parseInt(@svg.attr("height"))
     @destroyed = false
     @_cleanup  = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
