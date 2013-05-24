@@ -144,7 +144,7 @@
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
       this.n = this.config.n || [];
-      this.force = this.config.force || new Force();
+      this.force = this.config.force || [new Force()];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
       this.bb_height = this.config.bb_height || 0;
@@ -153,7 +153,6 @@
       this.top = this.config.top || 0;
       this.bottom = this.config.bottom || 0;
       this.collision = this.config.collision || true;
-      this.physics = this.config.physics || false;
       this.tol = this.config.tol || 0.5;
       this._stroke = this.config.stroke || "none";
       this._fill = this.config.fill || "black";
@@ -167,12 +166,13 @@
       this.svg = this.config.svg || d3.select("#game_svg");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Integration.verlet(this);
-      this.width = Number(this.svg.attr("width"));
-      this.height = Number(this.svg.attr("height"));
+      this.width = this.config.width || parseInt(this.svg.attr("width"));
+      this.height = this.config.height || parseInt(this.svg.attr("height"));
       this.destroyed = false;
+      this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
-      this.add();
+      this.start();
     }
 
     Element.prototype.reaction = function(element) {
@@ -192,32 +192,6 @@
       this.g.attr("transform", "translate(" + this.r.x + "," + this.r.y + ") rotate(" + (360 * 0.5 * this.angle / Math.PI) + ")");
     };
 
-    Element.prototype.start_physics = function() {
-      this.physics = false;
-    };
-
-    Element.prototype.stop_physics = function() {
-      this.physics = true;
-    };
-
-    Element.prototype.stop_collision = function() {
-      this.collision = false;
-    };
-
-    Element.prototype.start_collision = function() {
-      this.collision = true;
-    };
-
-    Element.prototype.start = function() {
-      this.start_collision();
-      return this.start_physics();
-    };
-
-    Element.prototype.stop = function() {
-      this.stop_collision();
-      return this.stop_physics();
-    };
-
     Element.prototype.destroy_check = function(n) {
       if (this.is_root || this.is_bullet) {
         this.reaction(n);
@@ -230,15 +204,22 @@
       return this.r.x < -this.size || this.r.y < -this.size || this.r.x > this.width + this.size || this.r.y > this.height + this.size;
     };
 
-    Element.prototype.add = function() {
+    Element.prototype.start = function() {
       Collision.list.push(this);
     };
 
-    Element.prototype.remove = function() {
+    Element.prototype.stop = function() {
       var index;
       index = _.indexOf(Collision.list, this);
       if (index > -1) {
         Collision.list.splice(index, 1);
+      }
+    };
+
+    Element.prototype.cleanup = function(_cleanup) {
+      this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
+      if (this._cleanup && this.offscreen()) {
+        this.destroy();
       }
     };
 
@@ -247,11 +228,10 @@
         remove = true;
       }
       this.stop();
-      this.remove();
+      this.destroyed = true;
       if (remove) {
         this.g.remove();
       }
-      this.destroyed = true;
     };
 
     return Element;
@@ -264,10 +244,17 @@
       this.config = config != null ? config : {};
       this.element = [];
       this.svg = d3.select("#game_svg");
-      this.g = d3.select("#game_g");
-      this.width = this.svg.attr("width");
-      this.height = this.svg.attr("height");
+      if (this.svg.empty()) {
+        this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
+      }
+      this.width = parseInt(this.svg.attr("width"), 10);
+      this.height = parseInt(this.svg.attr("height"), 10);
       this.scale = 1;
+      this.g = d3.select("#game_g");
+      if (this.g.empty()) {
+        this.g = this.svg.append('g');
+      }
+      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
     }
 
     Game.prototype.start = function() {
@@ -299,14 +286,11 @@
 
     Circle.prototype.draw = function() {
       Circle.__super__.draw.apply(this, arguments);
-      this.image.attr("r", this.size);
-      if (this.r.x < 0 || this.r.x > this.width || this.r.y < 0 || this.r.y > this.height) {
-        this.stop_collision();
-        return this.g.remove();
-      }
+      return this.image.attr("r", this.size);
     };
 
-    Circle.prototype.BB = function() {
+    Circle.prototype.BB = function(size) {
+      this.size = size != null ? size : this.size;
       this.bb_width = 2 * this.size;
       this.bb_height = 2 * this.size;
       return Circle.__super__.BB.apply(this, arguments);
@@ -416,113 +400,6 @@
 
   })(Element);
 
-  this.Rectangle = (function(_super) {
-
-    __extends(Rectangle, _super);
-
-    function Rectangle(config) {
-      this.config = config != null ? config : {};
-      Rectangle.__super__.constructor.apply(this, arguments);
-      this.type = 'Rectangle';
-      this.posx = this.config.x || '0';
-      this.posy = this.config.y || '0';
-      this.width = this.config.width || '10';
-      this.height = this.config.height || '5';
-      this.maxx = this.posx;
-      this.maxy = this.posy;
-      this.minx = this.posx - this.width;
-      this.miny = this.posy - this.height;
-      this.stroke = this.config.stroke || this._stroke;
-      this._fill = this.config.fill || "#FFF";
-      this.draw();
-    }
-
-    Rectangle.prototype.setX = function(xpos) {
-      if (xpos) {
-        return this.posx = xpos;
-      }
-    };
-
-    Rectangle.prototype.setY = function(ypos) {
-      if (ypos) {
-        return this.posy = ypos;
-      }
-    };
-
-    Rectangle.prototype.setWidth = function(width) {
-      if (width) {
-        return this.width = width;
-      }
-    };
-
-    Rectangle.prototype.setHeight = function(height) {
-      if (height) {
-        return this.height = height;
-      }
-    };
-
-    Rectangle.prototype.setFill = function(fill) {
-      if (fill) {
-        return this._fill = fill;
-      }
-    };
-
-    Rectangle.prototype.getX = function() {
-      return this.posx;
-    };
-
-    Rectangle.prototype.getY = function() {
-      return this.posy;
-    };
-
-    Rectangle.prototype.getTop = function() {
-      return this.maxy;
-    };
-
-    Rectangle.prototype.getLeft = function() {
-      return this.maxx;
-    };
-
-    Rectangle.prototype.getBottom = function() {
-      return this.miny;
-    };
-
-    Rectangle.prototype.getRight = function() {
-      return this.minx;
-    };
-
-    Rectangle.prototype.getWidth = function() {
-      return this.width;
-    };
-
-    Rectangle.prototype.getHeight = function() {
-      return this.height;
-    };
-
-    Rectangle.prototype.getFill = function() {
-      return this._fill;
-    };
-
-    Rectangle.prototype.draw = function() {
-      Rectangle.__super__.draw.apply(this, arguments);
-      if (this.svg) {
-        if (!this.image) {
-          this.image = this.g.append("rect");
-          this.image.attr("stroke", this._stroke);
-          this.image.attr("fill", "#FFF");
-          this.image.attr("x", this.posx);
-          this.image.attr("y", this.posy);
-          this.image.attr("height", this.height);
-          this.image.attr("width", this.width);
-          return this.image.attr("fill", "#FFF");
-        }
-      }
-    };
-
-    return Rectangle;
-
-  })(Element);
-
   this.Collision = (function() {
     var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, nearest_node, z_check;
 
@@ -561,36 +438,45 @@
     Collision.quadtree = Collision.update_quadtree();
 
     Collision.detect = function() {
-      var minsize, quadtree;
+      var d, i, length, size, x0, x3, y0, y3, _results;
       if (!(this.list.length > 0)) {
         return;
       }
       this.update_quadtree();
-      quadtree = this.quadtree;
-      minsize = 100;
-      return _.each(_.filter(this.list, function(d) {
-        return d.collision;
-      }), function(d) {
-        var size, x0, x3, y0, y3;
-        size = Math.max(4 * (d.size + d.tol), minsize);
-        x0 = d.r.x - size;
-        x3 = d.r.x + size;
-        y0 = d.r.y - size;
-        y3 = d.r.y + size;
-        return quadtree.visit(function(node, x1, y1, x2, y2) {
-          var p;
-          p = node.point;
-          if (p !== null) {
-            if (!(d !== p.d && p.d.collision)) {
-              return false;
+      length = this.list.length;
+      i = 0;
+      _results = [];
+      while (i < length) {
+        d = this.list[i];
+        if (d.collision) {
+          size = 2 * (d.size + d.tol);
+          x0 = d.r.x - size;
+          x3 = d.r.x + size;
+          y0 = d.r.y - size;
+          y3 = d.r.y + size;
+          this.quadtree.visit(function(node, x1, y1, x2, y2) {
+            var p;
+            p = node.point;
+            if (p !== null) {
+              if (p.destroyed) {
+                return false;
+              }
+              if (!(d !== p.d && p.d.collision)) {
+                return false;
+              }
+              if ((p.x >= x0) && (p.x < x3) && (p.y >= y0) && (p.y < y3)) {
+                Collision.check(d, p.d);
+              }
             }
-            if ((p.x >= x0) && (p.x < x3) && (p.y >= y0) && (p.y < y3)) {
-              Collision.check(d, p.d);
-            }
-          }
-          return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
-        });
-      });
+            return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
+          });
+        }
+        d.draw();
+        d.cleanup();
+        length = this.list.length;
+        _results.push(i++);
+      }
+      return _results;
     };
 
     Collision.check = function(ei, ej, reaction) {
@@ -821,23 +707,26 @@
 
     Integration.off = false;
 
-    Integration.tick = 1 / 120;
+    Integration.tick = 1 / 30;
 
     Integration.timestamp = Utils.timestamp();
 
     Integration.verlet = function(element) {
       return function() {
         var f;
-        f = element.force.f(element.r);
-        element.dr = new Vec(element.v).scale(element.dt).add(new Vec(f).scale(0.5 * element.dt * element.dt));
+        element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
         element.r.add(element.dr);
-        element.f = element.force.f(element.r);
+        f = new Vec();
+        element.force.forEach(function(force) {
+          return f.add(force.f(element));
+        });
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
+        element.f = f;
       };
     };
 
     Integration.integrate = function(cleanup) {
-      var element, moveable, offscreen, timestamp, _i, _j, _len, _len1;
+      var element, timestamp, _i, _len, _ref;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -849,26 +738,12 @@
         return;
       }
       Integration.timestamp = timestamp;
-      moveable = _.filter(Collision.list, function(d) {
-        return !d.physics;
-      });
-      for (_i = 0, _len = moveable.length; _i < _len; _i++) {
-        element = moveable[_i];
+      _ref = Collision.list;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        element = _ref[_i];
         element.tick();
       }
       Collision.detect();
-      for (_j = 0, _len1 = moveable.length; _j < _len1; _j++) {
-        element = moveable[_j];
-        element.draw();
-      }
-      offscreen = _.filter(moveable, function(d) {
-        return d.offscreen();
-      });
-      if (cleanup) {
-        _.each(offscreen, function(d) {
-          return d.destroy();
-        });
-      }
     };
 
     Integration.start = function(delay) {
@@ -961,51 +836,84 @@
 
   this.Force = (function() {
 
-    function Force(params) {
-      this.params = params != null ? params : {
+    function Force(param) {
+      this.param = param != null ? param : {
         type: 'constant',
         fx: 0,
         fy: 0
       };
     }
 
-    Force.prototype.f = function(r) {
-      var dr, fx, fy, r2, r3;
-      switch (this.params.type) {
+    Force.prototype.f = function(element) {
+      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
+      switch (this.param.type) {
         case 'constant':
-          fx = this.params.x;
-          fy = this.params.y;
+          fx = this.param.x;
+          fy = this.param.y;
+          break;
+        case 'friction':
+          fx = -this.param.alpha * element.v.x;
+          fy = -this.param.alpha * element.v.y;
           break;
         case 'spring':
-          fx = -(r.x - this.params.cx);
-          fy = -(r.y - this.params.cy);
+          fx = -(element.r.x - this.param.cx);
+          fy = -(element.r.y - this.param.cy);
           break;
         case 'charge':
         case 'gravity':
           dr = new Vec({
-            x: this.params.cx - r.x,
-            y: this.params.cy - r.y
+            x: this.param.cx - element.r.x,
+            y: this.param.cy - element.r.y
           });
           r2 = dr.length_squared();
           r3 = r2 * Math.sqrt(r2);
-          fx = this.params.q * dr.x / r3;
-          fy = this.params.q * dr.y / r3;
+          fx = this.param.q * dr.x / r3;
+          fy = this.param.q * dr.y / r3;
           break;
         case 'random':
-          fx = 2 * (Math.random() - 0.5) * this.params.xScale;
-          fy = 2 * (Math.random() - 0.5) * this.params.yScale;
-          if (r.x > this.params.xBound) {
-            fx = -this.params.fxBound;
+          fx = 2 * (Math.random() - 0.5) * this.param.xScale;
+          fy = 2 * (Math.random() - 0.5) * this.param.yScale;
+          if (element.r.x > this.param.xBound) {
+            fx = -this.param.fxBound;
           }
-          if (r.y > this.params.yBound) {
-            fy = -this.params.fyBound;
+          if (element.r.y > this.param.yBound) {
+            fy = -this.param.fyBound;
           }
-          if (r.x < 0) {
-            fx = this.params.fxBound;
+          if (element.r.x < 0) {
+            fx = this.param.fxBound;
           }
-          if (r.y < 0) {
-            fy = this.params.fyBound;
+          if (element.r.y < 0) {
+            fy = this.param.fyBound;
           }
+          break;
+        case 'gradient':
+          rpx = new Vec(element.r).add({
+            x: this.param.tol,
+            y: 0
+          });
+          rmx = new Vec(element.r).add({
+            x: -this.param.tol,
+            y: 0
+          });
+          rpy = new Vec(element.r).add({
+            y: this.param.tol,
+            x: 0
+          });
+          rmy = new Vec(element.r).add({
+            y: -this.param.tol,
+            x: 0
+          });
+          epx = this.param.energy(rpx);
+          emx = this.param.energy(rmx);
+          epy = this.param.energy(rpy);
+          emy = this.param.energy(rmy);
+          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
+            fx = 0;
+            fy = 0;
+            break;
+          }
+          fx = -0.5 * (epx - emx) / this.param.tol;
+          fy = -0.5 * (epy - emy) / this.param.tol;
       }
       return new Vec({
         x: fx,
@@ -1460,7 +1368,7 @@
       if (!(this.element.length > 0)) {
         return;
       }
-      this.params = {
+      this.param = {
         type: 'charge',
         cx: this.root.r.x,
         cy: this.root.r.y,
@@ -1469,7 +1377,7 @@
       _ref = this.element;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         drone = _ref[_i];
-        drone.force.params = this.params;
+        drone.force[0].param = this.param;
       }
     };
 
@@ -1510,6 +1418,7 @@
         Gameprez.start();
       }
       this.root.draw();
+      this.root.stop();
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", this.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
       prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -1632,7 +1541,6 @@
       };
       Root.__super__.constructor.call(this, this.config);
       this.is_root = true;
-      this.physics = true;
       this.r.x = this.width / 2;
       this.r.y = this.height - 180;
       this.angleStep = 2 * Math.PI / 60;
@@ -1642,6 +1550,7 @@
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
+      this.tick = function() {};
     }
 
     Root.prototype.update = function(xy) {
@@ -1667,6 +1576,9 @@
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       timestamp = Utils.timestamp();
+      if (this.destroyed) {
+        return true;
+      }
       if (!(this.collision && timestamp - this.lastfire > this.wait)) {
         return;
       }
@@ -1712,14 +1624,14 @@
     };
 
     Root.prototype.start = function() {
-      this.start_collision();
+      Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.update);
       this.svg.on("mousedown", this.fire);
       return this.svg.on("mousewheel", this.spin);
     };
 
     Root.prototype.stop = function() {
-      this.stop_collision();
+      Root.__super__.stop.apply(this, arguments);
       this.svg.on("mousemove", null);
       this.svg.on("mousedown", null);
       return this.svg.on("mousewheel", null);
@@ -1739,11 +1651,14 @@
     };
 
     Root.prototype.game_over = function(dur) {
+      var _this = this;
       if (dur == null) {
         dur = 500;
       }
       this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('sqrt').style("opacity", 0);
-      return this.bitmap.transition().duration(dur).attr('opacity', 0);
+      return this.bitmap.transition().duration(dur).attr('opacity', 0).each('end', function() {
+        return _this.destroy();
+      });
     };
 
     return Root;
