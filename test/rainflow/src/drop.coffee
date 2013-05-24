@@ -1,8 +1,8 @@
 class @Drop extends Circle
   constructor: (@config = {}) ->
     super
-    @dt = 5e-3
-    @size = 2.5
+    @dt = 1e-2
+    @size = 1
     @fill('deepskyblue')
     @stroke('white')
     @image.attr('opacity', '0.6')

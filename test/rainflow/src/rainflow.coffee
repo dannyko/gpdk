@@ -45,7 +45,7 @@ class @Rainflow extends Game
         energy: V
         type: 'gradient'
       @friction_param =
-        alpha: 2
+        alpha: 10
         type: 'friction'
       @root = new Root()
       @start()

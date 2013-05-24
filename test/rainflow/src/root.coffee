@@ -1,49 +1,21 @@
 class @Root extends Circle
   constructor: (@config = {}) ->
     super
+    @svg.style("cursor", "none")
+    @fill('none')
+    @stroke('white')
+    @image.attr('opacity', 0.8).attr('stroke-width', 2)
+    @svg.on("mousemove", @move) # default mouse behavior is to control the root element position
     @is_root   = true
     @tick      = -> return
-    @image.attr("fill", "#FFF")
-    @size      = 13
-    @angle     = -Math.PI * 0.5 # initialize bullet angle
-    @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @svg.on("mousemove", @move) # default mouse behavior is to control the root element position
-    d3.select(window).on("keydown", @keydown) # default keyboard listener
-    @svg.on("mousedown", @fire) # default mouse button listener
-    @svg.on("mousewheel", @spin) # default scroll wheel listener
+    @size      = 5
 
   move: (node = @svg.node()) =>
     xy = d3.mouse(node)
-    @r.x = xy[0]
-    @r.y = xy[1]
+    bb = document.getElementById('game_g').getBoundingClientRect()
+    x_off = bb.left
+    y_off = bb.bottom - bb.height
+    @r.x = xy[0] - x_off
+    @r.y = xy[1] - y_off
+    @r.scale(1/Utils.scale)
     @draw() 
-
-  spin: () =>
-    delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
-    @angle = @angle - delta
-
-  keydown: () =>
-    switch d3.event.keyCode 
-      when 70 then @fire() # f key fires bullets
-      when 39 then @angle += @angleStep # right arrow changes firing angle by default
-      when 37 then @angle -= @angleStep # left arrow changes firing angle by default
-      when 38 then @fire() # up arrow fires bullet
-      when 40 then @angle += Math.PI # down arrow reverses direction of firing angle 
-    return
-
-  fire: () =>
-    bullet      = new Bullet()
-    speed       = 5.5 / @dt
-    x           = Math.cos(@angle)
-    y           = Math.sin(@angle)
-    bullet.r.x    = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y    = @r.y + y * (@size / 3 + bullet.size)
-    bullet.v.x    = speed * x
-    bullet.v.y    = speed * y
-    bullet.start()
-  
-  destroy_check: (n) ->
-    d = new Vec(n.r).subtract(@r).normalize()
-    bump = 0.1 / @dt
-    n.v.add(d.scale(bump))
-    true
