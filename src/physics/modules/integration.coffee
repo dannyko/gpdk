@@ -6,12 +6,11 @@ class @Integration # numerical integration module for solving differential equat
 
   @verlet: (element) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
     -> # reference: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
-      f = new Vec(@f) ; # evaluate the force at the current position and store in temporary variable
-      element.dr = new Vec(element.v).scale(element.dt).add(new Vec(f).scale(0.5 * element.dt * element.dt)) # store displacement vector
+      element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt)) # store displacement vector
       element.r.add(element.dr) # update position
       f = new Vec() ; element.force.forEach (force) -> f.add(force.f(element)) # evaluate and store force value with respect to the updated position
-      element.v.add(@f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
-      @f = f
+      element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
+      element.f = f
       return      
 
   @integrate: (cleanup = true) =>
