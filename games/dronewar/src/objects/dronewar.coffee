@@ -66,12 +66,12 @@ class @Dronewar extends Game
 
   update_drone: ->
     return unless @element.length > 0
-    @params = 
+    @param = 
       type: 'charge'
       cx: @root.r.x
       cy: @root.r.y
       q:  @root.charge # charge
-    drone.force.params = @params for drone in @element
+    drone.force[0].param = @param for drone in @element
     return
 
   keydown: () =>

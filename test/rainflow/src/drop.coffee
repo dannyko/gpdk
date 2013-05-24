@@ -5,7 +5,7 @@ class @Drop extends Circle
     @size = 1
     @fill('deepskyblue')
     @stroke('white')
-    @image.attr('opacity', '0.6')
+    @image.attr('opacity', '0.6').attr('stroke-width', 0.5)
     # @BB() to allow bounding boxes to be used for collision detection
 
   cleanup: (@_cleanup = @_cleanup) ->
