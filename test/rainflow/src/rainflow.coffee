@@ -61,7 +61,7 @@ class @Rainflow extends Game
       scale = 0.75 * if width > height then height / @map_height else width / @map_width
       scale = Math.floor(scale * 2) * 0.5
       @svg.attr('width', width).attr('height', height)
-      @g.attr('transform', 'translate(' + (width - scale * @map_width) * 0.5 + ', ' + (height - scale * @map_height) * 0.5 + ') scale(' + scale + ')')
+      @g.attr('transform', 'translate(' + (width - scale * @map_width) / 3 + ', ' + (height - scale * @map_height) * 0.15 + ') scale(' + scale + ')')
       Utils.scale = scale # for access outside of the Game object
       return
     updateWindow()

@@ -1115,7 +1115,7 @@
         scale = 0.75 * (width > height ? height / _this.map_height : width / _this.map_width);
         scale = Math.floor(scale * 2) * 0.5;
         _this.svg.attr('width', width).attr('height', height);
-        _this.g.attr('transform', 'translate(' + (width - scale * _this.map_width) * 0.5 + ', ' + (height - scale * _this.map_height) * 0.5 + ') scale(' + scale + ')');
+        _this.g.attr('transform', 'translate(' + (width - scale * _this.map_width) / 3 + ', ' + (height - scale * _this.map_height) * 0.15 + ') scale(' + scale + ')');
         Utils.scale = scale;
       };
       updateWindow();
