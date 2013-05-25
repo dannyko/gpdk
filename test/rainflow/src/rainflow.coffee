@@ -3,7 +3,7 @@ class @Rainflow extends Game
     super
     @map_width = 360
     @map_height = 180 
-    @g.append('image').attr('xlink:href', 'earth_elevation4.png').attr('height', @map_height).attr('width', @map_width)
+    @g.append('image').attr('xlink:href', 'earth_elevation6.png').attr('height', @map_height).attr('width', @map_width)
     @svg.on("mousedown", @drop) # default mouse button listener
     d3.select(window).on("keydown", @keydown) # default keyboard listener
     # @svg.on("mousewheel", @spin) # default scroll wheel listener
@@ -19,7 +19,7 @@ class @Rainflow extends Game
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
       # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
-      scale = 1e-1 # units
+      scale = 1e-4 # units
       x   = r.x
       y   = r.y
       x   = @elevation[0].length - 1 + x % (@elevation[0].length - 1) if x < 0 
@@ -46,7 +46,7 @@ class @Rainflow extends Game
         energy: V
         type: 'gradient'
       @friction_param =
-        alpha: 1
+        alpha: .1
         type: 'friction'
       @root = new Root()
       @start()
@@ -59,6 +59,7 @@ class @Rainflow extends Game
      # @svg.attr("width", @width).attr("height", @height)
       # @map.attr("width", @width).attr("height", @height)
       scale = 0.75 * if width > height then height / @map_height else width / @map_width
+      scale = Math.floor(scale * 2) * 0.5
       @svg.attr('width', width).attr('height', height)
       @g.attr('transform', 'translate(' + (width - scale * @map_width) * 0.5 + ', ' + (height - scale * @map_height) * 0.5 + ') scale(' + scale + ')')
       Utils.scale = scale # for access outside of the Game object

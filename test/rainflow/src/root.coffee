@@ -9,6 +9,7 @@ class @Root extends Circle
     @is_root   = true
     @tick      = -> return
     @size      = 5
+    @stop()
 
   move: (node = @svg.node()) =>
     xy = d3.mouse(node)
