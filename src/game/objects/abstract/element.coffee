@@ -15,7 +15,7 @@ class @Element
     @top       = @config.top       || 0 # bounding box top
     @bottom    = @config.bottom    || 0 # bounding box bottom
     @collision = @config.collision || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
-    @tol       = @config.tol       || 0.5 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
+    @tol       = @config.tol       || 0.25 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
     @_stroke   = @config.stroke    || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
     @_fill     = @config.fill      || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
     @angle     = @config.angle     || 0 # angle for rigid body rotation
