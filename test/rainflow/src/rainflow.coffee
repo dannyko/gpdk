@@ -19,6 +19,7 @@ class @Rainflow extends Game
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
       # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
+      scale = 1e-1 # units
       x   = r.x
       y   = r.y
       x   = @elevation[0].length - 1 + x % (@elevation[0].length - 1) if x < 0 
@@ -35,17 +36,17 @@ class @Rainflow extends Game
       dyf = y - yf
       dyc = yc - y
       v_r = @elevation[yf][xf] * dxc * dyc + @elevation[yf][xc] * dxf * dyc + @elevation[yc][xf] * dxc * dyf + @elevation[yc][xc] * dxf * dyf
-      v_r *= 1 / ((xc - xf) * (yc - yf)) # bilinear approximation of scalar energy value from discrete data array
+      v_r *= scale / ((xc - xf) * (yc - yf)) # bilinear approximation of scalar energy value from discrete data array
 
     drops = (text) => # callback to execute after text file loads
       row = text.split('\n') 
       @elevation = row.map( (d) -> return d.split(',').map( (d) -> return Number(d) ) ) # matrix rows (m = 180) of elevations indexed by matrix column (n = 360)
       @gravity_param =
-        tol: 0.01 # for computing numerical gradient using a centered finite difference approximation
+        tol: 1 # for computing numerical gradient using a centered finite difference approximation
         energy: V
         type: 'gradient'
       @friction_param =
-        alpha: 10
+        alpha: 1
         type: 'friction'
       @root = new Root()
       @start()
