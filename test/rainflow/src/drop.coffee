@@ -1,15 +1,14 @@
 class @Drop extends Circle
   constructor: (@config = {}) ->
     super
-    @dt = 1e-2
+    @dt = .1
     @size = 1
-    @fill('deepskyblue')
-    @stroke('white')
-    @image.attr('opacity', '0.6').attr('stroke-width', 0.5)
+    @fill('white')
+    # @stroke('white')
+    @image.attr('opacity', '0.9').attr('stroke-width', 0.5)
     # @BB() to allow bounding boxes to be used for collision detection
 
   cleanup: (@_cleanup = @_cleanup) ->
-    # console.log(@width, @height, @r.x, @r.y)
     if @offscreen() # periodic wrapping
       if @r.x > @width then @r.x = @r.x % @width
       if @r.x < 0 then @r.x = @width + @r.x
