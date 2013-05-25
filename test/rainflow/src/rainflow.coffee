@@ -15,6 +15,36 @@ class @Rainflow extends Game
     #   @element[i].r.y = @map_height * Math.random()
     #   @element[i].draw()
     @elevation = []
+
+    prompt = @g.append("text")
+      .text("")
+      .attr("stroke", "black")
+      .attr("fill", "deepskyblue")
+      .attr("font-size", "36")
+      .attr("x", @map_width / 2 - 100 )
+      .attr("y", @map_height / 4)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+    prompt.text("RAINFLOW")
+    dur = 1000
+    prompt.transition().duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove()
+
+    inst = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", 10)
+      .attr("x", @map_width / 2 - 170 )
+      .attr("y", @map_height / 4 + 40)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+    inst.text("mouse over the map and click a button or hold any key to release drops")
+    dur = 1000
+    inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove()
+
+
     
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
@@ -61,7 +91,7 @@ class @Rainflow extends Game
       scale = 0.75 * if width > height then height / @map_height else width / @map_width
       scale = Math.floor(scale * 2) * 0.5
       @svg.attr('width', width).attr('height', height)
-      @g.attr('transform', 'translate(' + (width - scale * @map_width) / 3 + ', ' + (height - scale * @map_height) * 0.15 + ') scale(' + scale + ')')
+      @g.attr('transform', 'translate(' + @map_width * 0.5 + ', ' + @map_height * 0.5 + ') scale(' + scale + ')')
       Utils.scale = scale # for access outside of the Game object
       return
     updateWindow()
