@@ -1042,7 +1042,7 @@
     __extends(Rainflow, _super);
 
     function Rainflow(config) {
-      var V, drops, updateWindow,
+      var V, drops, dur, inst, prompt, updateWindow,
         _this = this;
       this.config = config != null ? config : {};
       this.keydown = function() {
@@ -1058,6 +1058,14 @@
       this.svg.on("mousedown", this.drop);
       d3.select(window).on("keydown", this.keydown);
       this.elevation = [];
+      prompt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "deepskyblue").attr("font-size", "36").attr("x", this.map_width / 2 - 100).attr("y", this.map_height / 4).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      prompt.text("RAINFLOW");
+      dur = 1000;
+      prompt.transition().duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove();
+      inst = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", 10).attr("x", this.map_width / 2 - 170).attr("y", this.map_height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      inst.text("mouse over the map and click a button or hold any key to release drops");
+      dur = 1000;
+      inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove();
       V = function(r) {
         var dxc, dxf, dyc, dyf, scale, tol, v_r, x, xc, xf, y, yc, yf;
         scale = 1e-4;
