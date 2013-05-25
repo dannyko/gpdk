@@ -49,7 +49,7 @@ class @Rainflow extends Game
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
       # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
-      scale = 1e-4 # units
+      scale = 3e-4 # units
       x   = r.x
       y   = r.y
       x   = @elevation[0].length - 1 + x % (@elevation[0].length - 1) if x < 0 

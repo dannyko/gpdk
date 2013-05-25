@@ -1068,7 +1068,7 @@
       inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove();
       V = function(r) {
         var dxc, dxf, dyc, dyf, scale, tol, v_r, x, xc, xf, y, yc, yf;
-        scale = 1e-4;
+        scale = 3e-4;
         x = r.x;
         y = r.y;
         if (x < 0) {
