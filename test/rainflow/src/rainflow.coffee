@@ -56,7 +56,7 @@ class @Rainflow extends Game
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
       # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
-      scale = 3e-4 # units
+      scale = 1e-4 # units
       x   = r.x
       y   = r.y
       x   = @elevation[0].length - 1 + x % (@elevation[0].length - 1) if x < 0 
@@ -103,11 +103,12 @@ class @Rainflow extends Game
         force_param: [new ForceParam(@gravity_param), new ForceParam(@friction_param)]
         width: @map_width
         height: @map_height
+    return unless config.length > 0
     dur = 100
     new_drop = -> new Drop(config.pop())
     int = setInterval(new_drop, dur)
     clear = -> clearInterval(int)
-    setTimeout(clear, dur * (config.length + 2))
+    setTimeout(clear, dur * (config.length + 1))
 
   keydown: () =>
     @drop() # any key releases a drop
