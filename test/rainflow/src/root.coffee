@@ -3,8 +3,8 @@ class @Root extends Circle
     super
     @svg.style("cursor", "none")
     @fill('none')
-    @stroke('white')
-    @image.attr('opacity', 0.8).attr('stroke-width', 1.5)
+    @stroke('navy')
+    @image.attr('opacity', 0.4).attr('stroke-width', 1.5)
     @svg.on("mousemove", @move) # default mouse behavior is to control the root element position
     @is_root   = true
     @tick      = -> return

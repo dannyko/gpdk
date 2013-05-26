@@ -7,6 +7,8 @@ class @Rainflow extends Game
     @root = new Root()
     @numel    = @config.numel || 5
     @elevation = [] # initialize
+    @dropwait = 175
+    @lastdrop = Utils.timestamp()
 
     drops = (text) => # callback to execute after text file loads
       row = text.split('\n') 
@@ -90,6 +92,9 @@ class @Rainflow extends Game
     # @root = new Root() # default root element i.e. under user control
 
   drop: (r = @root.r) =>
+    stamp = Utils.timestamp()
+    return unless stamp - @lastdrop > @dropwait 
+    @lastdrop = stamp
     config = []
     for i in [0..@numel - 1]
       dr = new Vec({x: 2 * @root.size * (Math.random() - 0.5), y: 2 * @root.size * (Math.random() - 0.5)})
@@ -98,7 +103,7 @@ class @Rainflow extends Game
         force_param: [new ForceParam(@gravity_param), new ForceParam(@friction_param)]
         width: @map_width
         height: @map_height
-    dur = 50
+    dur = 100
     new_drop = -> new Drop(config.pop())
     int = setInterval(new_drop, dur)
     clear = -> clearInterval(int)
