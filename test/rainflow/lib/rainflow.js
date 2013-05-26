@@ -144,7 +144,7 @@
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
       this.n = this.config.n || [];
-      this.force = this.config.force || [new Force()];
+      this.force_param = this.config.force_param || [new ForceParam()];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
       this.bb_height = this.config.bb_height || 0;
@@ -701,6 +701,91 @@
 
   })();
 
+  this.Force = (function() {
+
+    function Force() {}
+
+    Force["eval"] = function(element, param) {
+      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
+      switch (param.type) {
+        case 'constant':
+          fx = param.x;
+          fy = param.y;
+          break;
+        case 'friction':
+          fx = -param.alpha * element.v.x;
+          fy = -param.alpha * element.v.y;
+          break;
+        case 'spring':
+          fx = -(element.r.x - param.cx);
+          fy = -(element.r.y - param.cy);
+          break;
+        case 'charge':
+        case 'gravity':
+          dr = new Vec({
+            x: param.cx - element.r.x,
+            y: param.cy - element.r.y
+          });
+          r2 = dr.length_squared();
+          r3 = r2 * Math.sqrt(r2);
+          fx = param.q * dr.x / r3;
+          fy = param.q * dr.y / r3;
+          break;
+        case 'random':
+          fx = 2 * (Math.random() - 0.5) * param.xScale;
+          fy = 2 * (Math.random() - 0.5) * param.yScale;
+          if (element.r.x > param.xBound) {
+            fx = -param.fxBound;
+          }
+          if (element.r.y > param.yBound) {
+            fy = -param.fyBound;
+          }
+          if (element.r.x < 0) {
+            fx = param.fxBound;
+          }
+          if (element.r.y < 0) {
+            fy = param.fyBound;
+          }
+          break;
+        case 'gradient':
+          rpx = new Vec(element.r).add({
+            x: param.tol,
+            y: 0
+          });
+          rmx = new Vec(element.r).add({
+            x: -param.tol,
+            y: 0
+          });
+          rpy = new Vec(element.r).add({
+            y: param.tol,
+            x: 0
+          });
+          rmy = new Vec(element.r).add({
+            y: -param.tol,
+            x: 0
+          });
+          epx = param.energy(rpx);
+          emx = param.energy(rmx);
+          epy = param.energy(rpy);
+          emy = param.energy(rmy);
+          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
+            fx = 0;
+            fy = 0;
+            break;
+          }
+          fx = -0.5 * (epx - emx) / param.tol;
+          fy = -0.5 * (epy - emy) / param.tol;
+      }
+      return new Vec({
+        x: fx,
+        y: fy
+      });
+    };
+
+    return Force;
+
+  })();
+
   this.Integration = (function() {
 
     function Integration() {}
@@ -717,8 +802,8 @@
         element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
         element.r.add(element.dr);
         f = new Vec();
-        element.force.forEach(function(force) {
-          return f.add(force.f(element));
+        element.force_param.forEach(function(param) {
+          return f.add(Force["eval"](element, param));
         });
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
         element.f = f;
@@ -834,94 +919,42 @@
 
   })();
 
-  this.Force = (function() {
+  this.ForceParam = (function() {
 
-    function Force(param) {
-      this.param = param != null ? param : {
-        type: 'constant',
-        fx: 0,
-        fy: 0
-      };
-    }
-
-    Force.prototype.f = function(element) {
-      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
-      switch (this.param.type) {
+    function ForceParam(config) {
+      this.config = config != null ? config : {};
+      this.type = this.config.type || 'constant';
+      switch (this.config.type) {
         case 'constant':
-          fx = this.param.x;
-          fy = this.param.y;
+          this.fx = this.config.x || 0;
+          this.fy = this.config.y || 0;
           break;
         case 'friction':
-          fx = -this.param.alpha * element.v.x;
-          fy = -this.param.alpha * element.v.y;
+          this.alpha = this.config.alpha || 1;
           break;
         case 'spring':
-          fx = -(element.r.x - this.param.cx);
-          fy = -(element.r.y - this.param.cy);
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
           break;
         case 'charge':
         case 'gravity':
-          dr = new Vec({
-            x: this.param.cx - element.r.x,
-            y: this.param.cy - element.r.y
-          });
-          r2 = dr.length_squared();
-          r3 = r2 * Math.sqrt(r2);
-          fx = this.param.q * dr.x / r3;
-          fy = this.param.q * dr.y / r3;
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
+          this.q = this.config.q || 1;
           break;
         case 'random':
-          fx = 2 * (Math.random() - 0.5) * this.param.xScale;
-          fy = 2 * (Math.random() - 0.5) * this.param.yScale;
-          if (element.r.x > this.param.xBound) {
-            fx = -this.param.fxBound;
-          }
-          if (element.r.y > this.param.yBound) {
-            fy = -this.param.fyBound;
-          }
-          if (element.r.x < 0) {
-            fx = this.param.fxBound;
-          }
-          if (element.r.y < 0) {
-            fy = this.param.fyBound;
-          }
+          this.xScale = this.config.xScale || 1;
+          this.yScale = this.config.yScale || 1;
+          this.fxBound = this.config.fxBound || 10;
+          this.fyBound = this.config.fyBound || 10;
           break;
         case 'gradient':
-          rpx = new Vec(element.r).add({
-            x: this.param.tol,
-            y: 0
-          });
-          rmx = new Vec(element.r).add({
-            x: -this.param.tol,
-            y: 0
-          });
-          rpy = new Vec(element.r).add({
-            y: this.param.tol,
-            x: 0
-          });
-          rmy = new Vec(element.r).add({
-            y: -this.param.tol,
-            x: 0
-          });
-          epx = this.param.energy(rpx);
-          emx = this.param.energy(rmx);
-          epy = this.param.energy(rpy);
-          emy = this.param.energy(rmy);
-          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
-            fx = 0;
-            fy = 0;
-            break;
-          }
-          fx = -0.5 * (epx - emx) / this.param.tol;
-          fy = -0.5 * (epy - emy) / this.param.tol;
+          this.tol = this.config.tol || 0.1;
+          this.energy = this.config.energy || function(r) {};
       }
-      return new Vec({
-        x: fx,
-        y: fy
-      });
-    };
+    }
 
-    return Force;
+    return ForceParam;
 
   })();
 
@@ -1048,24 +1081,50 @@
       this.keydown = function() {
         return Rainflow.prototype.keydown.apply(_this, arguments);
       };
-      this.drop = function() {
+      this.drop = function(r) {
+        if (r == null) {
+          r = _this.root.r;
+        }
         return Rainflow.prototype.drop.apply(_this, arguments);
       };
       Rainflow.__super__.constructor.apply(this, arguments);
       this.map_width = 360;
       this.map_height = 180;
       this.g.append('image').attr('xlink:href', 'earth_elevation6.png').attr('height', this.map_height).attr('width', this.map_width);
-      this.svg.on("mousedown", this.drop);
-      d3.select(window).on("keydown", this.keydown);
+      this.root = new Root();
+      this.numel = this.config.numel || 5;
       this.elevation = [];
+      drops = function(text) {
+        var row;
+        row = text.split('\n');
+        _this.elevation = row.map(function(d) {
+          return d.split(',').map(function(d) {
+            return Number(d);
+          });
+        });
+        _this.gravity_param = {
+          tol: 1,
+          energy: V,
+          type: 'gradient'
+        };
+        _this.friction_param = {
+          alpha: .1,
+          type: 'friction'
+        };
+        _this.svg.on("mousedown", _this.drop);
+        d3.select(window).on("keydown", _this.keydown);
+        return _this.start();
+      };
       prompt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "deepskyblue").attr("font-size", "36").attr("x", this.map_width / 2 - 100).attr("y", this.map_height / 4).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       prompt.text("RAINFLOW");
       dur = 1000;
       prompt.transition().duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove();
       inst = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", 10).attr("x", this.map_width / 2 - 170).attr("y", this.map_height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
-      inst.text("mouse over the map and click a button or hold any key to release drops");
+      inst.text("mouse over the map and click a button or press any key to release drops");
       dur = 1000;
-      inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove();
+      inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove().each('end', function() {
+        return d3.text('topo_flip.csv', drops);
+      });
       V = function(r) {
         var dxc, dxf, dyc, dyf, scale, tol, v_r, x, xc, xf, y, yc, yf;
         scale = 3e-4;
@@ -1095,27 +1154,6 @@
         v_r = _this.elevation[yf][xf] * dxc * dyc + _this.elevation[yf][xc] * dxf * dyc + _this.elevation[yc][xf] * dxc * dyf + _this.elevation[yc][xc] * dxf * dyf;
         return v_r *= scale / ((xc - xf) * (yc - yf));
       };
-      drops = function(text) {
-        var row;
-        row = text.split('\n');
-        _this.elevation = row.map(function(d) {
-          return d.split(',').map(function(d) {
-            return Number(d);
-          });
-        });
-        _this.gravity_param = {
-          tol: 1,
-          energy: V,
-          type: 'gradient'
-        };
-        _this.friction_param = {
-          alpha: .1,
-          type: 'friction'
-        };
-        _this.root = new Root();
-        return _this.start();
-      };
-      d3.text('topo_flip.csv', drops);
       updateWindow = function() {
         var height, scale, width;
         width = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth;
@@ -1130,18 +1168,33 @@
       window.onresize = updateWindow;
     }
 
-    Rainflow.prototype.drop = function() {
-      var config;
-      config = {
-        r: new Vec({
-          x: this.root.r.x,
-          y: this.root.r.y
-        }),
-        force: [new Force(this.gravity_param), new Force(this.friction_param)],
-        width: this.map_width,
-        height: this.map_height
+    Rainflow.prototype.drop = function(r) {
+      var clear, config, dr, dur, i, int, new_drop, _i, _ref;
+      if (r == null) {
+        r = this.root.r;
+      }
+      config = [];
+      for (i = _i = 0, _ref = this.numel - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        dr = new Vec({
+          x: 2 * this.root.size * (Math.random() - 0.5),
+          y: 2 * this.root.size * (Math.random() - 0.5)
+        });
+        config.push({
+          r: new Vec(r).add(dr),
+          force_param: [new ForceParam(this.gravity_param), new ForceParam(this.friction_param)],
+          width: this.map_width,
+          height: this.map_height
+        });
+      }
+      dur = 50;
+      new_drop = function() {
+        return new Drop(config.pop());
       };
-      return new Drop(config);
+      int = setInterval(new_drop, dur);
+      clear = function() {
+        return clearInterval(int);
+      };
+      return setTimeout(clear, dur * (config.length + 2));
     };
 
     Rainflow.prototype.keydown = function() {
@@ -1169,11 +1222,11 @@
       this.svg.style("cursor", "none");
       this.fill('none');
       this.stroke('white');
-      this.image.attr('opacity', 0.8).attr('stroke-width', 2);
+      this.image.attr('opacity', 0.8).attr('stroke-width', 1.5);
       this.svg.on("mousemove", this.move);
       this.is_root = true;
       this.tick = function() {};
-      this.size = 5;
+      this.size = 2.5;
       this.stop();
     }
 
