@@ -6,7 +6,7 @@ class @Element
     @v         = @config.v         || new Vec() # velocity vector (vx, vy)
     @f         = @config.f         || new Vec() # force vector (fx, fy)
     @n         = @config.n         || [] # array of references to neighbor elements that this element interacts with
-    @force     = @config.force     || [new Force()] # array of objects for computing net force vectors: force.f() = [fx, fy]
+    @force_param = @config.force_param || [new ForceParam()] # array of objects for computing net force vectors: force.f() = [fx, fy]
     @size      = @config.size      || 0 # zero default size in units of pixels for abstract class
     @bb_width  = @config.bb_width  || 0 # bounding box width
     @bb_height = @config.bb_height || 0 # bounding box height

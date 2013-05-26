@@ -102,7 +102,7 @@ class @Rainflow extends Game
   drop: () =>
     config = 
       r: new Vec(x: @root.r.x, y: @root.r.y)
-      force: [new Force(@gravity_param), new Force(@friction_param)]
+      force_param: [new ForceParam(@gravity_param), new ForceParam(@friction_param)]
       width: @map_width
       height: @map_height
     new Drop(config)

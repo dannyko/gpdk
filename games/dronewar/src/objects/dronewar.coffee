@@ -71,7 +71,7 @@ class @Dronewar extends Game
       cx: @root.r.x
       cy: @root.r.y
       q:  @root.charge # charge
-    drone.force[0].param = @param for drone in @element
+    drone.force_param[0] = @param for drone in @element
     return
 
   keydown: () =>
