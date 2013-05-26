@@ -1129,7 +1129,7 @@
       });
       V = function(r) {
         var dxc, dxf, dyc, dyf, scale, tol, v_r, x, xc, xf, y, yc, yf;
-        scale = 3e-4;
+        scale = 1e-4;
         x = r.x;
         y = r.y;
         if (x < 0) {
@@ -1193,6 +1193,9 @@
           height: this.map_height
         });
       }
+      if (!(config.length > 0)) {
+        return;
+      }
       dur = 100;
       new_drop = function() {
         return new Drop(config.pop());
@@ -1201,7 +1204,7 @@
       clear = function() {
         return clearInterval(int);
       };
-      return setTimeout(clear, dur * (config.length + 2));
+      return setTimeout(clear, dur * (config.length + 1));
     };
 
     Rainflow.prototype.keydown = function() {

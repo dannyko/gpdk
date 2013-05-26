@@ -2,12 +2,12 @@ class @Drop extends Circle
   constructor: (@config = {}) ->
     super
     @dt = 1
-    @size = 1
+    @size = .7
     @fill('white')
-    @stroke('black')
+    @stroke('none')
     @image.attr('opacity', '0.8').attr('stroke-width', 0.25)
     @lifetime = Utils.timestamp()
-    @max_lifetime = 1e4
+    @max_lifetime = 3e4
     # @BB() to allow bounding boxes to be used for collision detection
 
   cleanup: (@_cleanup = @_cleanup) ->

@@ -7,7 +7,7 @@ class @Rainflow extends Game
     @root = new Root()
     @numel    = @config.numel || 5
     @elevation = [] # initialize
-    @dropwait = 175
+    @sleep = 250
     @lastdrop = Utils.timestamp()
 
     drops = (text) => # callback to execute after text file loads
@@ -93,7 +93,7 @@ class @Rainflow extends Game
 
   drop: (r = @root.r) =>
     stamp = Utils.timestamp()
-    return unless stamp - @lastdrop > @dropwait 
+    return unless stamp - @lastdrop > @sleep 
     @lastdrop = stamp
     config = []
     for i in [0..@numel - 1]
