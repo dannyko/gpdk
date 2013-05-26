@@ -4,17 +4,23 @@ class @Rainflow extends Game
     @map_width = 360
     @map_height = 180 
     @g.append('image').attr('xlink:href', 'earth_elevation6.png').attr('height', @map_height).attr('width', @map_width)
-    @svg.on("mousedown", @drop) # default mouse button listener
-    d3.select(window).on("keydown", @keydown) # default keyboard listener
-    # @svg.on("mousewheel", @spin) # default scroll wheel listener
-    # @numel    = @config.numel || 100
-    # for i in [0..@numel - 1] # create element list
-    #   newCircle = new TestCircle()
-    #   @element.push(newCircle) # extend the array of all elements in this game
-    #   @element[i].r.x = @map_width * Math.random()
-    #   @element[i].r.y = @map_height * Math.random()
-    #   @element[i].draw()
-    @elevation = []
+    @root = new Root()
+    @numel    = @config.numel || 5
+    @elevation = [] # initialize
+
+    drops = (text) => # callback to execute after text file loads
+      row = text.split('\n') 
+      @elevation = row.map( (d) -> return d.split(',').map( (d) -> return Number(d) ) ) # matrix rows (m = 180) of elevations indexed by matrix column (n = 360)
+      @gravity_param =
+        tol: 1 # for computing numerical gradient using a centered finite difference approximation
+        energy: V
+        type: 'gradient'
+      @friction_param =
+        alpha: .1
+        type: 'friction'
+      @svg.on("mousedown", @drop) # default mouse button listener
+      d3.select(window).on("keydown", @keydown) # default keyboard listener
+      @start()
 
     prompt = @g.append("text")
       .text("")
@@ -40,11 +46,10 @@ class @Rainflow extends Game
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .attr('opacity', 0)
-    inst.text("mouse over the map and click a button or hold any key to release drops")
+    inst.text("mouse over the map and click a button or press any key to release drops")
     dur = 1000
     inst.transition().delay(dur).duration(dur).attr('opacity', 1).transition().duration(dur).delay(5000).attr('opacity', 0).remove()
-
-
+      .each('end', -> d3.text('topo_flip.csv', drops) ) # load text data and execute callback)
     
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
@@ -68,21 +73,6 @@ class @Rainflow extends Game
       v_r = @elevation[yf][xf] * dxc * dyc + @elevation[yf][xc] * dxf * dyc + @elevation[yc][xf] * dxc * dyf + @elevation[yc][xc] * dxf * dyf
       v_r *= scale / ((xc - xf) * (yc - yf)) # bilinear approximation of scalar energy value from discrete data array
 
-    drops = (text) => # callback to execute after text file loads
-      row = text.split('\n') 
-      @elevation = row.map( (d) -> return d.split(',').map( (d) -> return Number(d) ) ) # matrix rows (m = 180) of elevations indexed by matrix column (n = 360)
-      @gravity_param =
-        tol: 1 # for computing numerical gradient using a centered finite difference approximation
-        energy: V
-        type: 'gradient'
-      @friction_param =
-        alpha: .1
-        type: 'friction'
-      @root = new Root()
-      @start()
-
-    d3.text('topo_flip.csv', drops) # load text data and execute callback
-
     updateWindow = () =>
       width  = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth
       height = window.innerHeight|| document.documentElement.clientHeight|| document.getElementsByTagName('body')[0].clientHeight
@@ -99,13 +89,20 @@ class @Rainflow extends Game
     # console.log(d3.selectAll('g'), @element.map (d) -> [d.height, d.width])
     # @root = new Root() # default root element i.e. under user control
 
-  drop: () =>
-    config = 
-      r: new Vec(x: @root.r.x, y: @root.r.y)
-      force_param: [new ForceParam(@gravity_param), new ForceParam(@friction_param)]
-      width: @map_width
-      height: @map_height
-    new Drop(config)
+  drop: (r = @root.r) =>
+    config = []
+    for i in [0..@numel - 1]
+      dr = new Vec({x: 2 * @root.size * (Math.random() - 0.5), y: 2 * @root.size * (Math.random() - 0.5)})
+      config.push
+        r: new Vec(r).add(dr)
+        force_param: [new ForceParam(@gravity_param), new ForceParam(@friction_param)]
+        width: @map_width
+        height: @map_height
+    dur = 50
+    new_drop = -> new Drop(config.pop())
+    int = setInterval(new_drop, dur)
+    clear = -> clearInterval(int)
+    setTimeout(clear, dur * (config.length + 2))
 
   keydown: () =>
     @drop() # any key releases a drop
