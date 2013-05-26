@@ -1094,6 +1094,8 @@
       this.root = new Root();
       this.numel = this.config.numel || 5;
       this.elevation = [];
+      this.dropwait = 175;
+      this.lastdrop = Utils.timestamp();
       drops = function(text) {
         var row;
         row = text.split('\n');
@@ -1169,10 +1171,15 @@
     }
 
     Rainflow.prototype.drop = function(r) {
-      var clear, config, dr, dur, i, int, new_drop, _i, _ref;
+      var clear, config, dr, dur, i, int, new_drop, stamp, _i, _ref;
       if (r == null) {
         r = this.root.r;
       }
+      stamp = Utils.timestamp();
+      if (!(stamp - this.lastdrop > this.dropwait)) {
+        return;
+      }
+      this.lastdrop = stamp;
       config = [];
       for (i = _i = 0, _ref = this.numel - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         dr = new Vec({
@@ -1186,7 +1193,7 @@
           height: this.map_height
         });
       }
-      dur = 50;
+      dur = 100;
       new_drop = function() {
         return new Drop(config.pop());
       };
@@ -1221,8 +1228,8 @@
       Root.__super__.constructor.apply(this, arguments);
       this.svg.style("cursor", "none");
       this.fill('none');
-      this.stroke('white');
-      this.image.attr('opacity', 0.8).attr('stroke-width', 1.5);
+      this.stroke('navy');
+      this.image.attr('opacity', 0.4).attr('stroke-width', 1.5);
       this.svg.on("mousemove", this.move);
       this.is_root = true;
       this.tick = function() {};
