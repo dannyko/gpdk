@@ -8,7 +8,7 @@ class @Integration # numerical integration module for solving differential equat
     -> # reference: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
       element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt)) # store displacement vector
       element.r.add(element.dr) # update position
-      f = new Vec() ; element.force_param.forEach (param) -> f.add(Force.f(element, param)) # evaluate and store force value with respect to the updated position
+      f = new Vec() ; element.force_param.forEach (param) -> f.add(Force.eval(element, param)) # evaluate and store force value with respect to the updated position
       element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
       element.f = f
       return      

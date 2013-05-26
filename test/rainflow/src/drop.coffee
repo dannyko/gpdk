@@ -14,7 +14,7 @@ class @Drop extends Circle
     @lifetime = Utils.timestamp() - @lifetime
     @destroy() if @lifetime > @max_lifetime
     @lifetime = Utils.timestamp() - @lifetime
-    if @offscreen() # periodic wrapping along horizontal axis
+    if @offscreen() # periodic wrapping 
       if @r.x > @width then @r.x = @r.x % @width
       if @r.x < 0 then @r.x = @width + @r.x
       if @r.y < 0 then (
