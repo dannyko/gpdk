@@ -8,7 +8,12 @@ class @Drop extends Circle
     @image.attr('opacity', '0.8').attr('stroke-width', 0.25)
     @lifetime = Utils.timestamp()
     @max_lifetime = 3e4
+    @vscale = .9
     # @BB() to allow bounding boxes to be used for collision detection
+
+  reaction: (element) ->
+    @v.scale(@vscale)
+    super
 
   cleanup: (@_cleanup = @_cleanup) ->
     @lifetime = Utils.timestamp() - @lifetime
