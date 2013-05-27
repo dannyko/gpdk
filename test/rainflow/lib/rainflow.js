@@ -715,6 +715,7 @@
         case 'friction':
           fx = -param.alpha * element.v.x;
           fy = -param.alpha * element.v.y;
+          element.v.scale(param.vscale);
           break;
         case 'spring':
           fx = -(element.r.x - param.cx);
@@ -931,6 +932,7 @@
           break;
         case 'friction':
           this.alpha = this.config.alpha || 1;
+          this.vscale = this.config.vscale || .99;
           break;
         case 'spring':
           this.cx = this.config.cx || 0;
@@ -1031,12 +1033,12 @@
       this.config = config != null ? config : {};
       Drop.__super__.constructor.apply(this, arguments);
       this.dt = 1;
-      this.size = 1;
+      this.size = .7;
       this.fill('white');
-      this.stroke('black');
+      this.stroke('none');
       this.image.attr('opacity', '0.8').attr('stroke-width', 0.25);
       this.lifetime = Utils.timestamp();
-      this.max_lifetime = 1e4;
+      this.max_lifetime = 3e4;
     }
 
     Drop.prototype.cleanup = function(_cleanup) {
@@ -1094,7 +1096,7 @@
       this.root = new Root();
       this.numel = this.config.numel || 5;
       this.elevation = [];
-      this.dropwait = 175;
+      this.sleep = 250;
       this.lastdrop = Utils.timestamp();
       drops = function(text) {
         var row;
@@ -1111,6 +1113,7 @@
         };
         _this.friction_param = {
           alpha: .1,
+          vscale: .9,
           type: 'friction'
         };
         _this.svg.on("mousedown", _this.drop);
@@ -1176,7 +1179,7 @@
         r = this.root.r;
       }
       stamp = Utils.timestamp();
-      if (!(stamp - this.lastdrop > this.dropwait)) {
+      if (!(stamp - this.lastdrop > this.sleep)) {
         return;
       }
       this.lastdrop = stamp;
