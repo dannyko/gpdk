@@ -1034,9 +1034,9 @@
       Drop.__super__.constructor.apply(this, arguments);
       this.dt = 1;
       this.size = .7;
-      this.fill('white');
+      this.fill('navy');
       this.stroke('none');
-      this.image.attr('opacity', '0.8').attr('stroke-width', 0.25);
+      this.image.attr('opacity', '0.6').attr('stroke-width', 0.25);
       this.lifetime = Utils.timestamp();
       this.max_lifetime = 3e4;
       this.vscale = .7;
