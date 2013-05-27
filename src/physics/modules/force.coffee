@@ -6,7 +6,6 @@ class @Force # this simple object does one job: return the value of the force f(
       when 'friction'          then (
         fx = -param.alpha * element.v.x
         fy = -param.alpha * element.v.y
-        element.v.scale(param.vscale)
       )
       when 'spring'            then fx = -(element.r.x - param.cx) ; fy = -(element.r.y - param.cy)
       when 'charge', 'gravity' then (

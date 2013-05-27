@@ -7,8 +7,9 @@ class @ForceParam # the force config object defines the interface and provides d
         @fy = @config.y || 0
       )
       when 'friction' then ( 
-        @alpha = @config.alpha || 1
+        @alpha  = @config.alpha  || 1
         @vscale = @config.vscale || .99
+        @vcut   = @config.vcut   || 1e-2
       )
       when 'spring' then (
         @cx = @config.cx || 0
