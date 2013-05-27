@@ -19,6 +19,7 @@ class @Rainflow extends Game
         type: 'gradient'
       @friction_param =
         alpha: .1
+        vscale: .9
         type: 'friction'
       @svg.on("mousedown", @drop) # default mouse button listener
       d3.select(window).on("keydown", @keydown) # default keyboard listener
