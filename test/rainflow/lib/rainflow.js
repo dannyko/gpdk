@@ -715,7 +715,6 @@
         case 'friction':
           fx = -param.alpha * element.v.x;
           fy = -param.alpha * element.v.y;
-          element.v.scale(param.vscale);
           break;
         case 'spring':
           fx = -(element.r.x - param.cx);
@@ -933,6 +932,7 @@
         case 'friction':
           this.alpha = this.config.alpha || 1;
           this.vscale = this.config.vscale || .99;
+          this.vcut = this.config.vcut || 1e-2;
           break;
         case 'spring':
           this.cx = this.config.cx || 0;
@@ -1039,7 +1039,13 @@
       this.image.attr('opacity', '0.8').attr('stroke-width', 0.25);
       this.lifetime = Utils.timestamp();
       this.max_lifetime = 3e4;
+      this.vscale = .7;
     }
+
+    Drop.prototype.reaction = function(element) {
+      this.v.scale(this.vscale);
+      return Drop.__super__.reaction.apply(this, arguments);
+    };
 
     Drop.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
@@ -1112,8 +1118,7 @@
           type: 'gradient'
         };
         _this.friction_param = {
-          alpha: .1,
-          vscale: .9,
+          alpha: .2,
           type: 'friction'
         };
         _this.svg.on("mousedown", _this.drop);
