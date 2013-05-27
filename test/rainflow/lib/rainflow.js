@@ -715,6 +715,7 @@
         case 'friction':
           fx = -param.alpha * element.v.x;
           fy = -param.alpha * element.v.y;
+          element.v.scale(param.vscale);
           break;
         case 'spring':
           fx = -(element.r.x - param.cx);
@@ -931,6 +932,7 @@
           break;
         case 'friction':
           this.alpha = this.config.alpha || 1;
+          this.vscale = this.config.vscale || .99;
           break;
         case 'spring':
           this.cx = this.config.cx || 0;
@@ -1111,6 +1113,7 @@
         };
         _this.friction_param = {
           alpha: .1,
+          vscale: .9,
           type: 'friction'
         };
         _this.svg.on("mousedown", _this.drop);
