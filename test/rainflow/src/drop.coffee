@@ -3,9 +3,9 @@ class @Drop extends Circle
     super
     @dt = 1
     @size = .7
-    @fill('white')
+    @fill('navy')
     @stroke('none')
-    @image.attr('opacity', '0.8').attr('stroke-width', 0.25)
+    @image.attr('opacity', '0.6').attr('stroke-width', 0.25)
     @lifetime = Utils.timestamp()
     @max_lifetime = 3e4
     @vscale = .7
