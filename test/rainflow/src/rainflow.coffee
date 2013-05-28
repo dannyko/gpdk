@@ -56,24 +56,14 @@ class @Rainflow extends Game
     V = (r) => # energy evaluation function
       # bilinearly interpolated energy, see http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
       # first wrap the input coordinates to an interior point, enforcing periodic boundary conditions
-      scale = 1e-4 # units
       x   = r.x
       y   = r.y
       x   = @elevation[0].length - 1 + x % (@elevation[0].length - 1) if x < 0 
       x   = x % (@elevation[0].length - 1) if x > @elevation[0].length - 1
       y   = @elevation.length - 1 + y % (@elevation.length - 1) if y < 0
       y   = y % (@elevation.length - 1) if y > @elevation.length - 1
-      tol = 1e-12 # small number for offset in case x = Math.floor(x)
-      xf  = Math.floor(x)
-      xc  = Math.ceil(x + tol)
-      yf  = Math.floor(y)
-      yc  = Math.ceil(y + tol)
-      dxf = x - xf
-      dxc = xc - x
-      dyf = y - yf
-      dyc = yc - y
-      v_r = @elevation[yf][xf] * dxc * dyc + @elevation[yf][xc] * dxf * dyc + @elevation[yc][xf] * dxc * dyf + @elevation[yc][xc] * dxf * dyf
-      v_r *= scale / ((xc - xf) * (yc - yf)) # bilinear approximation of scalar energy value from discrete data array
+      scale = 1e-4 # units
+      energy = scale * Utils.bilinear_interp @elevation, x, y
 
     updateWindow = () =>
       width  = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth
