@@ -7,7 +7,7 @@ class @Root extends Circle
     @size      = 13
     @angle     = -Math.PI * 0.5 # initialize bullet angle
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @svg.on("mousemove", @move) # default mouse behavior is to control the root element position
+    @div.on("mousemove", @move) # default mouse behavior is to control the root element position
     d3.select(window).on("keydown", @keydown) # default keyboard listener
     @svg.on("mousedown", @fire) # default mouse button listener
     @svg.on("mousewheel", @spin) # default scroll wheel listener

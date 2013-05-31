@@ -28,6 +28,7 @@ class @Element
                   .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
     @g           = @config.g           || @g
     @svg         = @config.svg         || d3.select("#game_svg")
+    @div         = @config.div         || d3.select("#game_div")
     @quadtree    = @config.quadtree    || null
     @tick        = @config.tick        || Integration.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @width       = @config.width       || parseInt(@svg.attr("width"))

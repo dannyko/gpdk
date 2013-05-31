@@ -56,7 +56,7 @@ class @Utils
 
     interp(d, this)
 
-  @bilinear_interp = (matrix, x, y) ->
+  @bilinear_interp = (matrix, x, y) -> # from http://en.wikipedia.org/wiki/Bilinear_interpolation#Algorithm
     tol = 1e-1 # for offset in case x = Math.floor(x)
     xf  = Math.floor(x)
     xc  = Math.ceil(x + tol)

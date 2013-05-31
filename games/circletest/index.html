@@ -6,11 +6,19 @@
 <script type="text/javascript" src="../../lib/coffee-script.js"></script><!-- http://coffeescript.org/extras/-->
 <script type="text/javascript" src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
 <style>
+  #game_div {
+    position:relative;
+  }
+  #game_canvas {
+  	position: absolute;
+  	top:0px;
+  }
 </style>
 </head>
 <body>
 <input id="use_bb" type="checkbox"/><label for="use_bb">Use rectangle collisions</label>
 <div id="game_div" style="background-color: #333; width: 800px ; height: 600px;margin-left: auto; margin-right: auto;">
+<canvas id="game_canvas" width="800" height="600"> </canvas>
 <svg id="game_svg" width="800" height="600">
 <g id="game_g" width="800" height="600">
 </g>
