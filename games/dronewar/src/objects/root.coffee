@@ -28,14 +28,14 @@ class @Root extends Polygon
   fire: () =>
     timestamp   = Utils.timestamp()
     return true if @destroyed
-    return unless @collision and timestamp - @lastfire > @wait
+    return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
     bullet      = new Bullet()
     bullet.size = @bullet_size
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
     bullet.r.x  = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y  = @r.y + y * 14
+    bullet.r.y  = @r.y + y * 20
     bullet.v.x  = @bullet_speed * x  
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)

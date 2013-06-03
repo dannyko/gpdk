@@ -130,6 +130,20 @@
       return interp(d, this);
     };
 
+    Utils.bilinear_interp = function(matrix, x, y) {
+      var dxc, dxf, dyc, dyf, interp, tol, xc, xf, yc, yf;
+      tol = 1e-1;
+      xf = Math.floor(x);
+      xc = Math.ceil(x + tol);
+      yf = Math.floor(y);
+      yc = Math.ceil(y + tol);
+      dxf = x - xf;
+      dxc = xc - x;
+      dyf = y - yf;
+      dyc = yc - y;
+      return interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf;
+    };
+
     return Utils;
 
   })();
@@ -144,7 +158,7 @@
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
       this.n = this.config.n || [];
-      this.force = this.config.force || [new Force()];
+      this.force_param = this.config.force_param || [new ForceParam()];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
       this.bb_height = this.config.bb_height || 0;
@@ -153,7 +167,7 @@
       this.top = this.config.top || 0;
       this.bottom = this.config.bottom || 0;
       this.collision = this.config.collision || true;
-      this.tol = this.config.tol || 0.5;
+      this.tol = this.config.tol || 0.25;
       this._stroke = this.config.stroke || "none";
       this._fill = this.config.fill || "black";
       this.angle = this.config.angle || 0;
@@ -701,6 +715,91 @@
 
   })();
 
+  this.Force = (function() {
+
+    function Force() {}
+
+    Force["eval"] = function(element, param) {
+      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
+      switch (param.type) {
+        case 'constant':
+          fx = param.x;
+          fy = param.y;
+          break;
+        case 'friction':
+          fx = -param.alpha * element.v.x;
+          fy = -param.alpha * element.v.y;
+          break;
+        case 'spring':
+          fx = -(element.r.x - param.cx);
+          fy = -(element.r.y - param.cy);
+          break;
+        case 'charge':
+        case 'gravity':
+          dr = new Vec({
+            x: param.cx - element.r.x,
+            y: param.cy - element.r.y
+          });
+          r2 = dr.length_squared();
+          r3 = r2 * Math.sqrt(r2);
+          fx = param.q * dr.x / r3;
+          fy = param.q * dr.y / r3;
+          break;
+        case 'random':
+          fx = 2 * (Math.random() - 0.5) * param.xScale;
+          fy = 2 * (Math.random() - 0.5) * param.yScale;
+          if (element.r.x > param.xBound) {
+            fx = -param.fxBound;
+          }
+          if (element.r.y > param.yBound) {
+            fy = -param.fyBound;
+          }
+          if (element.r.x < 0) {
+            fx = param.fxBound;
+          }
+          if (element.r.y < 0) {
+            fy = param.fyBound;
+          }
+          break;
+        case 'gradient':
+          rpx = new Vec(element.r).add({
+            x: param.tol,
+            y: 0
+          });
+          rmx = new Vec(element.r).add({
+            x: -param.tol,
+            y: 0
+          });
+          rpy = new Vec(element.r).add({
+            y: param.tol,
+            x: 0
+          });
+          rmy = new Vec(element.r).add({
+            y: -param.tol,
+            x: 0
+          });
+          epx = param.energy(rpx);
+          emx = param.energy(rmx);
+          epy = param.energy(rpy);
+          emy = param.energy(rmy);
+          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
+            fx = 0;
+            fy = 0;
+            break;
+          }
+          fx = -0.5 * (epx - emx) / param.tol;
+          fy = -0.5 * (epy - emy) / param.tol;
+      }
+      return new Vec({
+        x: fx,
+        y: fy
+      });
+    };
+
+    return Force;
+
+  })();
+
   this.Integration = (function() {
 
     function Integration() {}
@@ -717,8 +816,8 @@
         element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
         element.r.add(element.dr);
         f = new Vec();
-        element.force.forEach(function(force) {
-          return f.add(force.f(element));
+        element.force_param.forEach(function(param) {
+          return f.add(Force["eval"](element, param));
         });
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
         element.f = f;
@@ -834,94 +933,44 @@
 
   })();
 
-  this.Force = (function() {
+  this.ForceParam = (function() {
 
-    function Force(param) {
-      this.param = param != null ? param : {
-        type: 'constant',
-        fx: 0,
-        fy: 0
-      };
-    }
-
-    Force.prototype.f = function(element) {
-      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
-      switch (this.param.type) {
+    function ForceParam(config) {
+      this.config = config != null ? config : {};
+      this.type = this.config.type || 'constant';
+      switch (this.config.type) {
         case 'constant':
-          fx = this.param.x;
-          fy = this.param.y;
+          this.fx = this.config.x || 0;
+          this.fy = this.config.y || 0;
           break;
         case 'friction':
-          fx = -this.param.alpha * element.v.x;
-          fy = -this.param.alpha * element.v.y;
+          this.alpha = this.config.alpha || 1;
+          this.vscale = this.config.vscale || .99;
+          this.vcut = this.config.vcut || 1e-2;
           break;
         case 'spring':
-          fx = -(element.r.x - this.param.cx);
-          fy = -(element.r.y - this.param.cy);
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
           break;
         case 'charge':
         case 'gravity':
-          dr = new Vec({
-            x: this.param.cx - element.r.x,
-            y: this.param.cy - element.r.y
-          });
-          r2 = dr.length_squared();
-          r3 = r2 * Math.sqrt(r2);
-          fx = this.param.q * dr.x / r3;
-          fy = this.param.q * dr.y / r3;
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
+          this.q = this.config.q || 1;
           break;
         case 'random':
-          fx = 2 * (Math.random() - 0.5) * this.param.xScale;
-          fy = 2 * (Math.random() - 0.5) * this.param.yScale;
-          if (element.r.x > this.param.xBound) {
-            fx = -this.param.fxBound;
-          }
-          if (element.r.y > this.param.yBound) {
-            fy = -this.param.fyBound;
-          }
-          if (element.r.x < 0) {
-            fx = this.param.fxBound;
-          }
-          if (element.r.y < 0) {
-            fy = this.param.fyBound;
-          }
+          this.xScale = this.config.xScale || 1;
+          this.yScale = this.config.yScale || 1;
+          this.fxBound = this.config.fxBound || 10;
+          this.fyBound = this.config.fyBound || 10;
           break;
         case 'gradient':
-          rpx = new Vec(element.r).add({
-            x: this.param.tol,
-            y: 0
-          });
-          rmx = new Vec(element.r).add({
-            x: -this.param.tol,
-            y: 0
-          });
-          rpy = new Vec(element.r).add({
-            y: this.param.tol,
-            x: 0
-          });
-          rmy = new Vec(element.r).add({
-            y: -this.param.tol,
-            x: 0
-          });
-          epx = this.param.energy(rpx);
-          emx = this.param.energy(rmx);
-          epy = this.param.energy(rpy);
-          emy = this.param.energy(rmy);
-          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
-            fx = 0;
-            fy = 0;
-            break;
-          }
-          fx = -0.5 * (epx - emx) / this.param.tol;
-          fy = -0.5 * (epy - emy) / this.param.tol;
+          this.tol = this.config.tol || 0.1;
+          this.energy = this.config.energy || function(r) {};
       }
-      return new Vec({
-        x: fx,
-        y: fy
-      });
-    };
+    }
 
-    return Force;
+    return ForceParam;
 
   })();
 
@@ -1377,7 +1426,7 @@
       _ref = this.element;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         drone = _ref[_i];
-        drone.force[0].param = this.param;
+        drone.force_param[0] = this.param;
       }
     };
 
@@ -1579,7 +1628,7 @@
       if (this.destroyed) {
         return true;
       }
-      if (!(this.collision && timestamp - this.lastfire > this.wait)) {
+      if (!(this.collision && timestamp - this.lastfire >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
@@ -1588,7 +1637,7 @@
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
       bullet.r.x = this.r.x + x * (this.size / 3 + bullet.size);
-      bullet.r.y = this.r.y + y * 14;
+      bullet.r.y = this.r.y + y * 20;
       bullet.v.x = this.bullet_speed * x;
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
