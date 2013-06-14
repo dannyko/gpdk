@@ -28,6 +28,11 @@ class @Dronewar extends Game
       .attr("y", "60")
       .attr('font-family', 'arial black')
     d3.select(window).on("keydown", @keydown) # keyboard listener
+    img     = new Image()
+    img.src = Ship.viper().url
+    img.src = Ship.sidewinder().url
+    img.src = Ship.fang().url
+    img.src = Drone.url
 
   level: ->
     @svg.style("cursor", "none")
@@ -96,7 +101,6 @@ class @Dronewar extends Game
     return
 
   start: -> # start new game
-    Gameprez.start() if Gameprez? # start score tracking 
     @root.draw()
     @root.stop()
     title = @g.append("text")
@@ -197,6 +201,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
+      Gameprez.start() if Gameprez? # start score tracking 
     )
     how = @g.append("text")
       .text("")

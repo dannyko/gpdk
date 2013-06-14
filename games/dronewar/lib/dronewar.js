@@ -248,6 +248,12 @@
       }
     };
 
+    Element.prototype.update = function() {
+      this.tick();
+      this.draw();
+      return this.cleanup();
+    };
+
     return Element;
 
   })();
@@ -485,8 +491,6 @@
             return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
           });
         }
-        d.draw();
-        d.cleanup();
         length = this.list.length;
         _results.push(i++);
       }
@@ -806,7 +810,7 @@
 
     Integration.off = false;
 
-    Integration.tick = 1 / 30;
+    Integration.tick = 1000 / 80;
 
     Integration.timestamp = Utils.timestamp();
 
@@ -825,7 +829,7 @@
     };
 
     Integration.integrate = function(cleanup) {
-      var element, timestamp, _i, _len, _ref;
+      var element, len, timestamp;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -837,10 +841,12 @@
         return;
       }
       Integration.timestamp = timestamp;
-      _ref = Collision.list;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        element = _ref[_i];
+      len = Collision.list.length;
+      while (len--) {
+        element = Collision.list[len];
         element.tick();
+        element.draw();
+        element.cleanup();
       }
       Collision.detect();
     };
@@ -1301,10 +1307,6 @@
       }
       this.destroy();
       n.destroy();
-      Gamescore.increment_value();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.score(Gamescore.value);
-      }
       return true;
     };
 
@@ -1316,19 +1318,25 @@
 
     __extends(Drone, _super);
 
+    Drone.url = GameAssetsUrl + "drone_1.png";
+
     function Drone(config) {
       this.config = config != null ? config : {};
       Drone.__super__.constructor.apply(this, arguments);
       this.stop();
       this.image.remove();
       this.g.attr("class", "drone");
-      this.image = this.g.append("image").attr("xlink:href", GameAssetsUrl + "drone_1.png").attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
     Drone.prototype.destroy = function(remove) {
       var N, dur, fill;
       if (remove == null) {
         remove = false;
+      }
+      Gamescore.increment_value();
+      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+        Gameprez.score(Gamescore.value);
       }
       Drone.__super__.destroy.call(this, remove);
       dur = 100;
@@ -1352,7 +1360,8 @@
     __extends(Dronewar, _super);
 
     function Dronewar() {
-      var _this = this;
+      var img,
+        _this = this;
       this.reset = function() {
         return Dronewar.prototype.reset.apply(_this, arguments);
       };
@@ -1370,6 +1379,11 @@
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
       this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial black');
       d3.select(window).on("keydown", this.keydown);
+      img = new Image();
+      img.src = Ship.viper().url;
+      img.src = Ship.sidewinder().url;
+      img.src = Ship.fang().url;
+      img.src = Drone.url;
     }
 
     Dronewar.prototype.level = function() {
@@ -1463,9 +1477,6 @@
     Dronewar.prototype.start = function() {
       var dur, fang, go, how, prompt, root, sidewinder, title, viper,
         _this = this;
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.start();
-      }
       this.root.draw();
       this.root.stop();
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", this.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -1519,7 +1530,10 @@
         go.transition().duration(dur).style("opacity", 0).remove();
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
-        return d3.timer(_this.progress);
+        d3.timer(_this.progress);
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          return Gameprez.start();
+        }
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", this.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use the mouse for controlling movement, scrollwheel for rotation");

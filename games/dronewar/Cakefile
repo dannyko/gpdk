@@ -9,9 +9,18 @@ OUTPUT_DIR   = 'lib' # the directory where the output .js file lives
 task 'compile', 'Compiles coffee in src/ to js in OUTPUT_DIR/', ->
   compile()
 
+task 'zip', 'Compiles and zips coffee in src/ to js in OUTPUT_DIR/', ->
+  compile(zip)
+
 compile = (callback) ->
   fileString = '../../src/game/modules ../../src/game/objects/abstract ../../src/game/objects/base ../../src/physics/ src'
   exec "coffee -j #{OUTPUT_DIR}/#{FILE_NAME}.js -c #{fileString}", (err, stdout, stderr) ->
     throw err if err
     console.log "Compiled coffee files"
+    callback?()
+
+zip = (callback) ->
+  exec "cd #{OUTPUT_DIR} && zip #{FILE_NAME}.zip * && cd ..", (err, stdout, stderr) ->
+    throw err if err
+    console.log "Zipped game files"
     callback?()

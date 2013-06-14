@@ -77,3 +77,8 @@ class @Element
     @destroyed = true
     @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     return
+
+  update: -> # helper to combine these three operations into one loop for efficiency    
+    @tick()
+    @draw()
+    @cleanup()

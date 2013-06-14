@@ -1,16 +1,20 @@
 class @Drone extends Circle
+  @url = GameAssetsUrl + "drone_1.png"
+
   constructor: (@config = {}) ->
     super
     @stop()
     @image.remove()
     @g.attr("class", "drone")
     @image = @g.append("image")
-      .attr("xlink:href", GameAssetsUrl + "drone_1.png")
+      .attr("xlink:href", Drone.url)
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
         
   destroy: (remove = false) ->
+    Gamescore.increment_value() 
+    Gameprez.score(Gamescore.value) if Gameprez?
     super(remove)
     dur = 100
     N = 320
