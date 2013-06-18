@@ -12,9 +12,12 @@ class @Drone extends Circle
       .attr("width", @size * 2)
       .attr("height", @size * 2)
         
-  destroy: (remove = false) ->
+  reaction: (element) -> # increment score if reacting with bullet
     Gamescore.increment_value() 
-    Gameprez.score(Gamescore.value) if Gameprez?
+    Gameprez?.score(Gamescore.value)
+    super
+
+  destroy: (remove = false) ->
     super(remove)
     dur = 100
     N = 320

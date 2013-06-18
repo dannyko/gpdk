@@ -17,3 +17,10 @@ class @Game
   start: -> Integration.start() # start all elements
     
   stop: -> Integration.stop() # stop all elements
+
+  cleanup: -> # remove all elements from Collision list and set to object reference to null
+    len = Collision.list.length
+    while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      element = Collision.list[len]
+      element.destroy() unless element.destroyed
+      element = null

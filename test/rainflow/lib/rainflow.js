@@ -130,6 +130,20 @@
       return interp(d, this);
     };
 
+    Utils.bilinear_interp = function(matrix, x, y) {
+      var dxc, dxf, dyc, dyf, interp, tol, xc, xf, yc, yf;
+      tol = 1e-1;
+      xf = Math.floor(x);
+      xc = Math.ceil(x + tol);
+      yf = Math.floor(y);
+      yc = Math.ceil(y + tol);
+      dxf = x - xf;
+      dxc = xc - x;
+      dyf = y - yf;
+      dyc = yc - y;
+      return interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf;
+    };
+
     return Utils;
 
   })();
@@ -232,6 +246,12 @@
       if (remove) {
         this.g.remove();
       }
+    };
+
+    Element.prototype.update = function() {
+      this.tick();
+      this.draw();
+      return this.cleanup();
     };
 
     return Element;
@@ -471,8 +491,6 @@
             return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
           });
         }
-        d.draw();
-        d.cleanup();
         length = this.list.length;
         _results.push(i++);
       }
@@ -792,7 +810,7 @@
 
     Integration.off = false;
 
-    Integration.tick = 1 / 30;
+    Integration.tick = 1000 / 80;
 
     Integration.timestamp = Utils.timestamp();
 
@@ -811,7 +829,7 @@
     };
 
     Integration.integrate = function(cleanup) {
-      var element, timestamp, _i, _len, _ref;
+      var element, len, timestamp;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -823,10 +841,12 @@
         return;
       }
       Integration.timestamp = timestamp;
-      _ref = Collision.list;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        element = _ref[_i];
+      len = Collision.list.length;
+      while (len--) {
+        element = Collision.list[len];
         element.tick();
+        element.draw();
+        element.cleanup();
       }
       Collision.detect();
     };
@@ -1136,8 +1156,7 @@
         return d3.text('topo_flip.csv', drops);
       });
       V = function(r) {
-        var dxc, dxf, dyc, dyf, scale, tol, v_r, x, xc, xf, y, yc, yf;
-        scale = 1e-4;
+        var energy, scale, x, y;
         x = r.x;
         y = r.y;
         if (x < 0) {
@@ -1152,17 +1171,8 @@
         if (y > _this.elevation.length - 1) {
           y = y % (_this.elevation.length - 1);
         }
-        tol = 1e-12;
-        xf = Math.floor(x);
-        xc = Math.ceil(x + tol);
-        yf = Math.floor(y);
-        yc = Math.ceil(y + tol);
-        dxf = x - xf;
-        dxc = xc - x;
-        dyf = y - yf;
-        dyc = yc - y;
-        v_r = _this.elevation[yf][xf] * dxc * dyc + _this.elevation[yf][xc] * dxf * dyc + _this.elevation[yc][xf] * dxc * dyf + _this.elevation[yc][xc] * dxf * dyf;
-        return v_r *= scale / ((xc - xf) * (yc - yf));
+        scale = 1e-4;
+        return energy = scale * Utils.bilinear_interp(_this.elevation, x, y);
       };
       updateWindow = function() {
         var height, scale, width;

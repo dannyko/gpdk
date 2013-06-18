@@ -285,6 +285,20 @@
       return Integration.stop();
     };
 
+    Game.prototype.cleanup = function() {
+      var element, len, _results;
+      len = Collision.list.length;
+      _results = [];
+      while (len--) {
+        element = Collision.list[len];
+        if (!element.destroyed) {
+          element.destroy();
+        }
+        _results.push(element = null);
+      }
+      return _results;
+    };
+
     return Game;
 
   })();
@@ -1329,14 +1343,18 @@
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
+    Drone.prototype.reaction = function(element) {
+      Gamescore.increment_value();
+      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+        Gameprez.score(Gamescore.value);
+      }
+      return Drone.__super__.reaction.apply(this, arguments);
+    };
+
     Drone.prototype.destroy = function(remove) {
       var N, dur, fill;
       if (remove == null) {
         remove = false;
-      }
-      Gamescore.increment_value();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.score(Gamescore.value);
       }
       Drone.__super__.destroy.call(this, remove);
       dur = 100;
@@ -1467,10 +1485,16 @@
     };
 
     Dronewar.prototype.stop = function() {
+      var callback,
+        _this = this;
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
+      callback = function() {
+        _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        return true;
+      };
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.end(Gamescore.value);
+        Gameprez.end(Gamescore.value, callback);
       }
     };
 
@@ -1531,9 +1555,7 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
         d3.timer(_this.progress);
-        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-          return Gameprez.start();
-        }
+        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start() : void 0;
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", this.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use the mouse for controlling movement, scrollwheel for rotation");
@@ -1549,8 +1571,7 @@
         this.lives.text('LIVES: ' + Gamescore.lives);
       } else {
         dur = 420;
-        this.root.game_over();
-        this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        this.root.game_over(dur);
         this.stop();
         return true;
       }
@@ -1565,6 +1586,7 @@
     };
 
     Dronewar.prototype.reset = function() {
+      this.cleanup();
       this.g.selectAll("g").remove();
       this.lives.text("");
       this.scoretxt.text("");

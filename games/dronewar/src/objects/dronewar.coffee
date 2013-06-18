@@ -97,7 +97,8 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    Gameprez.end(Gamescore.value) if Gameprez?
+    callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; return true
+    Gameprez?.end(Gamescore.value, callback)
     return
 
   start: -> # start new game
@@ -201,7 +202,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
-      Gameprez.start() if Gameprez? # start score tracking 
+      Gameprez?.start() # start score tracking 
     )
     how = @g.append("text")
       .text("")
@@ -225,8 +226,7 @@ class @Dronewar extends Game
       @lives.text('LIVES: ' + Gamescore.lives) 
     else 
       dur = 420
-      @root.game_over()
-      @lives.text("GAME OVER, PRESS 'R' TO RESTART")
+      @root.game_over(dur)
       @stop()
       return true
     all_destroyed = @element.every (element) -> element.destroyed
@@ -237,6 +237,7 @@ class @Dronewar extends Game
     return
             
   reset: =>
+    @cleanup()
     @g.selectAll("g").remove()
     @lives.text("")
     @scoretxt.text("")
