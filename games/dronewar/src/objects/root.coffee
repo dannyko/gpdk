@@ -13,7 +13,7 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick = -> return
 
-  update: (xy = d3.mouse(@svg.node())) =>
+  redraw: (xy = d3.mouse(@svg.node())) =>
     return unless @collision # don't draw if not active
     @r.x = xy[0]
     @r.y = xy[1]
@@ -79,7 +79,7 @@ class @Root extends Polygon
       
   start: ->
     super
-    @svg.on("mousemove", @update) # default mouse behavior is to control the root element position
+    @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
