@@ -20,10 +20,7 @@ class @Integration # numerical integration module for solving differential equat
     @timestamp = timestamp
     len = Collision.list.length
     while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      element = Collision.list[len]
-      element.tick()
-      element.draw()
-      element.cleanup() # put cleanup inside the same loop as integration for efficiency    
+      Collision.list[len].update()
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     return 
   
