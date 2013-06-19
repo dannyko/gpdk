@@ -1321,6 +1321,10 @@
       }
       this.destroy();
       n.destroy();
+      Gamescore.increment_value();
+      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+        Gameprez.score(Gamescore.value);
+      }
       return true;
     };
 
@@ -1342,14 +1346,6 @@
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
-
-    Drone.prototype.reaction = function(element) {
-      Gamescore.increment_value();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.score(Gamescore.value);
-      }
-      return Drone.__super__.reaction.apply(this, arguments);
-    };
 
     Drone.prototype.destroy = function(remove) {
       var N, dur, fill;
@@ -1390,6 +1386,7 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
+      this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 5;
       this.N = this.initialN;
       this.root = new Root();
@@ -1555,7 +1552,7 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
         d3.timer(_this.progress);
-        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start() : void 0;
+        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", this.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use the mouse for controlling movement, scrollwheel for rotation");

@@ -1,6 +1,7 @@
 class @Dronewar extends Game
   constructor: ->
     super
+    @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 5
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
@@ -202,7 +203,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
-      Gameprez?.start() # start score tracking 
+      Gameprez?.start(@max_score_increment) # start score tracking 
     )
     how = @g.append("text")
       .text("")
