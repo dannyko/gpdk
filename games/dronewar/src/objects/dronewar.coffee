@@ -1,6 +1,7 @@
 class @Dronewar extends Game
   constructor: ->
     super
+    @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 5
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
@@ -28,6 +29,11 @@ class @Dronewar extends Game
       .attr("y", "60")
       .attr('font-family', 'arial black')
     d3.select(window).on("keydown", @keydown) # keyboard listener
+    img     = new Image()
+    img.src = Ship.viper().url
+    img.src = Ship.sidewinder().url
+    img.src = Ship.fang().url
+    img.src = Drone.url
 
   level: ->
     @svg.style("cursor", "none")
@@ -92,11 +98,11 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    Gameprez.end(Gamescore.value) if Gameprez?
+    callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; return true
+    Gameprez?.end(Gamescore.value, callback)
     return
 
   start: -> # start new game
-    Gameprez.start() if Gameprez? # start score tracking 
     @root.draw()
     @root.stop()
     title = @g.append("text")
@@ -197,6 +203,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
+      Gameprez?.start(@max_score_increment) # start score tracking 
     )
     how = @g.append("text")
       .text("")
@@ -220,8 +227,7 @@ class @Dronewar extends Game
       @lives.text('LIVES: ' + Gamescore.lives) 
     else 
       dur = 420
-      @root.game_over()
-      @lives.text("GAME OVER, PRESS 'R' TO RESTART")
+      @root.game_over(dur)
       @stop()
       return true
     all_destroyed = @element.every (element) -> element.destroyed
@@ -232,6 +238,7 @@ class @Dronewar extends Game
     return
             
   reset: =>
+    @cleanup()
     @g.selectAll("g").remove()
     @lives.text("")
     @scoretxt.text("")

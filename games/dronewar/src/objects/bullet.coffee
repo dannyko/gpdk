@@ -5,10 +5,10 @@ class @Bullet extends Circle
     @size = 3 # bullets should be set smaller than default elements
     @fill("#000")
     
-  destroy_check: (n) -> # bullet handles score value updates 
+  destroy_check: (n) -> 
     return true if n.is_root
     @destroy()
     n.destroy()
     Gamescore.increment_value() 
-    Gameprez.score(Gamescore.value) if Gameprez?
+    Gameprez?.score(Gamescore.value)
     true

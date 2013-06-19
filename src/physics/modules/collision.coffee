@@ -36,8 +36,6 @@ class @Collision
               Collision.check(d, p.d) # check for collision and run reactions if collision occurred
           x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
         )
-      d.draw() # put this inside the collision detection for loop for efficiency to avoid extra loops
-      d.cleanup() # ditto - put cleanup inside the same loop as collision detection for efficiency
       length = @list.length
       i++
 
