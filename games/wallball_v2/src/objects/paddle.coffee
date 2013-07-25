@@ -23,26 +23,19 @@ class @Paddle extends Polygon
     @set_path()
     @r.x       = @width / 2
     @r.y       = @height - @bb_height * 0.5
-    
 
   redraw: (xy = d3.mouse(@svg.node())) =>
-    return unless @react # don't draw if not active
+    return unless @collision # don't draw if not active
     @r.x = xy[0]
-    @r.y = xy[1]
     @draw()
-    @collision_detect()
-
 
   start: ->
     super
-    # @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    
-  
+    @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     
   stop: ->
     super
     @svg.on("mousemove", null) # default mouse behavior is to control the root element position
-    
 
   death_check: (n) ->
     n.death()
@@ -63,3 +56,18 @@ class @Paddle extends Polygon
       .ease('linear')
       .attr("fill", @fill())
   
+  reaction: (n) -> # what happens when root gets hit by a ball
+    console.log('paddle reaction', n)
+    n.v.y = -n.v.y
+    N    = 240 # random color parameter
+    fill = '#ff0' 
+    dur  = 120 # color effect transition duration parameter
+    @image # default reaction
+      .transition()
+      .duration(dur)
+      .ease('sqrt')
+      .attr("fill", fill)
+      .transition()
+      .duration(dur)
+      .ease('linear')
+      .attr("fill", @fill())
