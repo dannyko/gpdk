@@ -9,6 +9,4 @@ class @Bullet extends Circle
     return true if n.is_root
     @destroy()
     n.destroy()
-    Gamescore.increment_value() 
-    Gameprez?.score(Gamescore.value)
     true
