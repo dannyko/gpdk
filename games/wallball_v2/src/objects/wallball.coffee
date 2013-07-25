@@ -4,6 +4,7 @@ class @Wallball extends Game
     @initialN = @config.initialN || 1
     @N        = @initialN
     @root     = new Paddle() # root element i.e. under user control  
+    console.log(@root.r)
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none").attr("fill", "white")
       .attr("font-size", "18").attr("x", "20")
@@ -27,18 +28,42 @@ class @Wallball extends Game
     #d3.select(window).on("keydown", @keydown) # keyboard listener
     
 
-    start: -> # start new game
+  start: -> # start new game
     @root.draw()
-    @root.go = true # e.g. to start bullets firing without allowing root movement   
-    title = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", @width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold')
-    title.text("Wallball")
+    console.log(@root.r)
+    title = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "48")
+      .attr("x", @width / 2 - 320)
+      .attr("y", 90).attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+    title.text("WALLBALL")
     root = @root # copy local reference to @root for access inside other objects without using @ 
 
-    go = @g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", @root.r.x - 60).attr("y", @root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
-    go.text("START")
-    how = @g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", @width / 2 - 320).attr("y", @root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer")
-    how.text("Use the mouse for controlling movement.")
-
+    go = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "#FF2")
+      .attr("font-size", "36")
+      .attr("x", @root.r.x - 60)
+      .attr("y", @root.r.y + 100)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
+      .text("START")
+    how = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", @width / 2 - 320)
+      .attr("y", @root.r.y + 130)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
+      .text("Use the mouse for controlling movement.")
 
     go.on("click", => 
       dur = 500
@@ -56,9 +81,7 @@ class @Wallball extends Game
           @root.image.transition().duration(dur).attr("stroke", "none").attr("fill", "#900").transition().duration(dur).ease('sqrt').style("opacity", 0)
           @lives.text('GAME OVER, PRESS "r" TO RESTART')
           @stop()
-          if Gameprez?
-            Gameprez.gameData.pause = true
-            Gameprez.end()        
+          Gameprez?.end()        
           return true
         inactive = @element.every (element) -> 
           element.react == false and element.fixed == true 
@@ -68,11 +91,8 @@ class @Wallball extends Game
           #@level()
         return
       )
-      if Gameprez?
-        Gameprez.start()
-        Gameprez.gameData = {}
-        Gameprez.gameData.pause = false
-      )
+      Gameprez?.start()
+    )
       
   reset: =>
     @g.selectAll("g").remove()
