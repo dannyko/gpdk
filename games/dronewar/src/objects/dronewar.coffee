@@ -203,6 +203,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
+      Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
     )
     how = @g.append("text")
@@ -245,7 +246,6 @@ class @Dronewar extends Game
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    Gamescore.value = 0
     @root = new Root()
     Gamescore.lives = Gamescore.initialLives
     @start()

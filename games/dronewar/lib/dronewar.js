@@ -1552,6 +1552,7 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
         d3.timer(_this.progress);
+        Gamescore.value = 0;
         return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", this.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
@@ -1590,7 +1591,6 @@
       this.leveltxt.text("");
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
-      Gamescore.value = 0;
       this.root = new Root();
       Gamescore.lives = Gamescore.initialLives;
       this.start();
