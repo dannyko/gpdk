@@ -33,7 +33,7 @@ class @Wallball extends Game
     d3.select('#game_div')
       .transition(dur)
       .style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
-    newBall = new Circle()
+    newBall = new Ball()
     @element.push(newBall) # extend the array of all elements in this game
     i = 0
     @element[i].r.x = @width  * 0.5
