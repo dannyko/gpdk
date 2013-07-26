@@ -1,6 +1,6 @@
 class @Integration # numerical integration module for solving differential equations e.g. physical simulations
 
-  @off: false # a boolean switch determining whether or not to run the 
+  @off: false # a boolean switch determining whether or not to run the physics engine
   @tick: 1000 / 80 # maximum frames per second to prevent the simulation from running too fast on faster machines for predictable realtime performance
   @timestamp: Utils.timestamp() # to keep track of integration frequency
 

@@ -6,11 +6,11 @@ class @Ball extends Circle
   reaction: (n) ->  
     N    = 240 # random color parameter
     fill = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"
-    flash(@, fill)
+    @flash(fill)
     
-  flash = (circle, fill) ->
+  flash: (fill) ->
     dur     = 120 # color effect transition duration parameter
-    circle.image.transition()
+    @image.transition()
       .duration(dur)
       .ease('sqrt')
       .attr("fill", fill)

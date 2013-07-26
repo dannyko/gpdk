@@ -14,7 +14,6 @@ class @Paddle extends Polygon
     @angleStep = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @stroke("#700")
     @fill("red")
-
     @image.attr("stroke", @_stroke)
     @image.attr("fill", @_fill)
     @r.x       = @width / 2
