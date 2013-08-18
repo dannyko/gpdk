@@ -32,8 +32,8 @@ class @Vec # two-dimensional vectors {x, y}
   length: ->
     Math.sqrt(@length_squared())
     
-  normalize: ->
-    inverseLength = 1 / @length()
+  normalize: (length = 1) ->
+    inverseLength = length / @length()
     @x *= inverseLength
     @y *= inverseLength
     @

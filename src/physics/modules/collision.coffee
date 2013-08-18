@@ -13,6 +13,15 @@ class @Collision
 
   @quadtree = @update_quadtree() # initialize
 
+  @resolve: (m, n) ->
+    maxiter  = 32 # should not occur under normal conditions
+    iter     = 1 # initialize
+    reaction = false
+    while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+      m.tick() # update position unless root or bullet 
+      n.tick() # update position unless root or bullet 
+      iter++ # increment the iteration counter
+
   @detect: -> # execute default collision detection using quadtree for accelerated iterations over active elements
     return unless @list.length > 0
     @update_quadtree() # update the quadtree for collision detection after all moveable elements have been moved
@@ -30,7 +39,7 @@ class @Collision
         @quadtree.visit( (node, x1, y1, x2, y2) ->
           p = node.point 
           if p isnt null
-            return false if p.destroyed # this node got cleaned up
+            return false if p.is_destroyed # this node got cleaned up
             return false unless d isnt p.d and p.d.collision # skip this point and continue searching lower levels of the hierarchy
             if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
               Collision.check(d, p.d) # check for collision and run reactions if collision occurred
@@ -56,20 +65,21 @@ class @Collision
         switch n.type 
           when 'Circle' then (
             d = @circle_circle(m, n) 
-            Reaction.circle_circle(m, n, d) if d.collision and reaction
+            reaction_type = 'circle_circle'
           )
           when 'Polygon' then (
             d =  @circle_polygon(m, n) 
-            Reaction.circle_polygon(m, n, d) if d.collision and reaction
+            reaction_type = 'circle_polygon'
           )
       )
       when 'Polygon' then (
         switch n.type 
           when 'Polygon' then (
             d =  @polygon_polygon(m, n) 
-            Reaction.polygon_polygon(m, n, d) if d.collision and reaction
+            reaction_type = 'polygon_polygon'
           )
       )
+    Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
     d
   
   @rectangle_rectangle: (m, n) ->

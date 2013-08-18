@@ -179,7 +179,7 @@
       this.tick = this.config.tick || Integration.verlet(this);
       this.width = this.config.width || parseInt(this.svg.attr("width"));
       this.height = this.config.height || parseInt(this.svg.attr("height"));
-      this.destroyed = false;
+      this.is_destroyed = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -239,7 +239,7 @@
         remove = true;
       }
       this.stop();
-      this.destroyed = true;
+      this.is_destroyed = true;
       if (remove) {
         this.g.remove();
       }
@@ -287,7 +287,7 @@
       _results = [];
       while (len--) {
         element = Collision.list[len];
-        if (!element.destroyed) {
+        if (!element.is_destroyed) {
           element.destroy();
         }
         _results.push(element = null);
@@ -486,7 +486,7 @@
             var p;
             p = node.point;
             if (p !== null) {
-              if (p.destroyed) {
+              if (p.is_destroyed) {
                 return false;
               }
               if (!(d !== p.d && p.d.collision)) {
@@ -1537,7 +1537,7 @@
     };
 
     Dronewar.prototype.progress = function() {
-      var all_destroyed, dur;
+      var all_is_destroyed, dur;
       this.update_drone();
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN + 1));
@@ -1549,10 +1549,10 @@
         this.stop();
         return true;
       }
-      all_destroyed = this.element.every(function(element) {
-        return element.destroyed;
+      all_is_destroyed = this.element.every(function(element) {
+        return element.is_destroyed;
       });
-      if (all_destroyed) {
+      if (all_is_destroyed) {
         this.N++;
         this.charge *= 10;
         this.level();
@@ -1623,7 +1623,7 @@
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       timestamp = Utils.timestamp();
-      if (this.destroyed) {
+      if (this.is_destroyed) {
         return true;
       }
       if (!(this.collision && timestamp - this.lastfire >= this.wait)) {

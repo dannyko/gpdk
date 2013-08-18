@@ -2,8 +2,8 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
-    @r.x           = @width / 2
-    @r.y           = @height - 180
+    @r.x           = Game.width / 2
+    @r.y           = Game.height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @lastfire      = Utils.timestamp()
     @charge        = 5e4
@@ -27,7 +27,7 @@ class @Root extends Polygon
 
   fire: () =>
     timestamp   = Utils.timestamp()
-    return true if @destroyed
+    return true if @is_destroyed
     return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
     bullet      = new Bullet()

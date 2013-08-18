@@ -1,9 +1,11 @@
 class @Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
   constructor: (@config = {}) ->
-    super
+    super(@config)
     @type = 'Polygon'
     @path  = @config.path || @default_path() # use an equilateral triangle as the default polygonal shape
     @image = @g.append("path") # render default polygon image   
+    @fill(@_fill)
+    @stroke(@_stroke)
     @set_path()
   
   default_path: ->

@@ -1,12 +1,12 @@
 class @Circle extends Element
   constructor: (@config = {}) ->
-    super
+    @config.size ||= 15
+    super(@config)
     @type  = 'Circle'
-    @size  = 15 # default size for circle elements (radius)
     @BB() # reset bounding box
     @image = @g.append("circle")
-    @image.attr("stroke", @_stroke)
-    @image.attr("fill", @_fill)
+    @stroke(@_stroke)
+    @fill(@_fill)
 
   draw: -> 
     super

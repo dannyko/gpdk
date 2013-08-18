@@ -1,15 +1,23 @@
 class @Wallball extends Game
-  constructor: ->
+  constructor: (@config = {}) ->
     super
-    @element = []
-    @initialN = @config.initialN || 1
-    @N        = @initialN
-    @root     = new Paddle() # root element i.e. under user control  
-    @scoretxt = @g.append("text").text("")
-      .attr("stroke", "none").attr("fill", "white")
-      .attr("font-size", "18").attr("x", "20")
-      .attr("y", "40").attr('font-family', 'arial black')
-    @lives    = @g.append("text")
+    @frame = new Frame() # Frame({width: 800, height: 600}) # frame element to control ball 
+    @root  = new Paddle() # root element i.e. under user control
+    @ball  = null
+    @wall  = new Wall()
+    Game.paddle = @root
+    Game.wall   = @wall
+    @padding = 8
+
+    @scoretxt = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "18")
+      .attr("x", "20")
+      .attr("y", "40")
+      .attr('font-family', 'arial black')
+    @lives = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
@@ -25,42 +33,42 @@ class @Wallball extends Game
       .attr("x", "20")
       .attr("y", "60")
       .attr('font-family', 'arial black')
-    #d3.select(window).on("keydown", @keydown) # keyboard listener
+    # d3.select(window).on("keydown", @keydown) # keyboard listener
 
-  level: ->
+  level: () ->
+    @ball = {is_destroyed: false} # placeholder
     @svg.style("cursor", "none")
-    dur = 600
-    d3.select('#game_div')
-      .transition(dur)
-      .style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
-    newBall = new Ball()
-    @element.push(newBall) # extend the array of all elements in this game
-    i = 0
-    @element[i].r.x = @width  * 0.5
-    @element[i].r.y = @height * 0.5
-    speed = 20
-    dx = @root.r.x - @element[i].r.x
-    dy = @root.r.y - @element[i].r.y
-    d  = Math.sqrt(dx * dx + dy * dy)
-    dx /= d
-    dy /= d
-    @element[i].v.x = speed * dx 
-    @element[i].v.y = speed * dy
-    console.log(Collision.list)
-    @element[i].draw()
-    dur = 400
-    n = @element.length * 2
+    ready = @g.append("text")
+      .text("GET READY")
+      .attr("stroke", "none")
+      .attr("fill", "yellow")
+      .attr("font-size", "36")
+      .attr("x", Game.width / 2 - 105)
+      .attr("y", Game.height / 2 + 80)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+    dur = 1000
+    ready.transition()
+      .duration(dur)
+      .style("opacity", 1)
+      .transition()
+      .duration(dur)
+      .style('opacity', 0)
+      .remove()
+      .each('end', => 
+        @ball = new Ball()
+      )
     return    
 
   start: -> # start new game
     super
-    @root.draw()
     title = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", @width / 2 - 320)
+      .attr("x", Game.width / 2 - 320)
       .attr("y", 90).attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     title.text("WALLBALL")
@@ -71,8 +79,8 @@ class @Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "#FF2")
       .attr("font-size", "36")
-      .attr("x", @width * 0.5 - 60)
-      .attr("y", @height - 100)
+      .attr("x", Game.width * 0.5 - 60)
+      .attr("y", Game.height - 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -82,29 +90,30 @@ class @Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @root.r.y + 130)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 2 + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
       .text("Use the mouse for controlling movement.")
 
     go.on("click", => 
-      dur = 500
+      dur = 300
       title.transition().duration(dur).style("opacity", 0).remove()
-  
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       d3.timer(@progress) # set a timer to monitor game progress
       Gamescore.value = 0
       Gameprez?.start()
+      @wall.v.y = @wall.speed
+      @level()
     )
       
   progress: =>
     @scoretxt.text('SCORE: ' + Gamescore.value)
     #@leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
     if Gamescore.lives >= 0
-      @lives.text('LIVES: ' + Gamescore.lives) 
+      @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
     else 
       dur = 420
       @root.image.transition().duration(dur).attr("stroke", "none").attr("fill", "#900").transition().duration(dur).ease('sqrt').style("opacity", 0)
@@ -112,8 +121,8 @@ class @Wallball extends Game
       @stop()
       Gameprez?.end()        
       return true
-    all_destroyed = @element.every (element) -> element.destroyed
-    @level() if all_destroyed
+    @level() if @ball isnt null and @ball.is_destroyed
+    @wall.v.y = -@wall.v.y if @ball? and (Math.random() < @wall.switch_probability or (Game.height * 0.5 - @wall.r.y) < (@wall.min_distance + @ball.size * @padding) or @wall.r.y < @wall.min_distance)
     return
 
 

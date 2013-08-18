@@ -1,6 +1,7 @@
 class @Reaction # reaction module with no class variables only class and private methods
 
   ## class methods:
+
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
     return if m.destroy_check(n) || n.destroy_check(m)
     line   = new Vec(d)

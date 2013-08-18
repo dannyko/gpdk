@@ -47,8 +47,8 @@ class @Dronewar extends Game
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
-        @element[i].r.x = @width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
+        @element[i].r.x = Game.width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = Game.height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
         speed = 20
         dx = @root.r.x - @element[i].r.x
         dy = @root.r.y - @element[i].r.y
@@ -110,7 +110,7 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", @width / 2 - 320)
+      .attr("x", Game.width / 2 - 320)
       .attr("y", 90)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -120,8 +120,8 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "36")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 40)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 40)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     prompt.text("SELECT SHIP")
@@ -132,8 +132,8 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 80)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 80)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -151,8 +151,8 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 110)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 110)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
@@ -168,8 +168,8 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 140)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 140)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -211,7 +211,7 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", @width / 2 - 320)
+      .attr("x", Game.width / 2 - 320)
       .attr("y", @root.r.y + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -231,8 +231,8 @@ class @Dronewar extends Game
       @root.game_over(dur)
       @stop()
       return true
-    all_destroyed = @element.every (element) -> element.destroyed
-    if all_destroyed # i.e. went offscreen or hit by bullet
+    all_is_destroyed = @element.every (element) -> element.is_destroyed
+    if all_is_destroyed # i.e. went offscreen or hit by bullet
       @N++
       @charge *= 10
       @level()

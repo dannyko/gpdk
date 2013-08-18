@@ -33,12 +33,13 @@
 <script type="text/coffeescript" src="../../../src/game/objects/abstract/game.coffee"></script>
 <script type="text/coffeescript" src="objects/paddle.coffee"></script>
 <script type="text/coffeescript" src="objects/ball.coffee"></script>
+<script type="text/coffeescript" src="objects/frame.coffee"></script>
+<script type="text/coffeescript" src="objects/wall.coffee"></script>
 <script type="text/coffeescript" src="objects/wallball.coffee"></script>
 <!-- run the game: -->
 <script type="text/coffeescript">
 $(document).ready ->
   window.game = new Wallball() # create the game instance
-  console.log('before start')
   window.game.start() # start the game timer
 </script>
 </body>
