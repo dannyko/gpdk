@@ -24,7 +24,9 @@ class @Wall extends Polygon
     @speed = 2 # initial wall speed
     @padding = 128
     @image.remove()
-    @g.attr("class", "paddle")
+    @g.remove()
+    @g = d3.select('#game_g').insert("g", ":first-child")
+    @g.attr("class", "wall")
     @image = @g.append("image")
      .attr("xlink:href", Wall.image_url)
      .attr("x", -w).attr("y", -h)

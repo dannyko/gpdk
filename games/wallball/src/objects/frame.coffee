@@ -16,6 +16,7 @@ class @Frame extends Polygon
     @set_path()
     @r.x = Game.width * 0.5 # centered horizontally
     @r.y = 0 # centered vertically
+    @g.remove() # frame is hidden so don't render a corresponding image
 
   destroy_check: (element) ->
     if element.type == 'Circle'

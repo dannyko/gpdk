@@ -53,6 +53,7 @@ class @Wallball extends Game
       .remove()
       .each('end', => 
         @ball = new Ball()
+        d3.timer(@progress) # set a timer to monitor game progress
       )
     return    
 
@@ -97,7 +98,6 @@ class @Wallball extends Game
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      d3.timer(@progress) # set a timer to monitor game progress
       Gamescore.value = 0
       Gameprez?.start()
       @wall.v.y = @wall.speed
@@ -120,7 +120,7 @@ class @Wallball extends Game
     @new_ball_needed = true if @ball?.is_destroyed
     @level() if @new_ball_needed 
     on_edge = false # initialize
-    return
+    if @ball? then return false else return true
 
   setup: ->
     @frame  = new Frame() # Frame({width: 800, height: 600}) # frame element to control ball 

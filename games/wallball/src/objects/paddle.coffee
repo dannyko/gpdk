@@ -64,13 +64,13 @@ class @Paddle extends Polygon
     intersect_x        = n.r.x - @r.x
     relative_intersect = intersect_x / @size
     relative_intersect = -1 if relative_intersect < -1
-    relative_intersect =  1 if relative_intersect > 1
+    relative_intersect =  1 if relative_intersect >  1
     relative_intersect = 0.01 if relative_intersect == 0
     n.v.x = relative_intersect * n.speed
-    n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x)
+    n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
     if Math.abs(n.v.y) < @min_y_speed
       n.v.y = -@min_y_speed
-      x_spd = Math.sqrt(n.speed * n.speed - @min_y_speed * @min_y_speed)
+      x_spd = Math.sqrt(n.speed * n.speed - @min_y_speed * @min_y_speed) # value of v.x determined from v.y by the Pythagorean thm.
       n.v.x =  x_spd if relative_intersect > 0
       n.v.x = -x_spd if relative_intersect < 0
     # n.r.y = Game.height - 2 * @height - n.size - n.tol
