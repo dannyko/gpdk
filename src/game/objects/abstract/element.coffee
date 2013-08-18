@@ -71,6 +71,7 @@ class @Element
     return
 
   destroy: (remove = true) -> 
+    return if @is_destroyed # don't allow elements to be destroyed twice by default
     @stop()
     @is_destroyed = true
     @g.remove() if remove # avoids accumulating indefinite numbers of dead elements

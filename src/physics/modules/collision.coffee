@@ -13,7 +13,7 @@ class @Collision
 
   @quadtree = @update_quadtree() # initialize
 
-  @resolve: (m, n) ->
+  @resolve: (m, n) -> # attempt to resolve a collision using each element's default physics behavior
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false

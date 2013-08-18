@@ -24,7 +24,7 @@ class @Game
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
     len = Collision.list.length
-    while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      element = Collision.list[len]
-      element.destroy() unless element.is_destroyed
+    while (len--) # decrementing avoids potential indexing issues after popping last element off
+      element = Collision.list.pop()
+      element.destroy()
       element = null

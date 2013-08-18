@@ -3,12 +3,12 @@ class @Paddle extends Polygon
 
   constructor: (@config = {}) ->
     @config.size ||= 90
-    h = 14
+    @height = 14
     @config.path ||= [     # Use default paddle if none defined
-             {pathSegTypeAsLetter: 'M', x: -@config.size,  y: -h, react: true},
-             {pathSegTypeAsLetter: 'L', x: -@config.size,  y:  h, react: true},
-             {pathSegTypeAsLetter: 'L', x:  @config.size,  y:  h, react: true},
-             {pathSegTypeAsLetter: 'L', x:  @config.size,  y: -h, react: true},
+             {pathSegTypeAsLetter: 'M', x: -@config.size,  y: -@height, react: true},
+             {pathSegTypeAsLetter: 'L', x: -@config.size,  y:  @height, react: true},
+             {pathSegTypeAsLetter: 'L', x:  @config.size,  y:  @height, react: true},
+             {pathSegTypeAsLetter: 'L', x:  @config.size,  y: -@height, react: true},
              {pathSegTypeAsLetter: 'Z'}
              ]    
     @config.fill  = 'red'
@@ -17,44 +17,63 @@ class @Paddle extends Polygon
     @is_root   = true # Make this the player controlled element
     @fixed     = true    
     @r.x       = Game.width / 2
-    @r.y       = Game.height - h
-    @max_bounce_angle = @config.max_bounce_angle || (9 * Math.PI/20)
-    @min_y_speed = @config.min_y_speed || 5
+    @r.y       = Game.height - @height
+    @min_y_speed = @config.min_y_speed || 8
+    @max_x     = Game.width - @config.size - @tol
+    @min_x     = @config.size + @tol
     @image.remove()
     @g.attr("class", "paddle")
     @image = @g.append("image")
-      .attr("xlink:href", Paddle.image_url)
-      .attr("x", -@size).attr("y", -h)
-      .attr("width", @size * 2)
-      .attr("height", h * 2)
+     .attr("xlink:href", Paddle.image_url)
+     .attr("x", -@size).attr("y", -@height)
+     .attr("width", @size * 2)
+     .attr("height", @height * 2)
+
+  nudge: (sign) ->
+    dist = 2 * @size
+    dx   = 20 * sign
+    x1   = @r.x + dist * sign
+    x1   = @max_x if x1 > @max_x
+    x1   = @min_x if x1 < @min_x
+    func = =>
+      done = false
+      done = true if (@r.x >= x1 and dx > 0) or (@r.x <= x1 and dx < 0)
+      @r.x += dx unless done
+      @r.x = @max_x if @r.x > @max_x
+      @r.x = @min_x if @r.x < @min_x
+      done
+    d3.timer(func)
 
   redraw: (xy = d3.event) =>
     return unless @collision # don't draw if not active
     @r.x += xy.webkitMovementX
-    @r.x = @config.size + 1 if @r.x < @config.size
-    @r.x = Game.width - @config.size - 1 if @r.x > Game.width - @config.size
+    @r.x = @min_x if @r.x < @min_x
+    @r.x = @max_x if @r.x > @max_x
     @draw()
 
   start: ->
     super
-    d3.select(window.top.document.body).on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
     
   stop: ->
     super
-    d3.select(window.top.document.body).on("mousemove", null) # default mouse behavior is to control the root element position
+    d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
 
   destroy_check: (n) -> # what happens when root gets hit by a ball
-    # n.v.y = -n.v.y
-    relative_intersect_x = (@r.x + (@bb_width * 0.5)) - n.r.x
-    normalized_relative_intersection_x = relative_intersect_x / (@bb_width * 0.5)
-    bounce_angle = normalized_relative_intersection_x * @max_bounce_angle
-    n.v.x = Math.cos(bounce_angle) * n.speed
-    n.v.y = -1 * Math.sin(bounce_angle) * n.speed    
+    console.log(n) if n.type isnt 'Circle'
+    intersect_x        = n.r.x - @r.x
+    relative_intersect = intersect_x / @size
+    relative_intersect = -1 if relative_intersect < -1
+    relative_intersect =  1 if relative_intersect > 1
+    relative_intersect = 0.01 if relative_intersect == 0
+    n.v.x = relative_intersect * n.speed
+    n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x)
     if Math.abs(n.v.y) < @min_y_speed
       n.v.y = -@min_y_speed
-      n.v.x = Math.sqrt(n.speed * n.speed - @min_y_speed * @min_y_speed)
-    # console.log('paddle destroy check', bounce_angle, n.v)
-    Collision.resolve(@, n)
+      x_spd = Math.sqrt(n.speed * n.speed - @min_y_speed * @min_y_speed)
+      n.v.x =  x_spd if relative_intersect > 0
+      n.v.x = -x_spd if relative_intersect < 0
+    # n.r.y = Game.height - 2 * @height - n.size - n.tol
     @reaction(n)  
 
   destroy: ->

@@ -28,7 +28,7 @@ class @Dronewar extends Game
       .attr("x", "20")
       .attr("y", "60")
       .attr('font-family', 'arial black')
-    d3.select(window).on("keydown", @keydown) # keyboard listener
+    d3.select(window.top).on("keydown", @keydown) # keyboard listener
     img     = new Image()
     img.src = Ship.viper().url
     img.src = Ship.sidewinder().url

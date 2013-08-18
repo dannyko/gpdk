@@ -1,7 +1,9 @@
 class @Wall extends Polygon
+  @image_url = GameAssetsUrl + "wall.png"
+
   set_wall = (w, h) ->
-    w -= 0.000001
-    h -= 0.000001
+    w -= 0.000001 # small tolerance
+    h -= 0.000001 # small tolerance
     [ # frame path for border containing the ball
      {pathSegTypeAsLetter: 'M', x: -w,  y:  h, react: true},
      {pathSegTypeAsLetter: 'L', x: -w,  y: -h, react: true},
@@ -11,30 +13,38 @@ class @Wall extends Polygon
      ]
 
   constructor: (@config = {}) ->
-    @config.r = new Vec({x: Game.width * 0.5, y: 0.01 * Game.height})
     @config.fill ||= 'darkblue'
     w = Game.width * 0.5
-    h = @config.r.y
+    h = Game.height * 0.5
     @config.path ||= set_wall(w, h)
+    @config.r = new Vec({x: Game.width * 0.5, y: -Game.height * 0.5 + 0.05 * Game.height})
     @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
     super(@config)
-    @switch_probability = 0.01
-    @min_distance = @config.r.y
+    @switch_probability = 0.005 # frequency of the wall's randomized direction changes
     @speed = 2 # initial wall speed
+    @padding = 128
+    @image.remove()
+    @g.attr("class", "paddle")
+    @image = @g.append("image")
+     .attr("xlink:href", Wall.image_url)
+     .attr("x", -w).attr("y", -h)
+     .attr("width", Game.width)
+     .attr("height", Game.height)
 
   draw: ->
-    @r.y += @dt * @v.y
-    @set_path(set_wall(@r.x, @r.y))
+    @r.y += @dt * @v.y # update wall position with constant speed and variable direction
+    if @r.y > (Game.height * 0.5 - @padding)
+      on_edge   = true
+      @r.y = Game.height * 0.5 - @padding
+    if (@r.y + Game.height * 0.5) < @tol
+      on_edge   = true
+      @r.y = @tol - Game.height * 0.5
+    @v.y   = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
     super
 
-  destroy_check: (element) ->
+  destroy_check: (element) -> # wall handles its own reactions and always overrides the default physics engine
     if element.type == 'Circle'
-      element.v.y = Math.abs(element.v.y) # Make sure the ball is moving away from the wall
-      element.r.y = 2 * @r.y + element.size + 2 * element.tol
-      element.reaction()
-      Gamescore.increment_value()
-      element.speed = Gamescore.increment / 5 + Gamescore.value / 500
       return true
     else 
-      console.log('something other than the ball hit the wall!')
-      return false
+      console.log('bug: something other than the ball hit the wall')
+      return true
