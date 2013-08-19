@@ -2,7 +2,7 @@ class @Ball extends Circle
   @image_url = GameAssetsUrl + "ball.png"
 
   constructor: (@config = {}) ->
-    @config.size   ||= 8
+    @config.size   ||= 12
     @config.fill   ||= '#FFF'
     @config.r      ||= new Vec({x: Game.paddle.r.x, y: Game.height - Game.paddle.bb_height - @config.size})
     super(@config)
@@ -28,6 +28,7 @@ class @Ball extends Circle
       @r.y = Game.wall.r.y + Game.height * 0.5 + @size + @tol # resolve the collision event
       @reaction() # trigger ball reaction effect
       Gamescore.increment_value() # increment game score value
+      Gameprez?.score(Gamescore.value)
     if @r.x < @tol + @size # don't allow it to go beyond left sidewall
       @r.x = @tol + @size 
       @v.x = Math.abs(@v.x)

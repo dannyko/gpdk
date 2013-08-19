@@ -2,6 +2,7 @@ class @Wallball extends Game
   constructor: (@config = {}) ->
     super
     @setup()
+    @game_over = false
 
     @scoretxt = @g.append("text")
       .text("")
@@ -21,12 +22,13 @@ class @Wallball extends Game
       .attr('font-family', 'arial black')
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
+    d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
   keydown: () =>
     switch d3.event.keyCode 
       when 39 then @paddle.nudge( 1) # right arrow
       when 37 then @paddle.nudge(-1) # left arrow
-      when 82 then @reset() if Gamescore.lives < 0
+      when 82 then @reset() if @game_over
     return
 
   level: () ->
@@ -59,6 +61,7 @@ class @Wallball extends Game
 
   start: -> # start new game
     super
+    @game_over = false
     title = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -113,9 +116,9 @@ class @Wallball extends Game
       dur = 420
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       @wall.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
-      @lives.text('GAME OVER, PRESS "r" TO RESTART')
       @stop()
-      Gameprez?.end()        
+      callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
+      Gameprez?.end(Gamescore.value, callback)
       return true
     @new_ball_needed = true if @ball?.is_destroyed
     @level() if @new_ball_needed 

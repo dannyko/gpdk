@@ -54,6 +54,7 @@ class @Paddle extends Polygon
   start: ->
     super
     d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    d3.select(window).on("mousemove", @redraw) if window isnt window.top # default mouse behavior is to control the root element position
     
   stop: ->
     super

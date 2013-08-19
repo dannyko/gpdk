@@ -1085,7 +1085,7 @@
     function Ball(config) {
       var _base, _base1, _base2;
       this.config = config != null ? config : {};
-      (_base = this.config).size || (_base.size = 8);
+      (_base = this.config).size || (_base.size = 12);
       (_base1 = this.config).fill || (_base1.fill = '#FFF');
       (_base2 = this.config).r || (_base2.r = new Vec({
         x: Game.paddle.r.x,
@@ -1112,6 +1112,9 @@
         this.r.y = Game.wall.r.y + Game.height * 0.5 + this.size + this.tol;
         this.reaction();
         Gamescore.increment_value();
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.score(Gamescore.value);
+        }
       }
       if (this.r.x < this.tol + this.size) {
         this.r.x = this.tol + this.size;
@@ -1317,7 +1320,10 @@
 
     Paddle.prototype.start = function() {
       Paddle.__super__.start.apply(this, arguments);
-      return d3.select(window.top).on("mousemove", this.redraw);
+      d3.select(window.top).on("mousemove", this.redraw);
+      if (window !== window.top) {
+        return d3.select(window).on("mousemove", this.redraw);
+      }
     };
 
     Paddle.prototype.stop = function() {
@@ -1485,9 +1491,13 @@
       };
       Wallball.__super__.constructor.apply(this, arguments);
       this.setup();
+      this.game_over = false;
       this.scoretxt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
       this.lives = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
       d3.select(window.top).on("keydown", this.keydown);
+      if (window !== window.top) {
+        d3.select(window).on("keydown", this.keydown);
+      }
     }
 
     Wallball.prototype.keydown = function() {
@@ -1499,7 +1509,7 @@
           this.paddle.nudge(-1);
           break;
         case 82:
-          if (Gamescore.lives < 0) {
+          if (this.game_over) {
             this.reset();
           }
       }
@@ -1523,6 +1533,7 @@
       var go, how, title,
         _this = this;
       Wallball.__super__.start.apply(this, arguments);
+      this.game_over = false;
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("WALLBALL");
       go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", Game.width * 0.5 - 60).attr("y", Game.height - 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("START");
@@ -1544,7 +1555,8 @@
     };
 
     Wallball.prototype.progress = function() {
-      var dur, on_edge, _ref;
+      var callback, dur, on_edge, _ref,
+        _this = this;
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       if (Gamescore.lives >= 0) {
         this.lives.text('LIVES: ' + Gamescore.lives);
@@ -1552,10 +1564,14 @@
         dur = 420;
         this.paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
         this.wall.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
-        this.lives.text('GAME OVER, PRESS "r" TO RESTART');
         this.stop();
+        callback = function() {
+          _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+          _this.game_over = true;
+          return true;
+        };
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-          Gameprez.end();
+          Gameprez.end(Gamescore.value, callback);
         }
         return true;
       }
