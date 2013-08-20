@@ -4,7 +4,7 @@ class @Frame extends Polygon
     super
     tol = 1
     w = 0.5 * (Game.width + tol)
-    h = (Game.height + tol)
+    h = 0.5 * (Game.height + tol)
     @path = [ # frame path for border containing the ball
              {pathSegTypeAsLetter: 'M', x: -w,  y:  h, react: true},
              {pathSegTypeAsLetter: 'L', x: -w,  y: -h, react: true},
@@ -23,4 +23,4 @@ class @Frame extends Polygon
       return true
     else 
       console.log('bug: something other than the ball collided with the frame')
-      return false
+      return false    

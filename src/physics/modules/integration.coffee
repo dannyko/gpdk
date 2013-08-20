@@ -19,8 +19,7 @@ class @Integration # numerical integration module for solving differential equat
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast
     @timestamp = timestamp
     len = Collision.list.length
-    while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      Collision.list[len].update()
+    Collision.list[len].update() while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     return 
   

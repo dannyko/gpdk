@@ -1,5 +1,8 @@
 class @Ship extends Polygon
-  @image_url = GameAssetsUrl + "ship.png"
+  @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
+  @increment_count = [1, 2, 4]
+  @speed = [2, 3, 4]
+  @size  = [40, 35, 30]
 
   set_ship = (w, h) ->
     [ 
@@ -11,37 +14,60 @@ class @Ship extends Polygon
      ]
 
   constructor: (@config = {}) ->
+    @difficulty = Math.floor(3 * (Math.random() - 1e-6))
     @config.fill ||= 'darkblue'
-    w = 20
-    h = 20
+    @config.size ||= Ship.size[@difficulty] # half the sidelength of the square ship
+    w = @config.size
+    h = @config.size
     @config.path ||= set_ship(w, h)
     @config.r = new Vec({x: Game.width * 0.8 * Math.random(), y: 0.05 * Game.height * Math.random()})
-    @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
+    @config.r.x = 2 * @config.size if @config.r.x < 2 * @config.size
+    @config.r.x = Game.width - 2 * @config.size if @config.r.x > (Game.width - 2 * @config.size)
     super(@config)
-    @speed = 2 # initial ship speed
-    @v.y = @speed # initial ship velocity
-    @image.remove()
+    @name = 'Ship'
+    @image.remove() # don't display default SVG image, instead replace by custom bitmap defined below via an SVG <image> tag
     @g.attr("class", "ship")
+    @speed = Ship.speed[@difficulty] # initial ship speed
+    @v.y = @speed # initial ship velocity
     @image = @g.append("image")
-     .attr("xlink:href", Wall.image_url)
+     .attr("xlink:href", Ship.image_url[@difficulty])
      .attr("x", -w).attr("y", -h)
-     .attr("width", Game.width)
-     .attr("height", Game.height)
+     .attr("width", 2 * w)
+     .attr("height", 2 * h)
 
   draw: ->
-    @r.y += @dt * @v.y # update ship position with constant speed and variable direction
-    if @r.y > (Game.height * 0.5 - @padding)
-      on_edge   = true
-      @r.y = Game.height * 0.5 - @padding
-    if (@r.y + Game.height * 0.5) < @tol
-      on_edge   = true
-      @r.y = @tol - Game.height * 0.5
-    @v.y   = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
+    if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.1
+    if @v.y > Ship.speed[@difficulty] + 0.1 then @v.y *= 0.9
     super
 
-  destroy_check: (element) -> # wall handles its own reactions and always overrides the default physics engine
-    if element.type == 'Circle'
+  destroy: ->
+    return if @is_destroyed # don't allow destruction twice (i.e. before transition finishes)
+    @is_destroyed = true
+    @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
+    Gamescore.decrement_value() if @offscreen() # penalize score for missing a ship
+    fill = '#FFF' 
+    dur  = 210 # color effect transition duration parameter
+    @image.attr('opacity', 1)
+    @image # ship destroy reaction 
+      .transition()
+      .duration(dur)
+      .ease('sqrt')
+      .attr("opacity", 0)
+      .each('end', =>  
+        @g.remove()
+      )
+
+  destroy_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
+    if element.name is 'Ball' # hit by ball, destroy and awaard points
+      d = Collision.circle_polygon(element, @)
+      console.log(d.i)
+      switch d.i
+        when 0 then element.v.x = -Math.abs(element.v.x)
+        when 1 then element.v.y = -Math.abs(element.v.y)
+        when 2 then element.v.x =  Math.abs(element.v.x)
+        when 3 then element.v.y =  Math.abs(element.v.y)
+      Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
+      @destroy()
       return true
-    else 
-      console.log('bug: something other than the ball hit the wall')
-      return true
+    else # hit another ship, let physics engine handle the reaction
+      return false

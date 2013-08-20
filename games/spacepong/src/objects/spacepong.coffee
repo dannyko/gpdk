@@ -1,16 +1,16 @@
 class @Spacepong extends Game
   
   @ball_count: ->
-    1 if Gamescore.value < 100
-    2 if 100 <= Gamescore.value < 1000
-    3 if 1000 <= Gamescore.value < 5000
-    4 if 5000 <= Gamescore.value < 10000
-    5 if Gamescore >= 10000
+    count = 1 if Gamescore.value < 500
+    count = 2 if 500 <= Gamescore.value < 5000
+    count = 3 if 5000 <= Gamescore.value < 10000
+    count = 4 if 10000 <= Gamescore.value < 20000
+    count = 5 if Gamescore >= 20000
+    count
 
   constructor: (@config = {}) ->
     super
     @setup()
-    @game_over = false
 
     @scoretxt = @g.append("text")
       .text("")
@@ -32,6 +32,15 @@ class @Spacepong extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
+  setup: ->
+    @paddle = new Paddle() # paddle element i.e. under user control
+    Game.paddle = @paddle
+    @game_over = false
+    @ball_check_needed = true
+    @ship_check_needed = true
+    @ball = []
+    @ship = []
+
   keydown: () =>
     switch d3.event.keyCode 
       when 39 then @paddle.nudge( 1) # right arrow
@@ -39,17 +48,18 @@ class @Spacepong extends Game
       when 82 then @reset() if @game_over
     return
 
-  level: () ->
-    @new_ball_needed = false
-    @new_ship_count = 1 + Math.floor(Gamescore.value / 500) # (Math.random() * 4) + 1    
-    @ball = null
-    @svg.style("cursor", "none")
+  spawn_balls: () ->
+    @ball_check_needed = false
+    length = @ball.length
+    @ball = _.filter(@ball, (ball) -> !ball.is_destroyed)
+    txt = if length > 0 and @ball.length is length then 'MULTIBALL UP' else 'GET READY'
+    Integration.stop() # pause the physics engine
     ready = @g.append("text")
-      .text("GET READY")
+      .text(txt)
       .attr("stroke", "none")
       .attr("fill", "#666")
       .attr("font-size", "36")
-      .attr("x", Game.width / 2 - 105)
+      .attr("x", Game.width  / 2 - 105)
       .attr("y", Game.height / 2 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -63,15 +73,19 @@ class @Spacepong extends Game
       .style('opacity', 0)
       .remove()
       .each('end', => 
-        @ball = []
-        for i in [0...Spacepong.ball_count()]
-          @ball.push(new Ball())
-        @ship = []
-        for i in [0...new_ship_count]
-          @ship.push(new Ship())
-        d3.timer(@progress) # set a timer to monitor game progress
+        @ball.push(new Ball()) while @ball.length < Spacepong.ball_count()
+        @ball_check_needed = true
+        Integration.start() # unpause the physics engine
       )
     return    
+
+  spawn_ships: () ->
+    @ship_check_needed = false
+    @new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
+    @ship = [] # initialize
+    @ship.push(new Ship()) while @ship.length < @new_ship_count
+    @ship_check_needed = true
+    return
 
   start: -> # start new game
     super
@@ -86,17 +100,6 @@ class @Spacepong extends Game
       .attr('font-weight', 'bold')
     title.text("SPACEPONG")
 
-    go = @g.append("text")
-      .text("")
-      .attr("stroke", "none")
-      .attr("fill", "#FF2")
-      .attr("font-size", "36")
-      .attr("x", Game.width * 0.5 - 60)
-      .attr("y", Game.height - 100)
-      .attr('font-family', 'arial')
-      .attr('font-weight', 'bold')
-      .style("cursor", "pointer")
-      .text("START")
     how = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -109,15 +112,28 @@ class @Spacepong extends Game
       .style("cursor", "pointer")
       .text("Use the mouse for controlling movement.")
 
+    go = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "#FF2")
+      .attr("font-size", "36")
+      .attr("x", Game.width * 0.5 - 60)
+      .attr("y", Game.height - 100)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .style("cursor", "pointer")
+      .text("START")
+      
     go.on("click", => 
       go.on("click", null) # so that clicking start more than once before it finishes fading out does not create any actions in the game
+      @svg.style("cursor", "none")
       dur = 300
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       Gamescore.value = 0
       Gameprez?.start()
-      @level()
+      d3.timer(@progress)
     )
       
   progress: =>
@@ -131,20 +147,15 @@ class @Spacepong extends Game
       ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0) for ship in @ship
       @stop()
       callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
-      Gameprez?.end(Gamescore.value, callback)
+      if Gameprez?
+        Gameprez.end(Gamescore.value, callback)
+      else 
+        callback()
       return true
-    @new_ball_needed = true if @ball.length < Spacepong.ball_count()
-    @level() if @new_ball_needed 
-    on_edge = false # initialize
-    if @ball? then return false else return true
-
-  setup: ->
-    @frame  = new Frame() # Frame({width: 800, height: 600}) # frame element to control ball 
-    @paddle = new Paddle() # paddle element i.e. under user control
-    @ball   = null # no ball initially, until first level
-    @new_ball_needed = false # initially a new ball is not needed
-    Game.paddle = @paddle
-    Game.wall   = @wall
+    console.log('progress:', @ball)
+    @spawn_balls() if (@ball.length < Spacepong.ball_count() or (_.some  @ball, (d) -> d.is_destroyed)) and @ball_check_needed
+    @spawn_ships() if (_.every @ship, (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed
+    if @game_over then return true else return false
 
   reset: =>
     @cleanup()
