@@ -99,7 +99,7 @@ class @Dronewar extends Game
     super
     @root.stop()
     callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; return true
-    Gameprez?.end(Gamescore.value, callback)
+    @end(callback)
     return
 
   start: -> # start new game

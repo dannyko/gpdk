@@ -59,6 +59,7 @@ class @Ship extends Polygon
 
   destroy_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
     if element.name is 'Ball' # hit by ball, destroy and awaard points
+      element.reaction()
       d = Collision.circle_polygon(element, @)
       console.log(d.i)
       switch d.i

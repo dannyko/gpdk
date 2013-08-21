@@ -61,22 +61,19 @@ class @Paddle extends Polygon
   stop: ->
     super
     d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
+    d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is in iframe
 
   destroy_check: (n) -> # what happens when paddle gets hit by a ball
     if n.type is 'Circle' # hit a ball
       intersect_x        = n.r.x - @r.x
       relative_intersect = intersect_x / @size
-      relative_intersect = -1 if relative_intersect < -1
-      relative_intersect =  1 if relative_intersect >  1
-      relative_intersect = .1 if relative_intersect == 0 # small number other than 0 to prevent perfectly vertical bounce
+      L = 0.8
+      relative_intersect *= L
+      relative_intersect = -L if relative_intersect < -L
+      relative_intersect =  L if relative_intersect >  L
+      relative_intersect = .1 if relative_intersect == 0
       n.v.x = relative_intersect * n.speed
       n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
-      if Math.abs(n.v.y) < @min_y_speed
-        n.v.y = -@min_y_speed
-        x_spd = Math.sqrt(n.speed * n.speed - @min_y_speed * @min_y_speed) # value of v.x determined from v.y by the Pythagorean thm.
-        n.v.x =  x_spd if relative_intersect > 0
-        n.v.x = -x_spd if relative_intersect < 0
-      # n.r.y = Game.height - 2 * @height - n.size - n.tol
       @reaction(n)  
     else # hit a ship
       n.destroy()

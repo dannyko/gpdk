@@ -24,6 +24,14 @@ class @Wallball extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
+  setup: ->
+    @paddle = new Paddle() # paddle element i.e. under user control
+    @wall   = new Wall()
+    @ball   = null # no ball initially, until first spawn_ball
+    @ball_check_needed = true # initially a new ball is not needed
+    Game.paddle = @paddle
+    Game.wall   = @wall
+
   keydown: () =>
     switch d3.event.keyCode 
       when 39 then @paddle.nudge( 1) # right arrow
@@ -31,8 +39,9 @@ class @Wallball extends Game
       when 82 then @reset() if @game_over
     return
 
-  level: () ->
-    @new_ball_needed = false
+  spawn_ball: () ->
+    return unless @ball is null or @ball?.is_destroyed
+    @ball_check_needed = false # prevent @progress() from calling @spawn_ball() multiple times while first call is in progress
     @ball = null
     @svg.style("cursor", "none")
     ready = @g.append("text")
@@ -55,7 +64,7 @@ class @Wallball extends Game
       .remove()
       .each('end', => 
         @ball = new Ball()
-        d3.timer(@progress) # set a timer to monitor game progress
+        @ball_check_needed = true
       )
     return    
 
@@ -104,7 +113,7 @@ class @Wallball extends Game
       Gamescore.value = 0
       Gameprez?.start()
       @wall.v.y = @wall.speed
-      @level()
+      d3.timer(@progress)
     )
       
   progress: =>
@@ -118,21 +127,8 @@ class @Wallball extends Game
       @wall.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       @stop()
       callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
-      Gameprez?.end(Gamescore.value, callback)
-      return true
-    @new_ball_needed = true if @ball?.is_destroyed
-    @level() if @new_ball_needed 
-    on_edge = false # initialize
-    if @ball? then return false else return true
-
-  setup: ->
-    @frame  = new Frame() # Frame({width: 800, height: 600}) # frame element to control ball 
-    @paddle = new Paddle() # paddle element i.e. under user control
-    @wall   = new Wall()
-    @ball   = null # no ball initially, until first level
-    @new_ball_needed = false # initially a new ball is not needed
-    Game.paddle = @paddle
-    Game.wall   = @wall
+      return @end(callback)
+    @spawn_ball() if @ball_check_needed 
 
   reset: =>
     @cleanup()

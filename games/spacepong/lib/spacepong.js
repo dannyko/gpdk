@@ -1108,13 +1108,13 @@
       (_base = this.config).size || (_base.size = 12);
       (_base1 = this.config).fill || (_base1.fill = '#FFF');
       (_base2 = this.config).r || (_base2.r = new Vec({
-        x: Game.paddle.r.x,
+        x: Game.paddle.r.x + 2 * Math.random() - 1,
         y: Game.height - Game.paddle.bb_height - this.config.size
       }));
       Ball.__super__.constructor.call(this, this.config);
-      this.speed_factor = 0.0025;
+      this.name = 'Ball';
       this.initial_speed = 20;
-      this.speed = this.initial_speed + Gamescore.value * this.speed_factor;
+      this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.v.x = 0;
       this.v.y = -this.speed;
@@ -1124,17 +1124,10 @@
     }
 
     Ball.prototype.draw = function() {
-      var min_y;
-      this.speed = Math.min(this.max_speed, this.initial_speed + Gamescore.value * this.speed_factor);
-      min_y = Game.wall.r.y + Game.height * 0.5 + this.size + this.tol;
-      if (this.r.y < min_y) {
+      if (this.r.y < this.tol + this.size) {
+        this.r.y = this.tol + this.size;
         this.v.y = Math.abs(this.v.y);
-        this.r.y = Game.wall.r.y + Game.height * 0.5 + this.size + this.tol;
         this.reaction();
-        Gamescore.increment_value();
-        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-          Gameprez.score(Gamescore.value);
-        }
       }
       if (this.r.x < this.tol + this.size) {
         this.r.x = this.tol + this.size;
@@ -1160,14 +1153,15 @@
 
     Ball.prototype.reaction = function(n) {
       this.v.normalize(this.speed);
-      return this.flash();
+      this.flash();
+      return Ball.__super__.reaction.apply(this, arguments);
     };
 
     Ball.prototype.flash = function() {
       var dur, fill;
-      dur = 1000 / 3;
-      fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('sqrt').attr("opacity", 0.4).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      dur = 210;
+      fill = "#00F";
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('sqrt').attr("opacity", 0.5).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
     };
 
     return Ball;
@@ -1185,7 +1179,7 @@
       Frame.__super__.constructor.apply(this, arguments);
       tol = 1;
       w = 0.5 * (Game.width + tol);
-      h = Game.height + tol;
+      h = 0.5 * (Game.height + tol);
       this.path = [
         {
           pathSegTypeAsLetter: 'M',
@@ -1283,11 +1277,12 @@
       this.r.x = Game.width / 2;
       this.r.y = Game.height - this.height - this.padding;
       this.min_y_speed = this.config.min_y_speed || 8;
-      this.max_x = Game.width - this.config.size - this.tol;
-      this.min_x = this.config.size + this.tol;
-      this.g.attr("class", "paddle");
+      this.max_x = Game.width - this.config.size - this.tol - this.padding;
+      this.min_x = this.config.size + this.tol + this.padding;
+      this.overshoot = this.padding;
       this.image.remove();
-      this.image = this.g.append("image").attr("xlink:href", Paddle.image_url).attr("x", -this.size).attr("y", -this.height).attr("width", this.size * 2).attr("height", this.height * 2);
+      this.g.attr("class", "paddle");
+      this.image = this.g.append("image").attr("xlink:href", Paddle.image_url).attr("x", -this.size - this.overshoot).attr("y", -this.height).attr("width", this.size * 2 + this.overshoot * 2).attr("height", this.height * 2);
     }
 
     Paddle.prototype.nudge = function(sign) {
@@ -1329,7 +1324,6 @@
       if (!this.collision) {
         return;
       }
-      console.log('paddle redraw: ', xy);
       this.r.x += xy.webkitMovementX;
       if (this.r.x < this.min_x) {
         this.r.x = this.min_x;
@@ -1358,22 +1352,26 @@
 
     Paddle.prototype.destroy_check = function(n) {
       var L, intersect_x, relative_intersect;
-      intersect_x = n.r.x - this.r.x;
-      relative_intersect = intersect_x / this.size;
-      L = 0.8;
-      relative_intersect *= L;
-      if (relative_intersect < -L) {
-        relative_intersect = -L;
+      if (n.type === 'Circle') {
+        intersect_x = n.r.x - this.r.x;
+        relative_intersect = intersect_x / this.size;
+        L = 0.8;
+        relative_intersect *= L;
+        if (relative_intersect < -L) {
+          relative_intersect = -L;
+        }
+        if (relative_intersect > L) {
+          relative_intersect = L;
+        }
+        if (relative_intersect === 0) {
+          relative_intersect = .1;
+        }
+        n.v.x = relative_intersect * n.speed;
+        n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x);
+        return this.reaction(n);
+      } else {
+        return n.destroy();
       }
-      if (relative_intersect > L) {
-        relative_intersect = L;
-      }
-      if (relative_intersect === 0) {
-        relative_intersect = .1;
-      }
-      n.v.x = relative_intersect * n.speed;
-      n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x);
-      return this.reaction(n);
     };
 
     Paddle.prototype.destroy = function() {
@@ -1397,14 +1395,20 @@
 
   })(Polygon);
 
-  this.Wall = (function(_super) {
-    var set_wall;
+  this.Ship = (function(_super) {
+    var set_ship;
 
-    __extends(Wall, _super);
+    __extends(Ship, _super);
 
-    Wall.image_url = GameAssetsUrl + "wall.png";
+    Ship.image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"];
 
-    set_wall = function(w, h) {
+    Ship.increment_count = [1, 2, 4];
+
+    Ship.speed = [2, 3, 4];
+
+    Ship.size = [40, 35, 30];
+
+    set_ship = function(w, h) {
       return [
         {
           pathSegTypeAsLetter: 'M',
@@ -1432,77 +1436,134 @@
       ];
     };
 
-    function Wall(config) {
-      var h, w, _base, _base1;
+    function Ship(config) {
+      var h, w, _base, _base1, _base2;
       this.config = config != null ? config : {};
+      this.difficulty = Math.floor(3 * (Math.random() - 1e-6));
       (_base = this.config).fill || (_base.fill = 'darkblue');
-      w = Game.width * 0.5;
-      h = Game.height * 0.5;
-      (_base1 = this.config).path || (_base1.path = set_wall(w, h));
+      (_base1 = this.config).size || (_base1.size = Ship.size[this.difficulty]);
+      w = this.config.size;
+      h = this.config.size;
+      (_base2 = this.config).path || (_base2.path = set_ship(w, h));
       this.config.r = new Vec({
-        x: Game.width * 0.5,
-        y: -Game.height * 0.5 + 0.05 * Game.height
+        x: Game.width * 0.8 * Math.random(),
+        y: 0.05 * Game.height * Math.random()
       });
-      this.config.tick = function() {};
-      Wall.__super__.constructor.call(this, this.config);
-      this.switch_probability = 0.005;
-      this.speed = 2;
-      this.padding = 144;
-      this.g.remove();
-      this.g = d3.select('#game_g').insert("g", ":first-child");
-      this.g.attr("class", "wall");
-      this.image = this.g.append("image").attr("xlink:href", Wall.image_url).attr("x", -w).attr("y", -h).attr("width", Game.width).attr("height", Game.height);
+      if (this.config.r.x < 2 * this.config.size) {
+        this.config.r.x = 2 * this.config.size;
+      }
+      if (this.config.r.x > (Game.width - 2 * this.config.size)) {
+        this.config.r.x = Game.width - 2 * this.config.size;
+      }
+      Ship.__super__.constructor.call(this, this.config);
+      this.name = 'Ship';
+      this.image.remove();
+      this.g.attr("class", "ship");
+      this.speed = Ship.speed[this.difficulty];
+      this.v.y = this.speed;
+      this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
     }
 
-    Wall.prototype.draw = function() {
-      var on_edge;
-      this.r.y += this.dt * this.v.y;
-      if (this.r.y > (Game.height * 0.5 - this.padding)) {
-        on_edge = true;
-        this.r.y = Game.height * 0.5 - this.padding;
+    Ship.prototype.draw = function() {
+      if (this.v.y < Ship.speed[this.difficulty] - 0.1) {
+        this.v.y *= 1.1;
       }
-      if ((this.r.y + Game.height * 0.5) < this.tol) {
-        on_edge = true;
-        this.r.y = this.tol - Game.height * 0.5;
+      if (this.v.y > Ship.speed[this.difficulty] + 0.1) {
+        this.v.y *= 0.9;
       }
-      if (on_edge || Math.random() < this.switch_probability) {
-        this.v.y = -this.v.y;
-      }
-      return Wall.__super__.draw.apply(this, arguments);
+      return Ship.__super__.draw.apply(this, arguments);
     };
 
-    Wall.prototype.destroy_check = function(element) {
-      if (element.type === 'Circle') {
+    Ship.prototype.destroy = function() {
+      var dur, fill,
+        _this = this;
+      if (this.is_destroyed) {
+        return;
+      }
+      this.is_destroyed = true;
+      this.stop();
+      if (this.offscreen()) {
+        Gamescore.decrement_value();
+      }
+      fill = '#FFF';
+      dur = 210;
+      this.image.attr('opacity', 1);
+      return this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
+        return _this.g.remove();
+      });
+    };
+
+    Ship.prototype.destroy_check = function(element) {
+      var d, i, _i, _ref;
+      if (element.name === 'Ball') {
+        element.reaction();
+        d = Collision.circle_polygon(element, this);
+        console.log(d.i);
+        switch (d.i) {
+          case 0:
+            element.v.x = -Math.abs(element.v.x);
+            break;
+          case 1:
+            element.v.y = -Math.abs(element.v.y);
+            break;
+          case 2:
+            element.v.x = Math.abs(element.v.x);
+            break;
+          case 3:
+            element.v.y = Math.abs(element.v.y);
+        }
+        for (i = _i = 0, _ref = Ship.increment_count[this.difficulty]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+          Gamescore.increment_value();
+        }
+        this.destroy();
         return true;
       } else {
-        console.log('bug: something other than the ball hit the wall');
-        return true;
+        return false;
       }
     };
 
-    return Wall;
+    return Ship;
 
   })(Polygon);
 
-  this.Wallball = (function(_super) {
+  this.Spacepong = (function(_super) {
 
-    __extends(Wallball, _super);
+    __extends(Spacepong, _super);
 
-    function Wallball(config) {
+    Spacepong.ball_count = function() {
+      var count, _ref, _ref1, _ref2;
+      if (Gamescore.value < 500) {
+        count = 1;
+      }
+      if ((500 <= (_ref = Gamescore.value) && _ref < 5000)) {
+        count = 2;
+      }
+      if ((5000 <= (_ref1 = Gamescore.value) && _ref1 < 10000)) {
+        count = 3;
+      }
+      if ((10000 <= (_ref2 = Gamescore.value) && _ref2 < 20000)) {
+        count = 4;
+      }
+      if (Gamescore >= 20000) {
+        count = 5;
+      }
+      return count;
+    };
+
+    function Spacepong(config) {
       var _this = this;
       this.config = config != null ? config : {};
       this.reset = function() {
-        return Wallball.prototype.reset.apply(_this, arguments);
+        return Spacepong.prototype.reset.apply(_this, arguments);
       };
       this.progress = function() {
-        return Wallball.prototype.progress.apply(_this, arguments);
+        return Spacepong.prototype.progress.apply(_this, arguments);
       };
       this.keydown = function() {
-        return Wallball.prototype.keydown.apply(_this, arguments);
+        return Spacepong.prototype.keydown.apply(_this, arguments);
       };
-      Wallball.__super__.constructor.apply(this, arguments);
+      Spacepong.__super__.constructor.apply(this, arguments);
       this.setup();
-      this.game_over = false;
       this.scoretxt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
       this.lives = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
       d3.select(window.top).on("keydown", this.keydown);
@@ -1511,16 +1572,17 @@
       }
     }
 
-    Wallball.prototype.setup = function() {
+    Spacepong.prototype.setup = function() {
       this.paddle = new Paddle();
-      this.wall = new Wall();
-      this.ball = null;
-      this.ball_check_needed = true;
       Game.paddle = this.paddle;
-      return Game.wall = this.wall;
+      this.game_over = false;
+      this.ball_check_needed = true;
+      this.ship_check_needed = true;
+      this.ball = [];
+      return this.ship = [];
     };
 
-    Wallball.prototype.keydown = function() {
+    Spacepong.prototype.keydown = function() {
       switch (d3.event.keyCode) {
         case 39:
           this.paddle.nudge(1);
@@ -1535,35 +1597,50 @@
       }
     };
 
-    Wallball.prototype.spawn_ball = function() {
-      var dur, ready, _ref,
+    Spacepong.prototype.spawn_balls = function() {
+      var dur, length, ready, txt,
         _this = this;
-      if (!(this.ball === null || ((_ref = this.ball) != null ? _ref.is_destroyed : void 0))) {
-        return;
-      }
       this.ball_check_needed = false;
-      this.ball = null;
-      this.svg.style("cursor", "none");
-      ready = this.g.append("text").text("GET READY").attr("stroke", "none").attr("fill", "#666").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      length = this.ball.length;
+      this.ball = _.filter(this.ball, function(ball) {
+        return !ball.is_destroyed;
+      });
+      txt = length > 0 && this.ball.length === length ? 'MULTIBALL UP' : 'GET READY';
+      Integration.stop();
+      ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       dur = 1000;
       ready.transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', function() {
-        _this.ball = new Ball();
-        return _this.ball_check_needed = true;
+        while (_this.ball.length < Spacepong.ball_count()) {
+          _this.ball.push(new Ball());
+        }
+        _this.ball_check_needed = true;
+        return Integration.start();
       });
     };
 
-    Wallball.prototype.start = function() {
+    Spacepong.prototype.spawn_ships = function() {
+      this.ship_check_needed = false;
+      this.new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000));
+      this.ship = [];
+      while (this.ship.length < this.new_ship_count) {
+        this.ship.push(new Ship());
+      }
+      this.ship_check_needed = true;
+    };
+
+    Spacepong.prototype.start = function() {
       var go, how, title,
         _this = this;
-      Wallball.__super__.start.apply(this, arguments);
+      Spacepong.__super__.start.apply(this, arguments);
       this.game_over = false;
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
-      title.text("WALLBALL");
-      go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", Game.width * 0.5 - 60).attr("y", Game.height - 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("START");
+      title.text("SPACEPONG");
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", Game.height / 2 + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("Use the mouse for controlling movement.");
+      go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", Game.width * 0.5 - 60).attr("y", Game.height - 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("START");
       return go.on("click", function() {
         var dur;
         go.on("click", null);
+        _this.svg.style("cursor", "none");
         dur = 300;
         title.transition().duration(dur).style("opacity", 0).remove();
         go.transition().duration(dur).style("opacity", 0).remove();
@@ -1572,13 +1649,12 @@
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.start();
         }
-        _this.wall.v.y = _this.wall.speed;
         return d3.timer(_this.progress);
       });
     };
 
-    Wallball.prototype.progress = function() {
-      var callback, dur,
+    Spacepong.prototype.progress = function() {
+      var callback, dur, ship, _i, _len, _ref,
         _this = this;
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       if (Gamescore.lives >= 0) {
@@ -1586,7 +1662,11 @@
       } else {
         dur = 420;
         this.paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
-        this.wall.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
+        _ref = this.ship;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          ship = _ref[_i];
+          ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
+        }
         this.stop();
         callback = function() {
           _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
@@ -1595,12 +1675,19 @@
         };
         return this.end(callback);
       }
-      if (this.ball_check_needed) {
-        return this.spawn_ball();
+      if ((this.ball.length < Spacepong.ball_count() || (_.some(this.ball, function(d) {
+        return d.is_destroyed;
+      }))) && this.ball_check_needed) {
+        this.spawn_balls();
+      }
+      if ((_.every(this.ship, function(d) {
+        return d.is_destroyed;
+      })) && this.ship_check_needed && this.ball_check_needed) {
+        return this.spawn_ships();
       }
     };
 
-    Wallball.prototype.reset = function() {
+    Spacepong.prototype.reset = function() {
       this.cleanup();
       this.g.selectAll("g").remove();
       this.lives.text("");
@@ -1611,7 +1698,7 @@
       this.start();
     };
 
-    return Wallball;
+    return Spacepong;
 
   })(Game);
 

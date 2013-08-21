@@ -57,7 +57,7 @@ class @Spacepong extends Game
     ready = @g.append("text")
       .text(txt)
       .attr("stroke", "none")
-      .attr("fill", "#666")
+      .attr("fill", "#FFF")
       .attr("font-size", "36")
       .attr("x", Game.width  / 2 - 105)
       .attr("y", Game.height / 2 + 20)
@@ -80,7 +80,7 @@ class @Spacepong extends Game
     return    
 
   spawn_ships: () ->
-    @ship_check_needed = false
+    @ship_check_needed = false # tells the progress timer not to spawn ships until this function is completed
     @new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
     @ship = [] # initialize
     @ship.push(new Ship()) while @ship.length < @new_ship_count
@@ -147,15 +147,9 @@ class @Spacepong extends Game
       ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0) for ship in @ship
       @stop()
       callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
-      if Gameprez?
-        Gameprez.end(Gamescore.value, callback)
-      else 
-        callback()
-      return true
-    console.log('progress:', @ball)
+      return @end(callback)
     @spawn_balls() if (@ball.length < Spacepong.ball_count() or (_.some  @ball, (d) -> d.is_destroyed)) and @ball_check_needed
-    @spawn_ships() if (_.every @ship, (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed
-    if @game_over then return true else return false
+    @spawn_ships() if (_.every @ship, (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed # only spawn ships after balls have been spawned
 
   reset: =>
     @cleanup()

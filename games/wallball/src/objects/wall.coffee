@@ -2,9 +2,7 @@ class @Wall extends Polygon
   @image_url = GameAssetsUrl + "wall.png"
 
   set_wall = (w, h) ->
-    w -= 0.000001 # small tolerance
-    h -= 0.000001 # small tolerance
-    [ # frame path for border containing the ball
+    [ # wall path
      {pathSegTypeAsLetter: 'M', x: -w,  y:  h, react: true},
      {pathSegTypeAsLetter: 'L', x: -w,  y: -h, react: true},
      {pathSegTypeAsLetter: 'L', x:  w,  y: -h, react: true},
@@ -22,8 +20,7 @@ class @Wall extends Polygon
     super(@config)
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
     @speed = 2 # initial wall speed
-    @padding = 128
-    @image.remove()
+    @padding = 144
     @g.remove()
     @g = d3.select('#game_g').insert("g", ":first-child")
     @g.attr("class", "wall")
@@ -41,7 +38,7 @@ class @Wall extends Polygon
     if (@r.y + Game.height * 0.5) < @tol
       on_edge   = true
       @r.y = @tol - Game.height * 0.5
-    @v.y   = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
+    @v.y = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
     super
 
   destroy_check: (element) -> # wall handles its own reactions and always overrides the default physics engine

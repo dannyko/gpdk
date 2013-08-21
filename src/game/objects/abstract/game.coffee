@@ -22,6 +22,14 @@ class @Game
     
   stop: -> Integration.stop() # stop all elements
 
+  end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
+    if Gameprez?
+      Gameprez.end(Gamescore.value, callback)
+    else 
+      callback()
+    return true # game over so return true to stop the d3 timer calling @progress()
+
+
   cleanup: -> # remove all elements from Collision list and set to object reference to null
     len = Collision.list.length
     while (len--) # decrementing avoids potential indexing issues after popping last element off
