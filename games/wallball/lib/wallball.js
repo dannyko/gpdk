@@ -1112,10 +1112,10 @@
         y: Game.height - Game.paddle.bb_height - this.config.size
       }));
       Ball.__super__.constructor.call(this, this.config);
-      this.speed_factor = 0.0025;
+      this.speed_factor = 0.005;
       this.initial_speed = 20;
       this.speed = this.initial_speed + Gamescore.value * this.speed_factor;
-      this.max_speed = this.size * 10;
+      this.max_speed = 100;
       this.v.x = 0;
       this.v.y = -this.speed;
       this.image.remove();

@@ -6,10 +6,10 @@ class @Ball extends Circle
     @config.fill   ||= '#FFF'
     @config.r      ||= new Vec({x: Game.paddle.r.x, y: Game.height - Game.paddle.bb_height - @config.size})
     super(@config)
-    @speed_factor = 0.0025
+    @speed_factor = 0.005
     @initial_speed = 20
     @speed = @initial_speed + Gamescore.value * @speed_factor
-    @max_speed = @size * 10
+    @max_speed = 100
     @v.x   = 0 
     @v.y   = -@speed
     @image.remove()
