@@ -45,10 +45,9 @@ class @Paddle extends Polygon
       done
     d3.timer(func)
 
-  redraw: (xy = d3.event) =>
+  redraw: (e = d3.event) =>
     return unless @collision # don't draw if not active
-    console.log('paddle redraw: ', xy)
-    @r.x += xy.webkitMovementX
+    @r.x += e.movementX || e.mozMovementX || e.webkitMovementX || 0
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
     @draw()

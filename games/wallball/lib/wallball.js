@@ -1241,9 +1241,9 @@
       var _base, _base1,
         _this = this;
       this.config = config != null ? config : {};
-      this.redraw = function(xy) {
-        if (xy == null) {
-          xy = d3.event;
+      this.redraw = function(e) {
+        if (e == null) {
+          e = d3.event;
         }
         return Paddle.prototype.redraw.apply(_this, arguments);
       };
@@ -1322,15 +1322,14 @@
       return d3.timer(func);
     };
 
-    Paddle.prototype.redraw = function(xy) {
-      if (xy == null) {
-        xy = d3.event;
+    Paddle.prototype.redraw = function(e) {
+      if (e == null) {
+        e = d3.event;
       }
       if (!this.collision) {
         return;
       }
-      console.log('paddle redraw: ', xy);
-      this.r.x += xy.webkitMovementX;
+      this.r.x += e.movementX || e.mozMovementX || e.webkitMovementX || 0;
       if (this.r.x < this.min_x) {
         this.r.x = this.min_x;
       }
