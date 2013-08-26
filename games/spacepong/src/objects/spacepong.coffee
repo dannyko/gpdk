@@ -1,4 +1,6 @@
 class @Spacepong extends Game
+
+  @bg_img = GameAssetsUrl + 'earth_background.jpg'
   
   @ball_count: ->
     count = 1 if Gamescore.value < 500
@@ -10,6 +12,8 @@ class @Spacepong extends Game
 
   constructor: (@config = {}) ->
     super
+    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')')
+
     @setup()
 
     @scoretxt = @g.append("text")

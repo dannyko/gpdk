@@ -1148,8 +1148,8 @@
           y: 19
         },
         bullet_stroke: 'none',
-        bullet_fill: '#fff',
-        bullet_size: 2,
+        bullet_fill: '#90F ',
+        bullet_size: 3,
         bullet_speed: 15,
         bullet_tick: 25
       };
@@ -1248,8 +1248,8 @@
           x: 0,
           y: 25
         },
-        bullet_stroke: '#fff',
-        bullet_fill: 'none',
+        bullet_stroke: 'none',
+        bullet_fill: '#C00',
         bullet_size: 5,
         bullet_speed: 10,
         bullet_tick: 20
@@ -1329,7 +1329,7 @@
           y: 0
         },
         bullet_stroke: 'none',
-        bullet_fill: '#000',
+        bullet_fill: '#099',
         bullet_size: 4,
         bullet_speed: 10,
         bullet_tick: 30
@@ -1410,6 +1410,8 @@
 
     __extends(Dronewar, _super);
 
+    Dronewar.bg_img = GameAssetsUrl + 'space_background.jpg';
+
     function Dronewar() {
       var img,
         _this = this;
@@ -1423,6 +1425,7 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')');
       this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 5;
       this.N = this.initialN;

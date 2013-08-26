@@ -1530,6 +1530,8 @@
 
     __extends(Spacepong, _super);
 
+    Spacepong.bg_img = GameAssetsUrl + 'earth_background.jpg';
+
     Spacepong.ball_count = function() {
       var count, _ref, _ref1, _ref2;
       if (Gamescore.value < 500) {
@@ -1563,6 +1565,7 @@
         return Spacepong.prototype.keydown.apply(_this, arguments);
       };
       Spacepong.__super__.constructor.apply(this, arguments);
+      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
       this.lives = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');

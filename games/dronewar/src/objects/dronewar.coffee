@@ -1,6 +1,10 @@
 class @Dronewar extends Game
+
+  @bg_img = GameAssetsUrl + 'space_background.jpg'
+
   constructor: ->
     super
+    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 5
     @N        = @initialN
