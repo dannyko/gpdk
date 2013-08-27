@@ -29,7 +29,7 @@ class @Element
     @g           = @config.g           || @g
     @svg         = @config.svg         || d3.select("#game_svg")
     @quadtree    = @config.quadtree    || null
-    @tick        = @config.tick        || Integration.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
+    @tick        = @config.tick        || Physics.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @is_destroyed= false
     @_cleanup    = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')

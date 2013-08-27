@@ -183,7 +183,7 @@
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
       this.quadtree = this.config.quadtree || null;
-      this.tick = this.config.tick || Integration.verlet(this);
+      this.tick = this.config.tick || Physics.verlet(this);
       this.is_destroyed = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
@@ -287,11 +287,11 @@
     }
 
     Game.prototype.start = function() {
-      return Integration.start();
+      return Physics.start();
     };
 
     Game.prototype.stop = function() {
-      return Integration.stop();
+      return Physics.stop();
     };
 
     Game.prototype.end = function(callback) {
@@ -851,17 +851,17 @@
 
   })();
 
-  this.Integration = (function() {
+  this.Physics = (function() {
 
-    function Integration() {}
+    function Physics() {}
 
-    Integration.off = false;
+    Physics.off = false;
 
-    Integration.tick = 1000 / 80;
+    Physics.tick = 1000 / 80;
 
-    Integration.timestamp = Utils.timestamp();
+    Physics.timestamp = Utils.timestamp();
 
-    Integration.verlet = function(element) {
+    Physics.verlet = function(element) {
       return function() {
         var f;
         element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
@@ -875,19 +875,19 @@
       };
     };
 
-    Integration.integrate = function(cleanup) {
+    Physics.integrate = function(cleanup) {
       var len, timestamp;
       if (cleanup == null) {
         cleanup = true;
       }
-      if (Integration.off) {
+      if (Physics.off) {
         return true;
       }
       timestamp = Utils.timestamp();
-      if (timestamp - Integration.timestamp < Integration.tick) {
+      if (timestamp - Physics.timestamp < Physics.tick) {
         return;
       }
-      Integration.timestamp = timestamp;
+      Physics.timestamp = timestamp;
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update();
@@ -895,7 +895,7 @@
       Collision.detect();
     };
 
-    Integration.start = function(delay) {
+    Physics.start = function(delay) {
       if (delay == null) {
         delay = 0;
       }
@@ -903,11 +903,11 @@
       d3.timer(this.integrate, delay);
     };
 
-    Integration.stop = function() {
+    Physics.stop = function() {
       this.off = true;
     };
 
-    return Integration;
+    return Physics;
 
   }).call(this);
 
@@ -1609,7 +1609,7 @@
         return !ball.is_destroyed;
       });
       txt = length > 0 && this.ball.length === length ? 'MULTIBALL UP' : 'GET READY';
-      Integration.stop();
+      Physics.stop();
       ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       dur = 1000;
       ready.transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', function() {
@@ -1617,7 +1617,7 @@
           _this.ball.push(new Ball());
         }
         _this.ball_check_needed = true;
-        return Integration.start();
+        return Physics.start();
       });
     };
 

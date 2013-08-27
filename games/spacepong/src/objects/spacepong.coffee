@@ -57,7 +57,7 @@ class @Spacepong extends Game
     length = @ball.length
     @ball = _.filter(@ball, (ball) -> !ball.is_destroyed)
     txt = if length > 0 and @ball.length is length then 'MULTIBALL UP' else 'GET READY'
-    Integration.stop() # pause the physics engine
+    Physics.stop() # pause the physics engine
     ready = @g.append("text")
       .text(txt)
       .attr("stroke", "none")
@@ -79,7 +79,7 @@ class @Spacepong extends Game
       .each('end', => 
         @ball.push(new Ball()) while @ball.length < Spacepong.ball_count()
         @ball_check_needed = true
-        Integration.start() # unpause the physics engine
+        Physics.start() # unpause the physics engine
       )
     return    
 

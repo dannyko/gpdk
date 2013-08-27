@@ -18,9 +18,9 @@ class @Game
 	    .style('width', '')
 	    .style('height', '')
 
-  start: -> Integration.start() # start all elements
+  start: -> Physics.start() # start all elements
     
-  stop: -> Integration.stop() # stop all elements
+  stop: -> Physics.stop() # stop all elements
 
   end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
     if Gameprez?
