@@ -1377,7 +1377,8 @@
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      Drone.__super__.constructor.apply(this, arguments);
+      this.config.size = 20;
+      Drone.__super__.constructor.call(this, this.config);
       this.stop();
       this.image.remove();
       this.g.attr("class", "drone");
@@ -1442,41 +1443,31 @@
     }
 
     Dronewar.prototype.level = function() {
-      var d, dur, dx, dy, i, j, k, n, newAttacker, speed, _i, _j, _k, _ref, _ref1, _ref2;
+      var dur, i, n, newAttacker, speed, _i, _ref,
+        _this = this;
       this.svg.style("cursor", "none");
-      dur = 600;
-      d3.select('#game_div').transition(dur).style("background-color", function() {
-        return "hsl(" + Math.random() * 360 + ", 15%, 20%)";
-      });
       this.element = [];
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = new Drone();
         this.element.push(newAttacker);
+        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width;
+        this.element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height;
+        this.element[i].draw();
       }
-      for (k = _j = 0, _ref1 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; k = 0 <= _ref1 ? ++_j : --_j) {
-        for (j = _k = 0, _ref2 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref2 ? _k <= _ref2 : _k >= _ref2; j = 0 <= _ref2 ? ++_k : --_k) {
-          i = k * Math.floor(Math.sqrt(this.element.length)) + j;
-          if (i > this.element.length - 1) {
-            break;
-          }
-          this.element[i].r.x = Game.width * 0.5 + k * this.element[i].size * 2 + this.element[i].tol - Math.ceil(Math.sqrt(this.element.length)) * this.element[i].size;
-          this.element[i].r.y = Game.height * 0.1 + j * this.element[i].size * 2 + this.element[i].tol;
-          speed = 20;
-          dx = this.root.r.x - this.element[i].r.x;
-          dy = this.root.r.y - this.element[i].r.y;
-          d = Math.sqrt(dx * dx + dy * dy);
-          dx /= d;
-          dy /= d;
-          this.element[i].v.x = 0.1 * this.N * dx;
-          this.element[i].v.y = 0.1 * this.N * dy;
-          this.element[i].draw();
-        }
-      }
-      dur = 400;
       n = this.element.length * 2;
+      speed = 6 + Gamescore.value / 4000;
+      dur = 300 + 200 / (100 + Gamescore.value);
       d3.selectAll(".drone").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
-        return i / n * dur;
-      }).duration(dur).style("opacity", 1).each('end', function(d) {
+        return i * dur;
+      }).duration(dur * 4).style("opacity", 1).each('end', function(d) {
+        var d1, dx, dy;
+        dx = _this.root.r.x - d.r.x;
+        dy = _this.root.r.y - d.r.y;
+        d1 = Math.sqrt(dx * dx + dy * dy);
+        dx /= d1;
+        dy /= d1;
+        d.v.x = 0.1 * _this.N * dx * speed;
+        d.v.y = 0.1 * _this.N * dy * speed;
         return d.start();
       });
     };
@@ -1544,36 +1535,36 @@
       prompt.text("SELECT SHIP");
       root = this.root;
       sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      sidewinder.text("SIDEWINDER").style("fill", "#006");
+      sidewinder.text("SIDEWINDER").style("fill", "#099");
       dur = 500;
       sidewinder.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.sidewinder());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
       viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 110).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       viper.text("VIPER");
       viper.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.viper());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         sidewinder.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
       fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       fang.text("FANG");
       fang.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.fang());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return sidewinder.style("fill", "#FFF");
       });

@@ -2,7 +2,8 @@ class @Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
 
   constructor: (@config = {}) ->
-    super
+    @config.size = 20
+    super(@config)
     @stop()
     @image.remove()
     @g.attr("class", "drone")

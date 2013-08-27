@@ -41,37 +41,33 @@ class @Dronewar extends Game
 
   level: ->
     @svg.style("cursor", "none")
-    dur = 600
-    d3.select('#game_div').transition(dur).style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
     @element = [] # reinitialize element list
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone()
       @element.push(newAttacker) # extend the array of all elements in this game
-    for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
-      for j in [0..Math.ceil(Math.sqrt(@element.length))]
-        i = k * Math.floor(Math.sqrt(@element.length)) + j
-        break if i > @element.length - 1
-        @element[i].r.x = Game.width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = Game.height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
-        speed = 20
-        dx = @root.r.x - @element[i].r.x
-        dy = @root.r.y - @element[i].r.y
-        d  = Math.sqrt(dx * dx + dy * dy)
-        dx /= d
-        dy /= d
-        @element[i].v.x = 0.1 * @N * dx 
-        @element[i].v.y = 0.1 * @N * dy
-        @element[i].draw()
-    dur = 400
+      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+      @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].draw()
     n = @element.length * 2
+    speed = 6 + Gamescore.value / 4000
+    dur = 300 + 200/(100 + Gamescore.value)
     d3.selectAll(".drone")
       .data(@element)
       .style("opacity", 0)
       .transition()
-      .delay( (d, i) -> i / n * dur )
-      .duration(dur)
+      .delay( (d, i) -> i * dur )
+      .duration(dur * 4)
       .style("opacity", 1)
-      .each('end', (d) -> d.start())
+      .each('end', (d) => 
+        dx = @root.r.x - d.r.x
+        dy = @root.r.y - d.r.y
+        d1  = Math.sqrt(dx * dx + dy * dy)
+        dx /= d1
+        dy /= d1
+        d.v.x = 0.1 * @N * dx * speed
+        d.v.y = 0.1 * @N * dy * speed        
+        d.start()
+      )
     return
 
   update_drone: ->
@@ -141,12 +137,12 @@ class @Dronewar extends Game
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    sidewinder.text("SIDEWINDER").style("fill", "#006")
+    sidewinder.text("SIDEWINDER").style("fill", "#099")
     dur = 500
     sidewinder.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.sidewinder()) 
-      d3.select(this).transition().duration(dur).style("fill", "#006") 
+      d3.select(this).transition().duration(dur).style("fill", "#099") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
@@ -161,9 +157,9 @@ class @Dronewar extends Game
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
     viper.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.viper()) 
-      d3.select(this).transition().duration(dur).style("fill", "#006") 
+      d3.select(this).transition().duration(dur).style("fill", "#099") 
       sidewinder.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
@@ -179,9 +175,9 @@ class @Dronewar extends Game
       .style("cursor", "pointer")
     fang.text("FANG")
     fang.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.fang())
-      d3.select(this).transition().duration(dur).style("fill", "#006")
+      d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
     )
