@@ -29,10 +29,8 @@ class @Element
     @g           = @config.g           || @g
     @svg         = @config.svg         || d3.select("#game_svg")
     @quadtree    = @config.quadtree    || null
-    @tick        = @config.tick        || Integration.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
-    @width       = @config.width       || parseInt(@svg.attr("width"))
-    @height      = @config.height      || parseInt(@svg.attr("height"))
-    @destroyed   = false
+    @tick        = @config.tick        || Physics.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
+    @is_destroyed= false
     @_cleanup    = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
@@ -57,7 +55,7 @@ class @Element
       return true
     false
 
-  offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > @width + @size or @r.y > @height + @size
+  offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > Game.width + @size or @r.y > Game.height + @size
 
   start: ->  
     Collision.list.push(@) # add element to collision list by default
@@ -73,7 +71,13 @@ class @Element
     return
 
   destroy: (remove = true) -> 
+    return if @is_destroyed # don't allow elements to be destroyed twice by default
     @stop()
-    @destroyed = true
+    @is_destroyed = true
     @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
     return
+
+  update: -> # helper to combine these three operations into one loop for efficiency    
+    @tick()
+    @draw()
+    @cleanup()

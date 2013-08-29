@@ -1,6 +1,11 @@
 class @Dronewar extends Game
+
+  @bg_img = GameAssetsUrl + 'space_background.jpg'
+
   constructor: ->
     super
+    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
+    @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 5
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
@@ -27,41 +32,42 @@ class @Dronewar extends Game
       .attr("x", "20")
       .attr("y", "60")
       .attr('font-family', 'arial black')
-    d3.select(window).on("keydown", @keydown) # keyboard listener
+    d3.select(window.top).on("keydown", @keydown) # keyboard listener
+    img     = new Image()
+    img.src = Ship.viper().url
+    img.src = Ship.sidewinder().url
+    img.src = Ship.fang().url
+    img.src = Drone.url
 
   level: ->
     @svg.style("cursor", "none")
-    dur = 600
-    d3.select('#game_div').transition(dur).style("background-color", -> "hsl(" + Math.random() * 360 + ", 15%, 20%)")
     @element = [] # reinitialize element list
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone()
       @element.push(newAttacker) # extend the array of all elements in this game
-    for k in [0..Math.ceil(Math.sqrt(@element.length))] # place elements on grid
-      for j in [0..Math.ceil(Math.sqrt(@element.length))]
-        i = k * Math.floor(Math.sqrt(@element.length)) + j
-        break if i > @element.length - 1
-        @element[i].r.x = @width  * 0.5 + k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-        @element[i].r.y = @height * 0.1 + j  * @element[i].size  * 2  + @element[i].tol
-        speed = 20
-        dx = @root.r.x - @element[i].r.x
-        dy = @root.r.y - @element[i].r.y
-        d  = Math.sqrt(dx * dx + dy * dy)
-        dx /= d
-        dy /= d
-        @element[i].v.x = 0.1 * @N * dx 
-        @element[i].v.y = 0.1 * @N * dy
-        @element[i].draw()
-    dur = 400
+      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+      @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].draw()
     n = @element.length * 2
+    speed = 6 + Gamescore.value / 4000
+    dur = 300 + 200/(100 + Gamescore.value)
     d3.selectAll(".drone")
       .data(@element)
       .style("opacity", 0)
       .transition()
-      .delay( (d, i) -> i / n * dur )
-      .duration(dur)
+      .delay( (d, i) -> i * dur )
+      .duration(dur * 4)
       .style("opacity", 1)
-      .each('end', (d) -> d.start())
+      .each('end', (d) => 
+        dx = @root.r.x - d.r.x
+        dy = @root.r.y - d.r.y
+        d1  = Math.sqrt(dx * dx + dy * dy)
+        dx /= d1
+        dy /= d1
+        d.v.x = 0.1 * @N * dx * speed
+        d.v.y = 0.1 * @N * dy * speed        
+        d.start()
+      )
     return
 
   update_drone: ->
@@ -92,11 +98,11 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    Gameprez.end(Gamescore.value) if Gameprez?
+    callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; return true
+    @end(callback)
     return
 
   start: -> # start new game
-    Gameprez.start() if Gameprez? # start score tracking 
     @root.draw()
     @root.stop()
     title = @g.append("text")
@@ -104,7 +110,7 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", @width / 2 - 320)
+      .attr("x", Game.width / 2 - 320)
       .attr("y", 90)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -114,8 +120,8 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "36")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 40)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 40)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     prompt.text("SELECT SHIP")
@@ -126,17 +132,17 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 80)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 80)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    sidewinder.text("SIDEWINDER").style("fill", "#006")
+    sidewinder.text("SIDEWINDER").style("fill", "#099")
     dur = 500
     sidewinder.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.sidewinder()) 
-      d3.select(this).transition().duration(dur).style("fill", "#006") 
+      d3.select(this).transition().duration(dur).style("fill", "#099") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
@@ -145,15 +151,15 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 110)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 110)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
     viper.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.viper()) 
-      d3.select(this).transition().duration(dur).style("fill", "#006") 
+      d3.select(this).transition().duration(dur).style("fill", "#099") 
       sidewinder.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
@@ -162,16 +168,16 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", @width / 2 - 320)
-      .attr("y", @height / 4 + 140)
+      .attr("x", Game.width / 2 - 320)
+      .attr("y", Game.height / 4 + 140)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     fang.text("FANG")
     fang.on("click", -> 
-      return if this.style.fill == '#000066'
+      return if this.style.fill == '#000996'
       root.ship(Ship.fang())
-      d3.select(this).transition().duration(dur).style("fill", "#006")
+      d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
     )
@@ -197,13 +203,15 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
+      Gamescore.value = 0
+      Gameprez?.start(@max_score_increment) # start score tracking 
     )
     how = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", @width / 2 - 320)
+      .attr("x", Game.width / 2 - 320)
       .attr("y", @root.r.y + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -220,25 +228,24 @@ class @Dronewar extends Game
       @lives.text('LIVES: ' + Gamescore.lives) 
     else 
       dur = 420
-      @root.game_over()
-      @lives.text("GAME OVER, PRESS 'R' TO RESTART")
+      @root.game_over(dur)
       @stop()
       return true
-    all_destroyed = @element.every (element) -> element.destroyed
-    if all_destroyed # i.e. went offscreen or hit by bullet
+    all_is_destroyed = @element.every (element) -> element.is_destroyed
+    if all_is_destroyed # i.e. went offscreen or hit by bullet
       @N++
       @charge *= 10
       @level()
     return
             
   reset: =>
+    @cleanup()
     @g.selectAll("g").remove()
     @lives.text("")
     @scoretxt.text("")
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    Gamescore.value = 0
     @root = new Root()
     Gamescore.lives = Gamescore.initialLives
     @start()

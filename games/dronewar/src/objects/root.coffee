@@ -2,8 +2,8 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
-    @r.x           = @width / 2
-    @r.y           = @height - 180
+    @r.x           = Game.width / 2
+    @r.y           = Game.height - 180
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @lastfire      = Utils.timestamp()
     @charge        = 5e4
@@ -13,7 +13,7 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick = -> return
 
-  update: (xy = d3.mouse(@svg.node())) =>
+  redraw: (xy = d3.mouse(@svg.node())) =>
     return unless @collision # don't draw if not active
     @r.x = xy[0]
     @r.y = xy[1]
@@ -27,15 +27,15 @@ class @Root extends Polygon
 
   fire: () =>
     timestamp   = Utils.timestamp()
-    return true if @destroyed
-    return unless @collision and timestamp - @lastfire > @wait
+    return true if @is_destroyed
+    return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
     bullet      = new Bullet()
     bullet.size = @bullet_size
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
     bullet.r.x  = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y  = @r.y + y * 14
+    bullet.r.y  = @r.y + y * 20
     bullet.v.x  = @bullet_speed * x  
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
@@ -79,7 +79,7 @@ class @Root extends Polygon
       
   start: ->
     super
-    @svg.on("mousemove", @update) # default mouse behavior is to control the root element position
+    @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   

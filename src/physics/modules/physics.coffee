@@ -1,7 +1,7 @@
-class @Integration # numerical integration module for solving differential equations e.g. physical simulations
+class @Physics # numerical integration module for solving differential equations e.g. physical simulations
 
-  @off: false # a boolean switch determining whether or not to run the 
-  @tick: 1 / 30 # maximum frames per second to prevent the simulation from running too fast on faster machines for predictable realtime performance
+  @off: false # a boolean switch determining whether or not to run the physics engine
+  @tick: 1000 / 80 # maximum frames per second to prevent the simulation from running too fast on faster machines for predictable realtime performance
   @timestamp: Utils.timestamp() # to keep track of integration frequency
 
   @verlet: (element) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
@@ -18,7 +18,8 @@ class @Integration # numerical integration module for solving differential equat
     timestamp = Utils.timestamp()
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast
     @timestamp = timestamp
-    element.tick() for element in Collision.list # update each element by one tick of its timestep element.dt
+    len = Collision.list.length
+    Collision.list[len].update() while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     return 
   

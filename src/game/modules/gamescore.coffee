@@ -9,3 +9,6 @@ class @Gamescore # gamescore module
   ## class methods:
   @increment_value: -> # increase the value by the increment
     @value += @increment # update current game score value
+
+  @decrement_value: -> # increase the value by the increment
+    @value -= @increment # update current game score value

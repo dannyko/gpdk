@@ -10,5 +10,5 @@ class @Bullet extends Circle
     @destroy()
     n.destroy()
     Gamescore.increment_value() 
-    Gameprez.score(Gamescore.value) if Gameprez?
+    Gameprez?.score(Gamescore.value)
     true

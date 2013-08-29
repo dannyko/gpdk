@@ -1,6 +1,7 @@
 class @Reaction # reaction module with no class variables only class and private methods
 
   ## class methods:
+
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
     return if m.destroy_check(n) || n.destroy_check(m)
     line   = new Vec(d)
@@ -8,13 +9,17 @@ class @Reaction # reaction module with no class variables only class and private
     line.y = line.y / d.dist # normalize to get a unit vector
     overstep = Math.max(d.dmin - d.dist, 0) # account for overstep since simulated movement occurs in discrete jumps
     shift  = 0.5 * (Math.max(m.tol, n.tol) + overstep) # shift both by an equal amount adding up to satisfy tolerance while taking into account overstep
-    elastic_collision(m, n, line, shift)
+    Reaction.elastic_collision(m, n, line, shift)
     m.reaction(n) # should give the same result as n.reaction(m) - symmetric after destroy_check
     return  
     
   @circle_polygon: (circle, polygon, d) ->
     return if circle.destroy_check(polygon) || polygon.destroy_check(circle)
-    console.log('Reaction.circle_polygon not implemented yet')
+    intersecting_segment = polygon.path[d.i]
+    normal = intersecting_segment.n
+    shift = 0.5 * Math.max(circle.tol, polygon.tol)
+    Reaction.elastic_collision(circle, polygon, normal, shift)
+    console.log('circle_polygon', circle, polygon)
     return
     
   @polygon_polygon: (m, n, d) -> # perfectly elastic default collision type
@@ -31,15 +36,15 @@ class @Reaction # reaction module with no class variables only class and private
       normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
       segj   = mseg
     shift  = 0.5 * Math.max(m.tol, n.tol)
-    elastic_collision(m, n, normal, shift)
-    m.reaction(n) # should give the same effects as n.reaction(m) by symmetry
+    Reaction.elastic_collision(m, n, normal, shift)
+    m.reaction(n) # should give the same effects as n.reaction(m) by symmetry -- see Element abstract superclass
     return
     
-  elastic_collision = (m, n, line, shift) ->
+  @elastic_collision: (m, n, line, shift) ->
     lshift   = new Vec(line).scale(shift) # the amount to shift the elements by for each iteration as a 2D Vector
-    reaction = false # input for collision check to prevent reaction being called while the while loop executes
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
+    reaction = false # input for collision check to prevent reaction being called while the while loop executes
     while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.r     = m.r.add(lshift) # update position to resolve conflict
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 

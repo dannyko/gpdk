@@ -1,5 +1,13 @@
 == "Dronewar", a test game for the Gameprez Developer Kit ==
 
+--- 
+
+Battle endless waves of drones and see how many you can take down! 
+Select one of three ships, each with unique properties. 
+Drone speed and acceleration increase with score, so be careful...
+
+---
+
 To compile CoffeeScript code into JavaScript, run:
 
 cake compile

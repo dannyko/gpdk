@@ -21,6 +21,10 @@
       return this.value += this.increment;
     };
 
+    Gamescore.decrement_value = function() {
+      return this.value -= this.increment;
+    };
+
     return Gamescore;
 
   })();
@@ -130,6 +134,20 @@
       return interp(d, this);
     };
 
+    Utils.bilinear_interp = function(matrix, x, y) {
+      var dxc, dxf, dyc, dyf, interp, tol, xc, xf, yc, yf;
+      tol = 1e-1;
+      xf = Math.floor(x);
+      xc = Math.ceil(x + tol);
+      yf = Math.floor(y);
+      yc = Math.ceil(y + tol);
+      dxf = x - xf;
+      dxc = xc - x;
+      dyf = y - yf;
+      dyc = yc - y;
+      return interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf;
+    };
+
     return Utils;
 
   })();
@@ -144,7 +162,7 @@
       this.v = this.config.v || new Vec();
       this.f = this.config.f || new Vec();
       this.n = this.config.n || [];
-      this.force = this.config.force || [new Force()];
+      this.force_param = this.config.force_param || [new ForceParam()];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
       this.bb_height = this.config.bb_height || 0;
@@ -153,7 +171,7 @@
       this.top = this.config.top || 0;
       this.bottom = this.config.bottom || 0;
       this.collision = this.config.collision || true;
-      this.tol = this.config.tol || 0.5;
+      this.tol = this.config.tol || 0.25;
       this._stroke = this.config.stroke || "none";
       this._fill = this.config.fill || "black";
       this.angle = this.config.angle || 0;
@@ -165,10 +183,8 @@
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
       this.quadtree = this.config.quadtree || null;
-      this.tick = this.config.tick || Integration.verlet(this);
-      this.width = this.config.width || parseInt(this.svg.attr("width"));
-      this.height = this.config.height || parseInt(this.svg.attr("height"));
-      this.destroyed = false;
+      this.tick = this.config.tick || Physics.verlet(this);
+      this.is_destroyed = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -201,7 +217,7 @@
     };
 
     Element.prototype.offscreen = function() {
-      return this.r.x < -this.size || this.r.y < -this.size || this.r.x > this.width + this.size || this.r.y > this.height + this.size;
+      return this.r.x < -this.size || this.r.y < -this.size || this.r.x > Game.width + this.size || this.r.y > Game.height + this.size;
     };
 
     Element.prototype.start = function() {
@@ -227,11 +243,20 @@
       if (remove == null) {
         remove = true;
       }
+      if (this.is_destroyed) {
+        return;
+      }
       this.stop();
-      this.destroyed = true;
+      this.is_destroyed = true;
       if (remove) {
         this.g.remove();
       }
+    };
+
+    Element.prototype.update = function() {
+      this.tick();
+      this.draw();
+      return this.cleanup();
     };
 
     return Element;
@@ -240,6 +265,10 @@
 
   this.Game = (function() {
 
+    Game.width = null;
+
+    Game.height = null;
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.element = [];
@@ -247,8 +276,8 @@
       if (this.svg.empty()) {
         this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
       }
-      this.width = parseInt(this.svg.attr("width"), 10);
-      this.height = parseInt(this.svg.attr("height"), 10);
+      Game.width = parseInt(this.svg.attr("width"), 10);
+      Game.height = parseInt(this.svg.attr("height"), 10);
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
@@ -258,11 +287,35 @@
     }
 
     Game.prototype.start = function() {
-      return Integration.start();
+      return Physics.start();
     };
 
     Game.prototype.stop = function() {
-      return Integration.stop();
+      return Physics.stop();
+    };
+
+    Game.prototype.end = function(callback) {
+      if (callback == null) {
+        callback = function() {};
+      }
+      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+        Gameprez.end(Gamescore.value, callback);
+      } else {
+        callback();
+      }
+      return true;
+    };
+
+    Game.prototype.cleanup = function() {
+      var element, len, _results;
+      len = Collision.list.length;
+      _results = [];
+      while (len--) {
+        element = Collision.list.pop();
+        element.destroy();
+        _results.push(element = null);
+      }
+      return _results;
     };
 
     return Game;
@@ -274,14 +327,15 @@
     __extends(Circle, _super);
 
     function Circle(config) {
+      var _base;
       this.config = config != null ? config : {};
-      Circle.__super__.constructor.apply(this, arguments);
+      (_base = this.config).size || (_base.size = 15);
+      Circle.__super__.constructor.call(this, this.config);
       this.type = 'Circle';
-      this.size = 15;
       this.BB();
       this.image = this.g.append("circle");
-      this.image.attr("stroke", this._stroke);
-      this.image.attr("fill", this._fill);
+      this.stroke(this._stroke);
+      this.fill(this._fill);
     }
 
     Circle.prototype.draw = function() {
@@ -306,10 +360,12 @@
 
     function Polygon(config) {
       this.config = config != null ? config : {};
-      Polygon.__super__.constructor.apply(this, arguments);
+      Polygon.__super__.constructor.call(this, this.config);
       this.type = 'Polygon';
       this.path = this.config.path || this.default_path();
       this.image = this.g.append("path");
+      this.fill(this._fill);
+      this.stroke(this._stroke);
       this.set_path();
     }
 
@@ -347,8 +403,8 @@
       for (i = _i = 0, _ref = this.path.length - 2; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         this.path[i].r = new Vec(this.path[i]).subtract(this.path[(i + 1) % (this.path.length - 1)]);
         this.path[i].n = new Vec({
-          x: -this.path[i].y,
-          y: this.path[i].x
+          x: -this.path[i].r.y,
+          y: this.path[i].r.x
         }).normalize();
       }
       this.BB();
@@ -437,6 +493,20 @@
 
     Collision.quadtree = Collision.update_quadtree();
 
+    Collision.resolve = function(m, n) {
+      var iter, maxiter, reaction, _results;
+      maxiter = 32;
+      iter = 1;
+      reaction = false;
+      _results = [];
+      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
+        m.tick();
+        n.tick();
+        _results.push(iter++);
+      }
+      return _results;
+    };
+
     Collision.detect = function() {
       var d, i, length, size, x0, x3, y0, y3, _results;
       if (!(this.list.length > 0)) {
@@ -458,7 +528,7 @@
             var p;
             p = node.point;
             if (p !== null) {
-              if (p.destroyed) {
+              if (p.is_destroyed) {
                 return false;
               }
               if (!(d !== p.d && p.d.collision)) {
@@ -471,8 +541,6 @@
             return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
           });
         }
-        d.draw();
-        d.cleanup();
         length = this.list.length;
         _results.push(i++);
       }
@@ -480,7 +548,7 @@
     };
 
     Collision.check = function(ei, ej, reaction) {
-      var d, m, n, name, sort;
+      var d, m, n, name, reaction_type, sort;
       if (reaction == null) {
         reaction = true;
       }
@@ -498,25 +566,22 @@
           switch (n.type) {
             case 'Circle':
               d = this.circle_circle(m, n);
-              if (d.collision && reaction) {
-                Reaction.circle_circle(m, n, d);
-              }
+              reaction_type = 'circle_circle';
               break;
             case 'Polygon':
               d = this.circle_polygon(m, n);
-              if (d.collision && reaction) {
-                Reaction.circle_polygon(m, n, d);
-              }
+              reaction_type = 'circle_polygon';
           }
           break;
         case 'Polygon':
           switch (n.type) {
             case 'Polygon':
               d = this.polygon_polygon(m, n);
-              if (d.collision && reaction) {
-                Reaction.polygon_polygon(m, n, d);
-              }
+              reaction_type = 'polygon_polygon';
           }
+      }
+      if (d.collision && reaction) {
+        Reaction[reaction_type](m, n, d);
       }
       return d;
     };
@@ -701,52 +766,136 @@
 
   })();
 
-  this.Integration = (function() {
+  this.Force = (function() {
 
-    function Integration() {}
+    function Force() {}
 
-    Integration.off = false;
+    Force["eval"] = function(element, param) {
+      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
+      switch (param.type) {
+        case 'constant':
+          fx = param.x;
+          fy = param.y;
+          break;
+        case 'friction':
+          fx = -param.alpha * element.v.x;
+          fy = -param.alpha * element.v.y;
+          break;
+        case 'spring':
+          fx = -(element.r.x - param.cx);
+          fy = -(element.r.y - param.cy);
+          break;
+        case 'charge':
+        case 'gravity':
+          dr = new Vec({
+            x: param.cx - element.r.x,
+            y: param.cy - element.r.y
+          });
+          r2 = dr.length_squared();
+          r3 = r2 * Math.sqrt(r2);
+          fx = param.q * dr.x / r3;
+          fy = param.q * dr.y / r3;
+          break;
+        case 'random':
+          fx = 2 * (Math.random() - 0.5) * param.xScale;
+          fy = 2 * (Math.random() - 0.5) * param.yScale;
+          if (element.r.x > param.xBound) {
+            fx = -param.fxBound;
+          }
+          if (element.r.y > param.yBound) {
+            fy = -param.fyBound;
+          }
+          if (element.r.x < 0) {
+            fx = param.fxBound;
+          }
+          if (element.r.y < 0) {
+            fy = param.fyBound;
+          }
+          break;
+        case 'gradient':
+          rpx = new Vec(element.r).add({
+            x: param.tol,
+            y: 0
+          });
+          rmx = new Vec(element.r).add({
+            x: -param.tol,
+            y: 0
+          });
+          rpy = new Vec(element.r).add({
+            y: param.tol,
+            x: 0
+          });
+          rmy = new Vec(element.r).add({
+            y: -param.tol,
+            x: 0
+          });
+          epx = param.energy(rpx);
+          emx = param.energy(rmx);
+          epy = param.energy(rpy);
+          emy = param.energy(rmy);
+          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
+            fx = 0;
+            fy = 0;
+            break;
+          }
+          fx = -0.5 * (epx - emx) / param.tol;
+          fy = -0.5 * (epy - emy) / param.tol;
+      }
+      return new Vec({
+        x: fx,
+        y: fy
+      });
+    };
 
-    Integration.tick = 1 / 30;
+    return Force;
 
-    Integration.timestamp = Utils.timestamp();
+  })();
 
-    Integration.verlet = function(element) {
+  this.Physics = (function() {
+
+    function Physics() {}
+
+    Physics.off = false;
+
+    Physics.tick = 1000 / 80;
+
+    Physics.timestamp = Utils.timestamp();
+
+    Physics.verlet = function(element) {
       return function() {
         var f;
         element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
         element.r.add(element.dr);
         f = new Vec();
-        element.force.forEach(function(force) {
-          return f.add(force.f(element));
+        element.force_param.forEach(function(param) {
+          return f.add(Force["eval"](element, param));
         });
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
         element.f = f;
       };
     };
 
-    Integration.integrate = function(cleanup) {
-      var element, timestamp, _i, _len, _ref;
+    Physics.integrate = function(cleanup) {
+      var len, timestamp;
       if (cleanup == null) {
         cleanup = true;
       }
-      if (Integration.off) {
+      if (Physics.off) {
         return true;
       }
       timestamp = Utils.timestamp();
-      if (timestamp - Integration.timestamp < Integration.tick) {
+      if (timestamp - Physics.timestamp < Physics.tick) {
         return;
       }
-      Integration.timestamp = timestamp;
-      _ref = Collision.list;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        element = _ref[_i];
-        element.tick();
+      Physics.timestamp = timestamp;
+      len = Collision.list.length;
+      while (len--) {
+        Collision.list[len].update();
       }
       Collision.detect();
     };
 
-    Integration.start = function(delay) {
+    Physics.start = function(delay) {
       if (delay == null) {
         delay = 0;
       }
@@ -754,16 +903,15 @@
       d3.timer(this.integrate, delay);
     };
 
-    Integration.stop = function() {
+    Physics.stop = function() {
       this.off = true;
     };
 
-    return Integration;
+    return Physics;
 
   }).call(this);
 
   this.Reaction = (function() {
-    var elastic_collision;
 
     function Reaction() {}
 
@@ -777,15 +925,20 @@
       line.y = line.y / d.dist;
       overstep = Math.max(d.dmin - d.dist, 0);
       shift = 0.5 * (Math.max(m.tol, n.tol) + overstep);
-      elastic_collision(m, n, line, shift);
+      Reaction.elastic_collision(m, n, line, shift);
       m.reaction(n);
     };
 
     Reaction.circle_polygon = function(circle, polygon, d) {
+      var intersecting_segment, normal, shift;
       if (circle.destroy_check(polygon) || polygon.destroy_check(circle)) {
         return;
       }
-      console.log('Reaction.circle_polygon not implemented yet');
+      intersecting_segment = polygon.path[d.i];
+      normal = intersecting_segment.n;
+      shift = 0.5 * Math.max(circle.tol, polygon.tol);
+      Reaction.elastic_collision(circle, polygon, normal, shift);
+      console.log('circle_polygon', circle, polygon);
     };
 
     Reaction.polygon_polygon = function(m, n, d) {
@@ -805,16 +958,16 @@
         segj = mseg;
       }
       shift = 0.5 * Math.max(m.tol, n.tol);
-      elastic_collision(m, n, normal, shift);
+      Reaction.elastic_collision(m, n, normal, shift);
       m.reaction(n);
     };
 
-    elastic_collision = function(m, n, line, shift) {
+    Reaction.elastic_collision = function(m, n, line, shift) {
       var cPar, dPar, iter, lshift, maxiter, reaction, uPar, uPerp, vPar, vPerp;
       lshift = new Vec(line).scale(shift);
-      reaction = false;
       maxiter = 32;
       iter = 1;
+      reaction = false;
       while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
         m.r = m.r.add(lshift);
         n.r = n.r.subtract(lshift);
@@ -834,94 +987,44 @@
 
   })();
 
-  this.Force = (function() {
+  this.ForceParam = (function() {
 
-    function Force(param) {
-      this.param = param != null ? param : {
-        type: 'constant',
-        fx: 0,
-        fy: 0
-      };
-    }
-
-    Force.prototype.f = function(element) {
-      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
-      switch (this.param.type) {
+    function ForceParam(config) {
+      this.config = config != null ? config : {};
+      this.type = this.config.type || 'constant';
+      switch (this.config.type) {
         case 'constant':
-          fx = this.param.x;
-          fy = this.param.y;
+          this.fx = this.config.x || 0;
+          this.fy = this.config.y || 0;
           break;
         case 'friction':
-          fx = -this.param.alpha * element.v.x;
-          fy = -this.param.alpha * element.v.y;
+          this.alpha = this.config.alpha || 1;
+          this.vscale = this.config.vscale || .99;
+          this.vcut = this.config.vcut || 1e-2;
           break;
         case 'spring':
-          fx = -(element.r.x - this.param.cx);
-          fy = -(element.r.y - this.param.cy);
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
           break;
         case 'charge':
         case 'gravity':
-          dr = new Vec({
-            x: this.param.cx - element.r.x,
-            y: this.param.cy - element.r.y
-          });
-          r2 = dr.length_squared();
-          r3 = r2 * Math.sqrt(r2);
-          fx = this.param.q * dr.x / r3;
-          fy = this.param.q * dr.y / r3;
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
+          this.q = this.config.q || 1;
           break;
         case 'random':
-          fx = 2 * (Math.random() - 0.5) * this.param.xScale;
-          fy = 2 * (Math.random() - 0.5) * this.param.yScale;
-          if (element.r.x > this.param.xBound) {
-            fx = -this.param.fxBound;
-          }
-          if (element.r.y > this.param.yBound) {
-            fy = -this.param.fyBound;
-          }
-          if (element.r.x < 0) {
-            fx = this.param.fxBound;
-          }
-          if (element.r.y < 0) {
-            fy = this.param.fyBound;
-          }
+          this.xScale = this.config.xScale || 1;
+          this.yScale = this.config.yScale || 1;
+          this.fxBound = this.config.fxBound || 10;
+          this.fyBound = this.config.fyBound || 10;
           break;
         case 'gradient':
-          rpx = new Vec(element.r).add({
-            x: this.param.tol,
-            y: 0
-          });
-          rmx = new Vec(element.r).add({
-            x: -this.param.tol,
-            y: 0
-          });
-          rpy = new Vec(element.r).add({
-            y: this.param.tol,
-            x: 0
-          });
-          rmy = new Vec(element.r).add({
-            y: -this.param.tol,
-            x: 0
-          });
-          epx = this.param.energy(rpx);
-          emx = this.param.energy(rmx);
-          epy = this.param.energy(rpy);
-          emy = this.param.energy(rmy);
-          if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
-            fx = 0;
-            fy = 0;
-            break;
-          }
-          fx = -0.5 * (epx - emx) / this.param.tol;
-          fy = -0.5 * (epy - emy) / this.param.tol;
+          this.tol = this.config.tol || 0.1;
+          this.energy = this.config.energy || function(r) {};
       }
-      return new Vec({
-        x: fx,
-        y: fy
-      });
-    };
+    }
 
-    return Force;
+    return ForceParam;
 
   })();
 
@@ -970,9 +1073,12 @@
       return Math.sqrt(this.length_squared());
     };
 
-    Vec.prototype.normalize = function() {
+    Vec.prototype.normalize = function(length) {
       var inverseLength;
-      inverseLength = 1 / this.length();
+      if (length == null) {
+        length = 1;
+      }
+      inverseLength = length / this.length();
       this.x *= inverseLength;
       this.y *= inverseLength;
       return this;
@@ -1042,8 +1148,8 @@
           y: 19
         },
         bullet_stroke: 'none',
-        bullet_fill: '#fff',
-        bullet_size: 2,
+        bullet_fill: '#90F ',
+        bullet_size: 3,
         bullet_speed: 15,
         bullet_tick: 25
       };
@@ -1142,8 +1248,8 @@
           x: 0,
           y: 25
         },
-        bullet_stroke: '#fff',
-        bullet_fill: 'none',
+        bullet_stroke: 'none',
+        bullet_fill: '#C00',
         bullet_size: 5,
         bullet_speed: 10,
         bullet_tick: 20
@@ -1223,7 +1329,7 @@
           y: 0
         },
         bullet_stroke: 'none',
-        bullet_fill: '#000',
+        bullet_fill: '#099',
         bullet_size: 4,
         bullet_speed: 10,
         bullet_tick: 30
@@ -1267,13 +1373,16 @@
 
     __extends(Drone, _super);
 
+    Drone.url = GameAssetsUrl + "drone_1.png";
+
     function Drone(config) {
       this.config = config != null ? config : {};
-      Drone.__super__.constructor.apply(this, arguments);
+      this.config.size = 20;
+      Drone.__super__.constructor.call(this, this.config);
       this.stop();
       this.image.remove();
       this.g.attr("class", "drone");
-      this.image = this.g.append("image").attr("xlink:href", GameAssetsUrl + "drone_1.png").attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
     Drone.prototype.destroy = function(remove) {
@@ -1302,8 +1411,11 @@
 
     __extends(Dronewar, _super);
 
+    Dronewar.bg_img = GameAssetsUrl + 'space_background.jpg';
+
     function Dronewar() {
-      var _this = this;
+      var img,
+        _this = this;
       this.reset = function() {
         return Dronewar.prototype.reset.apply(_this, arguments);
       };
@@ -1314,51 +1426,48 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')');
+      this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 5;
       this.N = this.initialN;
       this.root = new Root();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
       this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial black');
-      d3.select(window).on("keydown", this.keydown);
+      d3.select(window.top).on("keydown", this.keydown);
+      img = new Image();
+      img.src = Ship.viper().url;
+      img.src = Ship.sidewinder().url;
+      img.src = Ship.fang().url;
+      img.src = Drone.url;
     }
 
     Dronewar.prototype.level = function() {
-      var d, dur, dx, dy, i, j, k, n, newAttacker, speed, _i, _j, _k, _ref, _ref1, _ref2;
+      var dur, i, n, newAttacker, speed, _i, _ref,
+        _this = this;
       this.svg.style("cursor", "none");
-      dur = 600;
-      d3.select('#game_div').transition(dur).style("background-color", function() {
-        return "hsl(" + Math.random() * 360 + ", 15%, 20%)";
-      });
       this.element = [];
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = new Drone();
         this.element.push(newAttacker);
+        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width;
+        this.element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height;
+        this.element[i].draw();
       }
-      for (k = _j = 0, _ref1 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref1 ? _j <= _ref1 : _j >= _ref1; k = 0 <= _ref1 ? ++_j : --_j) {
-        for (j = _k = 0, _ref2 = Math.ceil(Math.sqrt(this.element.length)); 0 <= _ref2 ? _k <= _ref2 : _k >= _ref2; j = 0 <= _ref2 ? ++_k : --_k) {
-          i = k * Math.floor(Math.sqrt(this.element.length)) + j;
-          if (i > this.element.length - 1) {
-            break;
-          }
-          this.element[i].r.x = this.width * 0.5 + k * this.element[i].size * 2 + this.element[i].tol - Math.ceil(Math.sqrt(this.element.length)) * this.element[i].size;
-          this.element[i].r.y = this.height * 0.1 + j * this.element[i].size * 2 + this.element[i].tol;
-          speed = 20;
-          dx = this.root.r.x - this.element[i].r.x;
-          dy = this.root.r.y - this.element[i].r.y;
-          d = Math.sqrt(dx * dx + dy * dy);
-          dx /= d;
-          dy /= d;
-          this.element[i].v.x = 0.1 * this.N * dx;
-          this.element[i].v.y = 0.1 * this.N * dy;
-          this.element[i].draw();
-        }
-      }
-      dur = 400;
       n = this.element.length * 2;
+      speed = 6 + Gamescore.value / 4000;
+      dur = 300 + 200 / (100 + Gamescore.value);
       d3.selectAll(".drone").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
-        return i / n * dur;
-      }).duration(dur).style("opacity", 1).each('end', function(d) {
+        return i * dur;
+      }).duration(dur * 4).style("opacity", 1).each('end', function(d) {
+        var d1, dx, dy;
+        dx = _this.root.r.x - d.r.x;
+        dy = _this.root.r.y - d.r.y;
+        d1 = Math.sqrt(dx * dx + dy * dy);
+        dx /= d1;
+        dy /= d1;
+        d.v.x = 0.1 * _this.N * dx * speed;
+        d.v.y = 0.1 * _this.N * dy * speed;
         return d.start();
       });
     };
@@ -1377,7 +1486,7 @@
       _ref = this.element;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         drone = _ref[_i];
-        drone.force[0].param = this.param;
+        drone.force_param[0] = this.param;
       }
     };
 
@@ -1404,57 +1513,58 @@
     };
 
     Dronewar.prototype.stop = function() {
+      var callback,
+        _this = this;
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.end(Gamescore.value);
-      }
+      callback = function() {
+        _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        return true;
+      };
+      this.end(callback);
     };
 
     Dronewar.prototype.start = function() {
       var dur, fang, go, how, prompt, root, sidewinder, title, viper,
         _this = this;
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.start();
-      }
       this.root.draw();
       this.root.stop();
-      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", this.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
+      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
-      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold');
+      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold');
       prompt.text("SELECT SHIP");
       root = this.root;
-      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      sidewinder.text("SIDEWINDER").style("fill", "#006");
+      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      sidewinder.text("SIDEWINDER").style("fill", "#099");
       dur = 500;
       sidewinder.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.sidewinder());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 110).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 110).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       viper.text("VIPER");
       viper.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.viper());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         sidewinder.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", this.width / 2 - 320).attr("y", this.height / 4 + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       fang.text("FANG");
       fang.on("click", function() {
-        if (this.style.fill === '#000066') {
+        if (this.style.fill === '#000996') {
           return;
         }
         root.ship(Ship.fang());
-        d3.select(this).transition().duration(dur).style("fill", "#006");
+        d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return sidewinder.style("fill", "#FFF");
       });
@@ -1470,15 +1580,17 @@
         go.transition().duration(dur).style("opacity", 0).remove();
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
-        return d3.timer(_this.progress);
+        d3.timer(_this.progress);
+        Gamescore.value = 0;
+        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
       });
-      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", this.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use the mouse for controlling movement, scrollwheel for rotation");
       Dronewar.__super__.start.apply(this, arguments);
     };
 
     Dronewar.prototype.progress = function() {
-      var all_destroyed, dur;
+      var all_is_destroyed, dur;
       this.update_drone();
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN + 1));
@@ -1486,15 +1598,14 @@
         this.lives.text('LIVES: ' + Gamescore.lives);
       } else {
         dur = 420;
-        this.root.game_over();
-        this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        this.root.game_over(dur);
         this.stop();
         return true;
       }
-      all_destroyed = this.element.every(function(element) {
-        return element.destroyed;
+      all_is_destroyed = this.element.every(function(element) {
+        return element.is_destroyed;
       });
-      if (all_destroyed) {
+      if (all_is_destroyed) {
         this.N++;
         this.charge *= 10;
         this.level();
@@ -1502,13 +1613,13 @@
     };
 
     Dronewar.prototype.reset = function() {
+      this.cleanup();
       this.g.selectAll("g").remove();
       this.lives.text("");
       this.scoretxt.text("");
       this.leveltxt.text("");
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
-      Gamescore.value = 0;
       this.root = new Root();
       Gamescore.lives = Gamescore.initialLives;
       this.start();
@@ -1533,16 +1644,16 @@
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
       };
-      this.update = function(xy) {
+      this.redraw = function(xy) {
         if (xy == null) {
           xy = d3.mouse(_this.svg.node());
         }
-        return Root.prototype.update.apply(_this, arguments);
+        return Root.prototype.redraw.apply(_this, arguments);
       };
       Root.__super__.constructor.call(this, this.config);
       this.is_root = true;
-      this.r.x = this.width / 2;
-      this.r.y = this.height - 180;
+      this.r.x = Game.width / 2;
+      this.r.y = Game.height - 180;
       this.angleStep = 2 * Math.PI / 60;
       this.lastfire = Utils.timestamp();
       this.charge = 5e4;
@@ -1553,7 +1664,7 @@
       this.tick = function() {};
     }
 
-    Root.prototype.update = function(xy) {
+    Root.prototype.redraw = function(xy) {
       if (xy == null) {
         xy = d3.mouse(this.svg.node());
       }
@@ -1576,10 +1687,10 @@
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       timestamp = Utils.timestamp();
-      if (this.destroyed) {
+      if (this.is_destroyed) {
         return true;
       }
-      if (!(this.collision && timestamp - this.lastfire > this.wait)) {
+      if (!(this.collision && timestamp - this.lastfire >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
@@ -1588,7 +1699,7 @@
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
       bullet.r.x = this.r.x + x * (this.size / 3 + bullet.size);
-      bullet.r.y = this.r.y + y * 14;
+      bullet.r.y = this.r.y + y * 20;
       bullet.v.x = this.bullet_speed * x;
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
@@ -1625,7 +1736,7 @@
 
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
-      this.svg.on("mousemove", this.update);
+      this.svg.on("mousemove", this.redraw);
       this.svg.on("mousedown", this.fire);
       return this.svg.on("mousewheel", this.spin);
     };

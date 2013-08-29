@@ -9,8 +9,13 @@ class @Circletest extends Game
       for j in [0..Math.ceil(Math.sqrt(@element.length))]
         i = k * Math.floor(Math.sqrt(@element.length)) + j
         break if i > @element.length - 1
+<<<<<<< HEAD:games/circletest/src/circletest.coffee
         @element[i].r.x = @width  * 0.5 + k   * (@element[i].size * 2 + @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
         @element[i].r.y = @height * 0.25 + j  * (@element[i].size  * 2 + @element[i].tol)
+=======
+        @element[i].r.x = Game.width  * 0.5 + k   * (@element[i].size * 2 + @element[i].tol) - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+        @element[i].r.y = Game.height * 0.25 + j  * (@element[i].size  * 2 + @element[i].tol)
+>>>>>>> dev:test/circletest/src/circletest.coffee
         @element[i].draw()
     @root = new Root() # default root element i.e. under user control
 

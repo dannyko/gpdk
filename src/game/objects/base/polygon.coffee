@@ -1,9 +1,11 @@
 class @Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
   constructor: (@config = {}) ->
-    super
+    super(@config)
     @type = 'Polygon'
     @path  = @config.path || @default_path() # use an equilateral triangle as the default polygonal shape
     @image = @g.append("path") # render default polygon image   
+    @fill(@_fill)
+    @stroke(@_stroke)
     @set_path()
   
   default_path: ->
@@ -21,7 +23,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
   polygon_path: -> # assign path metadata
     for i in [0..@path.length - 2] # set edge vectors: path.r
       @path[i].r = new Vec(@path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
-      @path[i].n = new Vec({x: -@path[i].y, y: @path[i].x}).normalize() # unit normal vector 
+      @path[i].n = new Vec({x: -@path[i].r.y, y: @path[i].r.x}).normalize() # unit normal vector 
     @BB()
     return
 
