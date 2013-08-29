@@ -1,5 +1,14 @@
 == "Wallball", a demo/test game for the Gameprez Developer Kit ==
 
+---
+
+Wallball is an entry-level game of skill for all ages. 
+Control the bouncing ball by moving the paddle, and score points by bouncing the ball off the moving wall. 
+Ball speed increases with score!
+
+---
+
+
 To compile CoffeeScript code into JavaScript, run:
 
 cake compile
