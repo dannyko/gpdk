@@ -1380,7 +1380,7 @@
       this.config.size = 20;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
-      this.max_speed = 15;
+      this.max_speed = 18;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
