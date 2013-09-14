@@ -5,6 +5,7 @@ class @Drone extends Circle
     @config.size = 20
     super(@config)
     @stop()
+    @max_speed = 15 
     @image.remove()
     @g.attr("class", "drone")
     @image = @g.append("image")
@@ -37,4 +38,5 @@ class @Drone extends Circle
     
   draw: ->
     @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
+    @v.normalize(@max_speed) if @v.length() > @max_speed
     super

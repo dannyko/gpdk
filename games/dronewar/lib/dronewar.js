@@ -1380,6 +1380,7 @@
       this.config.size = 20;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
+      this.max_speed = 15;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
@@ -1400,6 +1401,9 @@
 
     Drone.prototype.draw = function() {
       this.angle = -Math.atan2(this.f.x, this.f.y);
+      if (this.v.length() > this.max_speed) {
+        this.v.normalize(this.max_speed);
+      }
       return Drone.__super__.draw.apply(this, arguments);
     };
 
@@ -1443,7 +1447,7 @@
     }
 
     Dronewar.prototype.level = function() {
-      var dur, i, n, newAttacker, speed, _i, _ref,
+      var dur, i, n, newAttacker, _i, _ref,
         _this = this;
       this.svg.style("cursor", "none");
       this.element = [];
@@ -1455,7 +1459,7 @@
         this.element[i].draw();
       }
       n = this.element.length * 2;
-      speed = 6 + Gamescore.value / 4000;
+      this.speed = .04 + Gamescore.value / 1000000;
       dur = 300 + 200 / (100 + Gamescore.value);
       d3.selectAll(".drone").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
         return i * dur;
@@ -1466,8 +1470,8 @@
         d1 = Math.sqrt(dx * dx + dy * dy);
         dx /= d1;
         dy /= d1;
-        d.v.x = 0.1 * _this.N * dx * speed;
-        d.v.y = 0.1 * _this.N * dy * speed;
+        d.v.x = _this.N * dx * _this.speed;
+        d.v.y = _this.N * dy * _this.speed;
         return d.start();
       });
     };
@@ -1481,7 +1485,7 @@
         type: 'charge',
         cx: this.root.r.x,
         cy: this.root.r.y,
-        q: this.root.charge
+        q: this.root.charge * 500 * this.speed * this.speed
       };
       _ref = this.element;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {

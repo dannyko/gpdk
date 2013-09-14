@@ -49,8 +49,8 @@ class @Dronewar extends Game
       @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].draw()
     n = @element.length * 2
-    speed = 6 + Gamescore.value / 4000
-    dur = 300 + 200/(100 + Gamescore.value)
+    @speed = .04 + Gamescore.value / 1000000
+    dur = 300 + 200 / (100 + Gamescore.value)
     d3.selectAll(".drone")
       .data(@element)
       .style("opacity", 0)
@@ -64,8 +64,8 @@ class @Dronewar extends Game
         d1  = Math.sqrt(dx * dx + dy * dy)
         dx /= d1
         dy /= d1
-        d.v.x = 0.1 * @N * dx * speed
-        d.v.y = 0.1 * @N * dy * speed        
+        d.v.x = @N * dx * @speed
+        d.v.y = @N * dy * @speed        
         d.start()
       )
     return
@@ -76,7 +76,7 @@ class @Dronewar extends Game
       type: 'charge'
       cx: @root.r.x
       cy: @root.r.y
-      q:  @root.charge # charge
+      q:  @root.charge * 500 * @speed * @speed # charge
     drone.force_param[0] = @param for drone in @element
     return
 
