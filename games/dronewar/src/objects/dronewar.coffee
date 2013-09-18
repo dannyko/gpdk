@@ -49,8 +49,8 @@ class @Dronewar extends Game
       @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].draw()
     n = @element.length * 2
-    @speed = .04 + Gamescore.value / 1000000
-    dur = 300 + 200 / (100 + Gamescore.value)
+    @speed = .04 + Game.score / 1000000
+    dur = 300 + 200 / (100 + Game.score)
     d3.selectAll(".drone")
       .data(@element)
       .style("opacity", 0)
@@ -91,7 +91,7 @@ class @Dronewar extends Game
         @root.draw([@root.r.x, @root.r.y]) 
       )
       when 82
-        @reset() if Gamescore.lives < 0
+        @reset() if Game.lives < 0
       # down arrow reverses direction of firing angle 
     return
 
@@ -203,7 +203,7 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       d3.timer(@progress)
-      Gamescore.value = 0
+      Game.score = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
     )
     how = @g.append("text")
@@ -222,10 +222,10 @@ class @Dronewar extends Game
     
   progress: =>  # set a timer to monitor game progress
     @update_drone()
-    @scoretxt.text('SCORE: ' + Gamescore.value)
-    @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-    if Gamescore.lives >= 0
-      @lives.text('LIVES: ' + Gamescore.lives) 
+    @scoretxt.text('SCORE: ' + Game.score)
+    @leveltxt.text('LEVEL: ' + (@N - @initialN))
+    if Game.lives >= 0
+      @lives.text('LIVES: ' + Game.lives) 
     else 
       dur = 420
       @root.game_over(dur)
@@ -247,6 +247,6 @@ class @Dronewar extends Game
     @svg.style("cursor", "auto")
     @N = @initialN
     @root = new Root()
-    Gamescore.lives = Gamescore.initialLives
+    Game.lives = Game.initialLives
     @start()
     return

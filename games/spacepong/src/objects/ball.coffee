@@ -37,7 +37,7 @@ class @Ball extends Circle
       if Math.abs(@r.x - Game.paddle.r.x) <= Game.paddle.size # physics engine missed the collision with the paddle
         Game.paddle.destroy_check(@) 
       else 
-        Gamescore.lives -= 1
+        Game.lives -= 1
         @destroy()
         return
     super

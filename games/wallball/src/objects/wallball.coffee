@@ -110,17 +110,17 @@ class @Wallball extends Game
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      Gamescore.value = 0
+      Game.score = 0
       Gameprez?.start()
       @wall.v.y = @wall.speed
       d3.timer(@progress)
     )
       
   progress: =>
-    @scoretxt.text('SCORE: ' + Gamescore.value)
+    @scoretxt.text('SCORE: ' + Game.score)
     #@leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-    if Gamescore.lives >= 0
-      @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
+    if Game.lives >= 0
+      @lives.text('LIVES: ' + Game.lives) # updated text to display current # of lives
     else 
       dur = 420
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
@@ -137,6 +137,6 @@ class @Wallball extends Game
     @scoretxt.text("")
     @svg.style("cursor", "auto")
     @setup()
-    Gamescore.lives = Gamescore.initialLives
+    Game.lives = Game.initialLives
     @start()
     return

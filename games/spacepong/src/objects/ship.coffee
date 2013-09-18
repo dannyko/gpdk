@@ -44,7 +44,7 @@ class @Ship extends Polygon
     return if @is_destroyed # don't allow destruction twice (i.e. before transition finishes)
     @is_destroyed = true
     @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
-    Gamescore.decrement_value() if @offscreen() # penalize score for missing a ship
+    Game.decrement_score() if @offscreen() # penalize score for missing a ship
     fill = '#FFF' 
     dur  = 210 # color effect transition duration parameter
     @image.attr('opacity', 1)
@@ -67,7 +67,7 @@ class @Ship extends Polygon
         when 1 then element.v.y = -Math.abs(element.v.y)
         when 2 then element.v.x =  Math.abs(element.v.x)
         when 3 then element.v.y =  Math.abs(element.v.y)
-      Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
+      Game.increment_score() for i in [0...Ship.increment_count[@difficulty]]
       @destroy()
       return true
     else # hit another ship, let physics engine handle the reaction

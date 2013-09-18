@@ -92,7 +92,7 @@ class @Root extends Polygon
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship
-    Gamescore.lives -= 1 # decrement lives for this game
+    Game.lives -= 1 # decrement lives for this game
     n.destroy()
     N    = 240 # random color parameter
     fill = '#ff0' 

@@ -1,7 +1,19 @@
 class @Game
   
+  ## class variables:
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects
+  @score = 0 # default initial game score
+  @score_increment = 100 # default score increment
+  @initialLives = 2 # default number of extra lives
+  @lives = @initialLives # i.e. 3 lives total by default including the starting element
+
+  ## class methods:
+  @increment_score: -> # increase the value by the increment
+    @score += @score_increment # update current game score value
+
+  @decrement_score: -> # increase the value by the increment
+    @score -= @score_increment # update current game score value
 
   constructor: (@config = {}) ->
     @element    = [] # initialize
@@ -24,7 +36,7 @@ class @Game
 
   end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
     if Gameprez?
-      Gameprez.end(Gamescore.value, callback)
+      Gameprez.end(Game.score, callback)
     else 
       callback()
     return true # game over so return true to stop the d3 timer calling @progress()

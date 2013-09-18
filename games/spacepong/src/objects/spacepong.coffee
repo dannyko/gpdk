@@ -3,11 +3,11 @@ class @Spacepong extends Game
   @bg_img = GameAssetsUrl + 'earth_background.jpg'
   
   @ball_count: ->
-    count = 1 if Gamescore.value < 500
-    count = 2 if 500 <= Gamescore.value < 5000
-    count = 3 if 5000 <= Gamescore.value < 10000
-    count = 4 if 10000 <= Gamescore.value < 20000
-    count = 5 if Gamescore >= 20000
+    count = 1 if Game.score < 500
+    count = 2 if 500 <= Game.score < 5000
+    count = 3 if 5000 <= Game.score < 10000
+    count = 4 if 10000 <= Game.score < 20000
+    count = 5 if Game.score >= 20000
     count
 
   constructor: (@config = {}) ->
@@ -85,7 +85,7 @@ class @Spacepong extends Game
 
   spawn_ships: () ->
     @ship_check_needed = false # tells the progress timer not to spawn ships until this function is completed
-    @new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
+    @new_ship_count = Math.max(1, 1 + Math.floor(Game.score / 1000)) # (Math.random() * 4) + 1    
     @ship = [] # initialize
     @ship.push(new Ship()) while @ship.length < @new_ship_count
     @ship_check_needed = true
@@ -135,16 +135,16 @@ class @Spacepong extends Game
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      Gamescore.value = 0
+      Game.score = 0
       Gameprez?.start()
       d3.timer(@progress)
     )
       
   progress: =>
-    @scoretxt.text('SCORE: ' + Gamescore.value)
+    @scoretxt.text('SCORE: ' + Game.score)
     #@leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
-    if Gamescore.lives >= 0
-      @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
+    if Game.lives >= 0
+      @lives.text('LIVES: ' + Game.lives) # updated text to display current # of lives
     else 
       dur = 420
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
@@ -162,6 +162,6 @@ class @Spacepong extends Game
     @scoretxt.text("")
     @svg.style("cursor", "auto")
     @setup()
-    Gamescore.lives = Gamescore.initialLives
+    Game.lives = Game.initialLives
     @start()
     return

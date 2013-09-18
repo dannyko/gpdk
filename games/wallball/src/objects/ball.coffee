@@ -8,7 +8,7 @@ class @Ball extends Circle
     super(@config)
     @speed_factor = 0.005
     @initial_speed = 20
-    @speed = @initial_speed + Gamescore.value * @speed_factor
+    @speed = @initial_speed + Game.score * @speed_factor
     @max_speed = 100
     @v.x   = 0 
     @v.y   = -@speed
@@ -21,14 +21,14 @@ class @Ball extends Circle
       .attr("height", @size * 2)
 
   draw: ->
-    @speed = Math.min(@max_speed, @initial_speed + Gamescore.value * @speed_factor)
+    @speed = Math.min(@max_speed, @initial_speed + Game.score * @speed_factor)
     min_y = Game.wall.r.y + Game.height * 0.5 + @size + @tol
     if @r.y < min_y # don't allow ball to get behind the wall
       @v.y = Math.abs(@v.y) # Make sure the ball is moving away from the wall
       @r.y = Game.wall.r.y + Game.height * 0.5 + @size + @tol # resolve the collision event
       @reaction() # trigger ball reaction effect
-      Gamescore.increment_value() # increment game score value
-      Gameprez?.score(Gamescore.value)
+      Game.increment_score() # increment game score value
+      Gameprez?.score(Game.score)
     if @r.x < @tol + @size # don't allow it to go beyond left sidewall
       @r.x = @tol + @size 
       @v.x = Math.abs(@v.x)
@@ -42,7 +42,7 @@ class @Ball extends Circle
       if Math.abs(@r.x - Game.paddle.r.x) <= Game.paddle.size # physics engine missed the collision with the paddle
         Game.paddle.destroy_check(@) 
       else 
-        Gamescore.lives -= 1
+        Game.lives -= 1
         @destroy()
         return
     super
