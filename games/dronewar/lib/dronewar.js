@@ -182,6 +182,7 @@
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
+      this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Physics.verlet(this);
       this.is_destroyed = false;
@@ -264,14 +265,57 @@
   })();
 
   this.Game = (function() {
+    var get_scale;
 
     Game.width = null;
 
     Game.height = null;
 
+    Game.scale = 1;
+
+    get_scale = function(padding) {
+      var max_scale, min_scale, r1, r2, scale, x, y;
+      if (padding == null) {
+        padding = 60;
+      }
+      x = $(window.top).width();
+      y = $(window.top).height();
+      if (x > padding) {
+        x = x - padding;
+      }
+      if (y > padding) {
+        y = y - padding;
+      }
+      r1 = x / Game.width;
+      r2 = y / Game.height;
+      scale = r1 <= r2 ? r1 : r2;
+      max_scale = 1.0;
+      min_scale = 0.4;
+      return scale = Math.max(min_scale, Math.min(max_scale, scale));
+    };
+
+    Game.prototype.update_window = function() {
+      var h, scale, tol, w;
+      if (Game.width === null || Game.height === null) {
+        return Game.scale;
+      }
+      scale = get_scale();
+      tol = .001;
+      if (Math.abs(Game.scale - scale) < tol) {
+        return;
+      }
+      Game.scale = scale;
+      w = Math.ceil(Game.width * scale) + 'px';
+      h = Math.ceil(Game.height * scale) + 'px';
+      this.div.style('width', w).style('height', h);
+      this.svg.attr('width', w).attr('height', h);
+      this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
+    };
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.element = [];
+      this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
       if (this.svg.empty()) {
         this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
@@ -287,7 +331,7 @@
     }
 
     Game.prototype.start = function() {
-      return Physics.start();
+      return Physics.start(this);
     };
 
     Game.prototype.stop = function() {
@@ -861,6 +905,8 @@
 
     Physics.timestamp = Utils.timestamp();
 
+    Physics.game = null;
+
     Physics.verlet = function(element) {
       return function() {
         var f;
@@ -888,6 +934,7 @@
         return;
       }
       Physics.timestamp = timestamp;
+      Physics.game.update_window();
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update();
@@ -895,10 +942,11 @@
       Collision.detect();
     };
 
-    Physics.start = function(delay) {
+    Physics.start = function(game, delay) {
       if (delay == null) {
         delay = 0;
       }
+      this.game = game;
       this.off = false;
       d3.timer(this.integrate, delay);
     };
@@ -1150,8 +1198,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 3,
-        bullet_speed: 15,
-        bullet_tick: 25
+        bullet_speed: 20,
+        bullet_tick: 30
       };
     };
 
@@ -1251,8 +1299,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 5,
-        bullet_speed: 10,
-        bullet_tick: 20
+        bullet_speed: 12,
+        bullet_tick: 90
       };
     };
 
@@ -1331,8 +1379,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#099',
         bullet_size: 4,
-        bullet_speed: 10,
-        bullet_tick: 30
+        bullet_speed: 15,
+        bullet_tick: 60
       };
     };
 
@@ -1348,19 +1396,27 @@
       this.config = config != null ? config : {};
       Bullet.__super__.constructor.apply(this, arguments);
       this.is_bullet = true;
-      this.size = 3;
-      this.fill("#000");
+      this.power = this.config.power || 1;
     }
 
     Bullet.prototype.destroy_check = function(n) {
       if (n.is_root) {
         return true;
       }
+      if (n.is_bullet) {
+        if (!this.is_destroyed) {
+          n.destroy();
+        }
+        return true;
+      }
       this.destroy();
-      n.destroy();
-      Gamescore.increment_value();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.score(Gamescore.value);
+      n.deplete(this.power);
+      if (n.depleted()) {
+        Gamescore.increment_value();
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.score(Gamescore.value);
+        }
+        n.destroy();
       }
       return true;
     };
@@ -1381,22 +1437,43 @@
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
       this.max_speed = 18;
+      this.energy = this.config.energy || 1;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
+    Drone.prototype.deplete = function(power) {
+      var dur, fill, last;
+      if (power == null) {
+        power = 1;
+      }
+      this.energy = this.energy - power;
+      dur = 150;
+      fill = "#FF0";
+      last = this.g.select('circle:last-child');
+      if (last !== this.image) {
+        last.remove();
+      }
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style("fill", fill).style("opacity", 0).transition().duration(dur * 0.5).ease('sqrt').style('opacity', 0.5).transition().duration(dur * 0.5).ease('linear').style('opacity', (1 - this.energy / this.config.energy) / 3);
+    };
+
+    Drone.prototype.depleted = function() {
+      if (this.energy <= 0) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
     Drone.prototype.destroy = function(remove) {
-      var N, dur, fill;
+      var dur;
       if (remove == null) {
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 100;
-      N = 320;
-      fill = "hsl(" + Math.random() * N + ", 50%, 70%)";
-      this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).transition().duration(dur).ease('sqrt').attr("fill", fill).remove();
-      return this.g.attr("class", "").transition().delay(dur).duration(dur * 2).ease('sqrt').style("opacity", "0").remove();
+      dur = 300;
+      return this.g.attr("class", "").transition().duration(dur).ease('sqrt').style("opacity", "0").remove();
     };
 
     Drone.prototype.draw = function() {
@@ -1405,6 +1482,20 @@
         this.v.normalize(this.max_speed);
       }
       return Drone.__super__.draw.apply(this, arguments);
+    };
+
+    Drone.prototype.offscreen = function() {
+      var dr2, dx, dy, f, scale;
+      dx = this.r.x - Game.width * 0.5;
+      dy = this.r.y - Game.height * 0.5;
+      dr2 = dx * dx + dy * dy;
+      scale = .8;
+      if (dr2 > Game.height * Game.height * 0.25 * scale * scale) {
+        scale = .02;
+        f = Force["eval"](this, this.force_param[0]);
+        this.v.add(f.normalize(this.max_speed * scale));
+      }
+      return false;
     };
 
     return Drone;
@@ -1430,15 +1521,18 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 5;
       this.N = this.initialN;
       this.root = new Root();
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
-      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
-      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial black');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
+      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial bold');
       d3.select(window.top).on("keydown", this.keydown);
+      if (window !== window.top) {
+        d3.select(window).on("keydown", this.keydown);
+      }
       img = new Image();
       img.src = Ship.viper().url;
       img.src = Ship.sidewinder().url;
@@ -1447,12 +1541,17 @@
     }
 
     Dronewar.prototype.level = function() {
-      var dur, i, n, newAttacker, _i, _ref,
+      var Nlevel, dur, i, multiplier, n, newAttacker, offset, _i, _ref,
         _this = this;
       this.svg.style("cursor", "none");
       this.element = [];
+      Nlevel = this.N - this.initialN + 1;
+      multiplier = 5;
+      offset = 50;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        newAttacker = new Drone();
+        newAttacker = new Drone({
+          energy: Nlevel * multiplier + offset
+        });
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width;
         this.element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height;
@@ -1522,7 +1621,7 @@
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
       callback = function() {
-        _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        _this.lives.text("GAME OVER, PRESS 'R' OR CLICK HERE TO RESTART").on('click', _this.reset);
         return true;
       };
       this.end(callback);
@@ -1584,9 +1683,11 @@
         go.transition().duration(dur).style("opacity", 0).remove();
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
-        d3.timer(_this.progress);
         Gamescore.value = 0;
-        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.start(_this.max_score_increment);
+        }
+        return d3.timer(_this.progress);
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use the mouse for controlling movement, scrollwheel for rotation");
@@ -1650,7 +1751,7 @@
       };
       this.redraw = function(xy) {
         if (xy == null) {
-          xy = d3.mouse(_this.svg.node());
+          xy = d3.mouse(_this.game_g.node());
         }
         return Root.prototype.redraw.apply(_this, arguments);
       };
@@ -1670,7 +1771,7 @@
 
     Root.prototype.redraw = function(xy) {
       if (xy == null) {
-        xy = d3.mouse(this.svg.node());
+        xy = d3.mouse(this.game_g.node());
       }
       if (!this.collision) {
         return;
@@ -1690,15 +1791,17 @@
 
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
-      timestamp = Utils.timestamp();
       if (this.is_destroyed) {
         return true;
       }
+      timestamp = Utils.timestamp();
       if (!(this.collision && timestamp - this.lastfire >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
-      bullet = new Bullet();
+      bullet = new Bullet({
+        power: this.bullet_size * this.bullet_size
+      });
       bullet.size = this.bullet_size;
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
@@ -1708,7 +1811,6 @@
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
-      bullet.draw();
     };
 
     Root.prototype.ship = function(ship, dur) {
@@ -1741,7 +1843,6 @@
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
-      this.svg.on("mousedown", this.fire);
       return this.svg.on("mousewheel", this.spin);
     };
 

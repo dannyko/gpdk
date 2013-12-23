@@ -2,9 +2,36 @@ class @Game
   
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects
+  @scale:  1 # class variable for global scaling transformations
+
+  get_scale = (padding = 60) -> # minimal padding by default
+    x              = $(window.top).width()
+    y              = $(window.top).height()
+    x              = x - padding if x > padding
+    y              = y - padding if y > padding 
+    r1             = x / Game.width
+    r2             = y / Game.height
+    scale          = if r1 <= r2 then r1 else r2
+    max_scale      = 1.0
+    min_scale      = 0.4
+    scale          = Math.max(min_scale, Math.min(max_scale, scale))
+
+  update_window: ->
+    return Game.scale if Game.width is null or Game.height is null
+    scale = get_scale()
+    tol   = .001
+    return if Math.abs(Game.scale - scale) < tol # don't update after very small changes
+    Game.scale = scale 
+    w          = Math.ceil(Game.width * scale) + 'px'
+    h          = Math.ceil(Game.height * scale) + 'px'
+    @div.style('width', w).style('height', h)    
+    @svg.attr('width', w).attr('height', h)
+    @g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')')
+    return
 
   constructor: (@config = {}) ->
     @element    = [] # initialize
+    @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
     @svg        = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg') if @svg.empty()
     Game.width  = parseInt(@svg.attr("width"), 10)
@@ -18,7 +45,7 @@ class @Game
 	    .style('width', '')
 	    .style('height', '')
 
-  start: -> Physics.start() # start all elements
+  start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
     
   stop: -> Physics.stop() # stop all elements
 

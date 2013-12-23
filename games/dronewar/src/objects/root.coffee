@@ -13,24 +13,24 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick = -> return
 
-  redraw: (xy = d3.mouse(@svg.node())) =>
+  redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
-    @r.x = xy[0]
-    @r.y = xy[1]
+    @r.x = xy[0] # Game.scale
+    @r.y = xy[1] # Game.scale
     @draw()
 
-  spin: () =>
+  spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
     @rotate_path()
     @draw()
 
-  fire: () =>
-    timestamp   = Utils.timestamp()
+  fire: =>
     return true if @is_destroyed
+    timestamp   = Utils.timestamp()
     return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
-    bullet      = new Bullet()
+    bullet      = new Bullet({power: @bullet_size * @bullet_size})
     bullet.size = @bullet_size
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
@@ -40,7 +40,6 @@ class @Root extends Polygon
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet.draw()
     return
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
@@ -80,7 +79,6 @@ class @Root extends Polygon
   start: ->
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
     
