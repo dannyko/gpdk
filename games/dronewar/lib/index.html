@@ -10,14 +10,14 @@
 		  var default_width  = 860 ;
 		  var default_height = 645 ;
       var get_scale = function() {
-			  var x              = $(window).width() ;
-			  var y              = $(window).height() ;
-			  var r1             = x / default_width ;
-			  var r2             = y / default_height ;
-			  var scale          = (r1 <= r2) ? r1 : r2 ;
-			  var max_scale      = 1.0 ;
-			  var min_scale      = 0.4 ;
-			  scale              = Math.max(min_scale, Math.min(max_scale, scale)) ;
+			  var x         = $(window).width() ;
+			  var y         = $(window).height() ;
+			  var r1        = x / default_width ;
+			  var r2        = y / default_height ;
+			  var scale     = (r1 <= r2) ? r1 : r2 ;
+			  var max_scale = 1.0 ;
+			  var min_scale = 0.4 ;
+			  scale         = Math.max(min_scale, Math.min(max_scale, scale)) ;
 			  return scale ;
 			} ;
 

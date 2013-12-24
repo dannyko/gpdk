@@ -288,14 +288,14 @@
     get_scale = function(padding) {
       var max_scale, min_scale, r1, r2, scale, x, y;
       if (padding == null) {
-        padding = 60;
+        padding = 20;
       }
-      x = $(window.top).width();
-      y = $(window.top).height();
-      if (x > padding) {
+      x = $(window).width();
+      y = $(window).height();
+      if (x > padding && padding > 0) {
         x = x - padding;
       }
-      if (y > padding) {
+      if (y > padding && padding > 0) {
         y = y - padding;
       }
       r1 = x / Game.width;
@@ -1471,7 +1471,7 @@
       this.config.size = 20;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
-      this.max_speed = 8;
+      this.max_speed = 12;
       this.energy = this.config.energy || 1;
       this.image.remove();
       this.g.attr("class", "drone");
@@ -1484,9 +1484,8 @@
         power = 1;
       }
       this.energy = this.energy - power;
-      console.log(this.energy, power);
-      dur = 150;
-      fill = "#AA0";
+      dur = 50;
+      fill = "#FF0";
       last = this.g.select('circle:last-child');
       if (last !== this.image) {
         last.remove();
@@ -1508,7 +1507,7 @@
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 300;
+      dur = 100;
       return this.g.attr("class", "").transition().duration(dur).ease('sqrt').style("opacity", "0").remove();
     };
 
@@ -1785,6 +1784,12 @@
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
       };
+      this.redraw_touch = function(xy) {
+        if (xy == null) {
+          xy = d3.touches(_this.game_g.node());
+        }
+        return Root.prototype.redraw_touch.apply(_this, arguments);
+      };
       this.redraw = function(xy) {
         if (xy == null) {
           xy = d3.mouse(_this.game_g.node());
@@ -1808,6 +1813,18 @@
     Root.prototype.redraw = function(xy) {
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
+      }
+      if (!this.collision) {
+        return;
+      }
+      this.r.x = xy[0];
+      this.r.y = xy[1];
+      return this.draw();
+    };
+
+    Root.prototype.redraw_touch = function(xy) {
+      if (xy == null) {
+        xy = d3.touches(this.game_g.node());
       }
       if (!this.collision) {
         return;
@@ -1879,6 +1896,7 @@
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
+      this.svg.on("touchmove", this.redraw_touch);
       return this.svg.on("mousewheel", this.spin);
     };
 

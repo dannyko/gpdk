@@ -4,11 +4,11 @@ class @Game
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
 
-  get_scale = (padding = 60) -> # minimal padding by default
-    x              = $(window.top).width()
-    y              = $(window.top).height()
-    x              = x - padding if x > padding
-    y              = y - padding if y > padding 
+  get_scale = (padding = 20) -> # minimal padding to prevent browser scrollbar issues 
+    x              = $(window).width()
+    y              = $(window).height()
+    x              = (x - padding) if x > padding and padding > 0
+    y              = (y - padding) if y > padding and padding > 0
     r1             = x / Game.width
     r2             = y / Game.height
     scale          = if r1 <= r2 then r1 else r2

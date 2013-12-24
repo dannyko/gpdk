@@ -5,7 +5,7 @@ class @Drone extends Circle
     @config.size = 20
     super(@config)
     @stop()
-    @max_speed = 8
+    @max_speed = 12
     @energy = @config.energy || 1
     @image.remove()
     @g.attr("class", "drone")
@@ -17,9 +17,8 @@ class @Drone extends Circle
         
   deplete: (power = 1) ->
     @energy = @energy - power
-    console.log(@energy, power)
-    dur = 150
-    fill = "#AA0"
+    dur = 50
+    fill = "#FF0"
     last = @g.select('circle:last-child')
     if last isnt @image then last.remove()
     @g.append("circle")
@@ -42,7 +41,7 @@ class @Drone extends Circle
 
   destroy: (remove = false) ->
     super(remove)
-    dur = 300
+    dur = 100
     @g.attr("class", "")
       .transition()
       .duration(dur)

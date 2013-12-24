@@ -19,6 +19,12 @@ class @Root extends Polygon
     @r.y = xy[1] # Game.scale
     @draw()
 
+  redraw_touch: (xy = d3.touches(@game_g.node())) =>
+    return unless @collision # don't draw if not active
+    @r.x = xy[0] # Game.scale
+    @r.y = xy[1] # Game.scale
+    @draw()
+
   spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
@@ -79,6 +85,7 @@ class @Root extends Polygon
   start: ->
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    @svg.on("touchmove", @redraw_touch) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
   
     
