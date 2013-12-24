@@ -7,7 +7,7 @@ class @Collision
     return unless @list.length > 0
     timestamp = Utils.timestamp()
     if force_update or timestamp - @lastquad > @list.length or not @quadtree?
-      data = _.filter(@list, (d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
+      data = @list.filter((d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
       @quadtree = d3.geom.quadtree(data)
       @lastquad = timestamp
 
@@ -140,12 +140,13 @@ class @Collision
     d
     
   nearest_node = (m, n) -> 
-    init    = _.initial(m.path)
-    nearest = _.min(init, (d) -> 
-      dd = new Vec(d).add(m.r).subtract(n.r).length_squared()
-      dd
-    )
-    _.indexOf(m.path, nearest) # node of polygon m closest to the other element n's center
+    nn  = m.path[0] # initialize
+    nnd = new Vec(nn).add(m.r).subtract(n.r).length_squared()
+    for i in [1..@path.length - 2]
+      node = m.path[i]
+      d    = new Vec(node).add(m.r).subtract(n.r).length_squared()
+      nn = m.path[i] if d < nnd
+    m.path.indexOf(nn) # node of polygon m closest to the other element n's center
 
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
     d      = new Vec(m.r).subtract(n.r)

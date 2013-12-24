@@ -33,6 +33,18 @@
 
     function Utils() {}
 
+    Utils.clone = function(obj) {
+      var key, temp;
+      if (obj === null || typeof obj !== "object") {
+        return obj;
+      }
+      temp = new obj.constructor();
+      for (key in obj) {
+        temp[key] = Utils.clone(obj[key]);
+      }
+      return temp;
+    };
+
     Utils.addChainedAttributeAccessor = function(obj, attr) {
       return obj[attr] = function() {
         var newValues;
@@ -227,7 +239,7 @@
 
     Element.prototype.stop = function() {
       var index;
-      index = _.indexOf(Collision.list, this);
+      index = Collision.list.indexOf(this);
       if (index > -1) {
         Collision.list.splice(index, 1);
       }
@@ -455,29 +467,49 @@
     };
 
     Polygon.prototype.set_path = function(path) {
+      var i, maxd, maxnode, node, _i, _ref;
       this.path = path != null ? path : this.path;
       this.pathref = this.path.map(function(d) {
-        return _.clone(d);
+        return Utils.clone(d);
       });
       this.polygon_path();
-      this.maxnode = new Vec(_.max(this.path, function(node) {
-        return node.d = node.x * node.x + node.y * node.y;
-      }));
+      maxnode = this.path[0];
+      this.path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y;
+      maxd = this.path[0].d;
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = this.path[i];
+        node.d = node.x * node.x + node.y * node.y;
+        if (node.d > maxd) {
+          maxnode = this.path[i];
+        }
+      }
+      this.maxnode = new Vec(maxnode);
       this.size = this.maxnode.length();
       return this.image.attr("d", this.d());
     };
 
     Polygon.prototype.BB = function() {
-      this.bb_width = _.max(this.path, function(node) {
-        return node.x;
-      }).x - _.min(this.path, function(node) {
-        return node.x;
-      }).x;
-      this.bb_height = _.max(this.path, function(node) {
-        return node.y;
-      }).y - _.min(this.path, function(node) {
-        return node.y;
-      }).y;
+      var i, xmax, xmin, ymax, ymin, _i, _ref;
+      xmax = this.path[0].x;
+      ymax = this.path[0].y;
+      xmin = xmax;
+      ymin = ymax;
+      for (i = _i = 1, _ref = this.path.length - 1; 1 <= _ref ? _i < _ref : _i > _ref; i = 1 <= _ref ? ++_i : --_i) {
+        if (this.path[i].x > xmax) {
+          xmax = this.path[i].x;
+        }
+        if (this.path[i].x < xmin) {
+          xmin = this.path[i].x;
+        }
+        if (this.path[i].y > ymax) {
+          ymax = this.path[i].y;
+        }
+        if (this.path[i].y < ymin) {
+          ymin = this.path[i].y;
+        }
+      }
+      this.bb_width = xmax - xmin;
+      this.bb_height = ymax - ymin;
       return Polygon.__super__.BB.apply(this, arguments);
     };
 
@@ -521,7 +553,7 @@
       }
       timestamp = Utils.timestamp();
       if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
-        data = _.filter(this.list, function(d) {
+        data = this.list.filter(function(d) {
           return d.collision;
         }).map(function(d) {
           return {
@@ -723,14 +755,17 @@
     };
 
     nearest_node = function(m, n) {
-      var init, nearest;
-      init = _.initial(m.path);
-      nearest = _.min(init, function(d) {
-        var dd;
-        dd = new Vec(d).add(m.r).subtract(n.r).length_squared();
-        return dd;
-      });
-      return _.indexOf(m.path, nearest);
+      var d, i, nn, nnd, node, _i, _ref;
+      nn = m.path[0];
+      nnd = new Vec(nn).add(m.r).subtract(n.r).length_squared();
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = m.path[i];
+        d = new Vec(node).add(m.r).subtract(n.r).length_squared();
+        if (d < nnd) {
+          nn = m.path[i];
+        }
+      }
+      return m.path.indexOf(nn);
     };
 
     circle_circle_dist = function(m, n) {
@@ -1197,7 +1232,7 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
-        bullet_size: 3,
+        bullet_size: 4,
         bullet_speed: 20,
         bullet_tick: 30
       };
@@ -1298,7 +1333,7 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#C00',
-        bullet_size: 5,
+        bullet_size: 6,
         bullet_speed: 12,
         bullet_tick: 90
       };
@@ -1378,7 +1413,7 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#099',
-        bullet_size: 4,
+        bullet_size: 5,
         bullet_speed: 15,
         bullet_tick: 60
       };
@@ -1436,7 +1471,7 @@
       this.config.size = 20;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
-      this.max_speed = 18;
+      this.max_speed = 8;
       this.energy = this.config.energy || 1;
       this.image.remove();
       this.g.attr("class", "drone");
@@ -1449,13 +1484,14 @@
         power = 1;
       }
       this.energy = this.energy - power;
+      console.log(this.energy, power);
       dur = 150;
-      fill = "#FF0";
+      fill = "#AA0";
       last = this.g.select('circle:last-child');
       if (last !== this.image) {
         last.remove();
       }
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style("fill", fill).style("opacity", 0).transition().duration(dur * 0.5).ease('sqrt').style('opacity', 0.5).transition().duration(dur * 0.5).ease('linear').style('opacity', (1 - this.energy / this.config.energy) / 3);
+      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill).style("opacity", 0).transition().duration(dur * 0.5).ease('sqrt').style('opacity', 0.5).transition().duration(dur * 0.5).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .6);
     };
 
     Drone.prototype.depleted = function() {
@@ -1491,7 +1527,7 @@
       dr2 = dx * dx + dy * dy;
       scale = .8;
       if (dr2 > Game.height * Game.height * 0.25 * scale * scale) {
-        scale = .02;
+        scale = .01;
         f = Force["eval"](this, this.force_param[0]);
         this.v.add(f.normalize(this.max_speed * scale));
       }
@@ -1523,7 +1559,7 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 5;
+      this.initialN = this.config.initialN || 2;
       this.N = this.initialN;
       this.root = new Root();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
@@ -1546,15 +1582,15 @@
       this.svg.style("cursor", "none");
       this.element = [];
       Nlevel = this.N - this.initialN + 1;
-      multiplier = 5;
-      offset = 50;
+      multiplier = 10;
+      offset = 100;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = new Drone({
           energy: Nlevel * multiplier + offset
         });
         this.element.push(newAttacker);
-        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width;
-        this.element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height;
+        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
+        this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
         this.element[i].draw();
       }
       n = this.element.length * 2;

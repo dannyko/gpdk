@@ -55,7 +55,7 @@ class @Spacepong extends Game
   spawn_balls: () ->
     @ball_check_needed = false
     length = @ball.length
-    @ball = _.filter(@ball, (ball) -> !ball.is_destroyed)
+    @ball = @ball.filter((ball) -> !ball.is_destroyed)
     txt = if length > 0 and @ball.length is length then 'MULTIBALL UP' else 'GET READY'
     Physics.stop() # pause the physics engine
     ready = @g.append("text")

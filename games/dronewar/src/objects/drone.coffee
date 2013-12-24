@@ -5,7 +5,7 @@ class @Drone extends Circle
     @config.size = 20
     super(@config)
     @stop()
-    @max_speed = 18 
+    @max_speed = 8
     @energy = @config.energy || 1
     @image.remove()
     @g.attr("class", "drone")
@@ -17,12 +17,13 @@ class @Drone extends Circle
         
   deplete: (power = 1) ->
     @energy = @energy - power
+    console.log(@energy, power)
     dur = 150
-    fill = "#FF0"
+    fill = "#AA0"
     last = @g.select('circle:last-child')
     if last isnt @image then last.remove()
     @g.append("circle")
-      .attr("r", @size)
+      .attr("r", @size * .9)
       .attr("x", 0)
       .attr("y", 0)
       .style("fill", fill)
@@ -34,7 +35,7 @@ class @Drone extends Circle
       .transition()
       .duration(dur * 0.5)
       .ease('linear')
-      .style('opacity', (1 - @energy / @config.energy) / 3)
+      .style('opacity', (1 - @energy / @config.energy) * .6)
 
   depleted: ->
     if @energy <= 0 then true else false
@@ -60,7 +61,7 @@ class @Drone extends Circle
     dr2 = dx * dx + dy * dy 
     scale = .8
     if dr2 > Game.height * Game.height * 0.25 * scale * scale
-      scale = .02
+      scale = .01
       f  =  Force.eval(@, @force_param[0])
       @v.add(f.normalize(@max_speed * scale))
     return false

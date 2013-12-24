@@ -63,7 +63,7 @@ class @Element
     return
 
   stop: -> 
-    index = _.indexOf(Collision.list, @)
+    index = Collision.list.indexOf(@)
     Collision.list.splice(index, 1) if index > -1
     return
 

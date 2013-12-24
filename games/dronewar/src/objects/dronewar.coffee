@@ -6,7 +6,7 @@ class @Dronewar extends Game
     super
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 5
+    @initialN = @config.initialN || 2
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
@@ -46,13 +46,13 @@ class @Dronewar extends Game
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
     Nlevel = (@N - @initialN + 1)
-    multiplier = 5
-    offset     = 50
+    multiplier = 10
+    offset     = 100
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone({energy: Nlevel * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game
-      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-      @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+      @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].draw()
     n = @element.length * 2
     @speed = .04 + Gamescore.value / 1000000

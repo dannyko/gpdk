@@ -1,4 +1,11 @@
 class @Utils
+  @clone: (obj) ->
+    return obj  if obj is null or typeof (obj) isnt "object"
+    temp = new obj.constructor()
+    for key of obj
+      temp[key] = Utils.clone(obj[key])
+    temp
+
   @addChainedAttributeAccessor = (obj, attr) -> # modified from  http://coffeescriptcookbook.com/chapters/classes_and_objects/chaining
     obj[attr] = (newValues...) ->
       if newValues.length == 0
