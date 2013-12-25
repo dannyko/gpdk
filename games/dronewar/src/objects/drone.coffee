@@ -18,6 +18,7 @@ class @Drone extends Circle
   deplete: (power = 1) ->
     @energy = @energy - power
     dur = 50
+    fill0 = '#300'
     fill = "#FF0"
     last = @g.select('circle:last-child')
     if last isnt @image then last.remove()
@@ -25,24 +26,32 @@ class @Drone extends Circle
       .attr("r", @size * .9)
       .attr("x", 0)
       .attr("y", 0)
-      .style("fill", fill)
-      .style("opacity", 0)
+      .style("fill", fill0)
+      .style('opacity', 0)
       .transition()
-      .duration(dur * 0.5)
+      .duration(dur)
       .ease('sqrt')
-      .style('opacity', 0.5)
+      .style('opacity', 0.6)
       .transition()
-      .duration(dur * 0.5)
+      .duration(dur)
       .ease('linear')
-      .style('opacity', (1 - @energy / @config.energy) * .6)
+      .style('fill', fill)
+      .transition()
+      .duration(dur)
+      .ease('linear')
+      .style('opacity', (1 - @energy / @config.energy) * .4)
 
   depleted: ->
     if @energy <= 0 then true else false
 
   destroy: (remove = false) ->
     super(remove)
-    dur = 100
+    dur = 280
     @g.attr("class", "")
+      .style('opacity', '0.3')
+      .transition()
+      .duration(dur / 2)
+      .attr('transform', @g.attr('transform') + 'scale(5)')
       .transition()
       .duration(dur)
       .ease('sqrt')

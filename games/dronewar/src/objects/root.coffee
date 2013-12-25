@@ -19,12 +19,11 @@ class @Root extends Polygon
     @r.y = xy[1] # Game.scale
     @draw()
 
-  redraw_touch: (xy = d3.touches(@game_g.node())) =>
-    return unless @collision # don't draw if not active
-    @r.x = xy[0] # Game.scale
-    @r.y = xy[1] # Game.scale
-    @draw()
-
+  dragmove: => # a listener so use fat arrow to bind the function at the instance level rather than at the class level
+    x = @r.x + Math.floor(d3.event.dx)
+    y = @r.y + Math.floor(d3.event.dy)
+    @redraw([x, y])
+ 
   spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
@@ -85,15 +84,17 @@ class @Root extends Polygon
   start: ->
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    @svg.on("touchmove", @redraw_touch) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragmove))
+    # @svg.on("touchmove", @redraw_touch) # default mouse behavior is to control the root element position
+
   
     
   stop: ->
     super
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
-    @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship

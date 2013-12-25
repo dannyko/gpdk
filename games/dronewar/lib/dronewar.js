@@ -1479,18 +1479,19 @@
     }
 
     Drone.prototype.deplete = function(power) {
-      var dur, fill, last;
+      var dur, fill, fill0, last;
       if (power == null) {
         power = 1;
       }
       this.energy = this.energy - power;
       dur = 50;
+      fill0 = '#300';
       fill = "#FF0";
       last = this.g.select('circle:last-child');
       if (last !== this.image) {
         last.remove();
       }
-      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill).style("opacity", 0).transition().duration(dur * 0.5).ease('sqrt').style('opacity', 0.5).transition().duration(dur * 0.5).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .6);
+      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill0).style('opacity', 0).transition().duration(dur).ease('sqrt').style('opacity', 0.6).transition().duration(dur).ease('linear').style('fill', fill).transition().duration(dur).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .4);
     };
 
     Drone.prototype.depleted = function() {
@@ -1507,8 +1508,8 @@
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 100;
-      return this.g.attr("class", "").transition().duration(dur).ease('sqrt').style("opacity", "0").remove();
+      dur = 280;
+      return this.g.attr("class", "").style('opacity', '0.3').transition().duration(dur / 2).attr('transform', this.g.attr('transform') + 'scale(5)').transition().duration(dur).ease('sqrt').style("opacity", "0").remove();
     };
 
     Drone.prototype.draw = function() {
@@ -1784,11 +1785,8 @@
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
       };
-      this.redraw_touch = function(xy) {
-        if (xy == null) {
-          xy = d3.touches(_this.game_g.node());
-        }
-        return Root.prototype.redraw_touch.apply(_this, arguments);
+      this.dragmove = function() {
+        return Root.prototype.dragmove.apply(_this, arguments);
       };
       this.redraw = function(xy) {
         if (xy == null) {
@@ -1822,16 +1820,11 @@
       return this.draw();
     };
 
-    Root.prototype.redraw_touch = function(xy) {
-      if (xy == null) {
-        xy = d3.touches(this.game_g.node());
-      }
-      if (!this.collision) {
-        return;
-      }
-      this.r.x = xy[0];
-      this.r.y = xy[1];
-      return this.draw();
+    Root.prototype.dragmove = function() {
+      var x, y;
+      x = this.r.x + Math.floor(d3.event.dx);
+      y = this.r.y + Math.floor(d3.event.dy);
+      return this.redraw([x, y]);
     };
 
     Root.prototype.spin = function() {
@@ -1896,15 +1889,15 @@
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
-      this.svg.on("touchmove", this.redraw_touch);
-      return this.svg.on("mousewheel", this.spin);
+      this.svg.on("mousewheel", this.spin);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragmove));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
       this.svg.on("mousemove", null);
-      this.svg.on("mousedown", null);
-      return this.svg.on("mousewheel", null);
+      this.svg.on("mousewheel", null);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
     Root.prototype.reaction = function(n) {
