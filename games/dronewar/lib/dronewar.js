@@ -286,12 +286,17 @@
     Game.scale = 1;
 
     get_scale = function(padding) {
-      var max_scale, min_scale, r1, r2, scale, x, y;
+      var element, max_scale, min_scale, r1, r2, scale, x, y;
       if (padding == null) {
-        padding = 20;
+        padding = 4;
       }
-      x = $(window).width();
-      y = $(window).height();
+      element = window.top.document.body;
+      x = $(element).width();
+      y = $(element).height();
+      x = Math.min(x, $(window).width());
+      y = Math.min(y, $(window).height());
+      x = Math.min(x, $(window.top).width());
+      y = Math.min(y, $(window.top).height());
       if (x > padding && padding > 0) {
         x = x - padding;
       }
@@ -320,8 +325,9 @@
       w = Math.ceil(Game.width * scale) + 'px';
       h = Math.ceil(Game.height * scale) + 'px';
       this.div.style('width', w).style('height', h);
-      this.svg.attr('width', w).attr('height', h);
+      this.svg.style('width', w).style('height', h);
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
+      $(document.body).css('width', w).css('height', h);
     };
 
     function Game(config) {
@@ -330,7 +336,7 @@
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
       if (this.svg.empty()) {
-        this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
       Game.width = parseInt(this.svg.attr("width"), 10);
       Game.height = parseInt(this.svg.attr("height"), 10);
@@ -340,6 +346,7 @@
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window();
     }
 
     Game.prototype.start = function() {

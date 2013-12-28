@@ -4,9 +4,14 @@ class @Game
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
 
-  get_scale = (padding = 20) -> # minimal padding to prevent browser scrollbar issues 
-    x              = $(window).width()
-    y              = $(window).height()
+  get_scale = (padding = 4) -> # minimal padding to prevent browser scrollbar issues 
+    element        = window.top.document.body # .getElementsByTagName('iframe')[0]
+    x              = $(element).width()
+    y              = $(element).height()
+    x              = Math.min(x, $(window).width())
+    y              = Math.min(y, $(window).height())
+    x              = Math.min(x, $(window.top).width())
+    y              = Math.min(y, $(window.top).height())
     x              = (x - padding) if x > padding and padding > 0
     y              = (y - padding) if y > padding and padding > 0
     r1             = x / Game.width
@@ -25,15 +30,16 @@ class @Game
     w          = Math.ceil(Game.width * scale) + 'px'
     h          = Math.ceil(Game.height * scale) + 'px'
     @div.style('width', w).style('height', h)    
-    @svg.attr('width', w).attr('height', h)
+    @svg.style('width', w).style('height', h)
     @g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')')
+    $(document.body).css('width', w).css('height', h)
     return
 
   constructor: (@config = {}) ->
     @element    = [] # initialize
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
-    @svg        = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg') if @svg.empty()
+    @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
     Game.width  = parseInt(@svg.attr("width"), 10)
     Game.height = parseInt(@svg.attr("height"), 10)
     @scale      = 1 # initialize zoom level (implementation still pending)
@@ -44,6 +50,7 @@ class @Game
 	    .attr('height', @svg.attr('height'))
 	    .style('width', '')
 	    .style('height', '')
+    @update_window()
 
   start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
     
