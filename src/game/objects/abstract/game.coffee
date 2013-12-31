@@ -4,7 +4,7 @@ class @Game
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
 
-  get_scale = (padding = 4) -> # minimal padding to prevent browser scrollbar issues 
+  get_scale = (padding = 8) -> # minimal padding to prevent browser scrollbar issues 
     element        = window.top.document.body # .getElementsByTagName('iframe')[0]
     x              = $(element).width()
     y              = $(element).height()

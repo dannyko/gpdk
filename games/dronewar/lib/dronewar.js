@@ -288,7 +288,7 @@
     get_scale = function(padding) {
       var element, max_scale, min_scale, r1, r2, scale, x, y;
       if (padding == null) {
-        padding = 4;
+        padding = 8;
       }
       element = window.top.document.body;
       x = $(element).width();
@@ -1240,8 +1240,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 4,
-        bullet_speed: 20,
-        bullet_tick: 30
+        bullet_speed: 35,
+        bullet_tick: 200
       };
     };
 
@@ -1341,8 +1341,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 6,
-        bullet_speed: 12,
-        bullet_tick: 90
+        bullet_speed: 25,
+        bullet_tick: 300
       };
     };
 
@@ -1421,8 +1421,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#099',
         bullet_size: 5,
-        bullet_speed: 15,
-        bullet_tick: 60
+        bullet_speed: 30,
+        bullet_tick: 250
       };
     };
 
@@ -1789,11 +1789,11 @@
       this.fire = function() {
         return Root.prototype.fire.apply(_this, arguments);
       };
+      this.dragspin = function() {
+        return Root.prototype.dragspin.apply(_this, arguments);
+      };
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
-      };
-      this.dragmove = function() {
-        return Root.prototype.dragmove.apply(_this, arguments);
       };
       this.redraw = function(xy) {
         if (xy == null) {
@@ -1812,6 +1812,7 @@
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
+      this.pause_firing = false;
       this.tick = function() {};
     }
 
@@ -1822,29 +1823,41 @@
       if (!this.collision) {
         return;
       }
+      this.pause_firing = true;
       this.r.x = xy[0];
       this.r.y = xy[1];
-      return this.draw();
-    };
-
-    Root.prototype.dragmove = function() {
-      var x, y;
-      x = this.r.x + Math.floor(d3.event.dx);
-      y = this.r.y + Math.floor(d3.event.dy);
-      return this.redraw([x, y]);
+      return this.pause_firing = false;
     };
 
     Root.prototype.spin = function() {
       var delta;
       delta = this.angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta);
       this.angle = this.angle - delta;
-      this.rotate_path();
-      return this.draw();
+      return this.rotate_path();
+    };
+
+    Root.prototype.dragspin = function() {
+      var delta, deltax, deltay;
+      deltay = this.angleStep * Math.ceil(d3.event.dy) / Math.abs(Math.ceil(d3.event.dy));
+      if (isNaN(deltay)) {
+        deltay = 0;
+      }
+      deltax = this.angleStep * Math.ceil(d3.event.dx) / Math.abs(Math.ceil(d3.event.dx));
+      if (isNaN(deltax)) {
+        deltax = 0;
+      }
+      delta = Math.abs(deltay) > Math.abs(deltax) ? deltay : deltax;
+      console.log(delta, d3.event);
+      this.angle = this.angle - delta;
+      return this.rotate_path();
     };
 
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       if (this.is_destroyed) {
+        return true;
+      }
+      if (this.pause_firing) {
         return true;
       }
       timestamp = Utils.timestamp();
@@ -1897,7 +1910,8 @@
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
       this.svg.on("mousewheel", this.spin);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragmove));
+      this.svg.on("touchstart", this.redraw);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {

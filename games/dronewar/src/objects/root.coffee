@@ -11,27 +11,34 @@ class @Root extends Polygon
     @fill("#000")
     @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
+    @pause_firing = false
     @tick = -> return
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
+    @pause_firing = true
     @r.x = xy[0] # Game.scale
     @r.y = xy[1] # Game.scale
-    @draw()
-
-  dragmove: => # a listener so use fat arrow to bind the function at the instance level rather than at the class level
-    x = @r.x + Math.floor(d3.event.dx)
-    y = @r.y + Math.floor(d3.event.dy)
-    @redraw([x, y])
+    @pause_firing = false
  
   spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
     @rotate_path()
-    @draw()
+
+  dragspin: =>
+    deltay = @angleStep * Math.ceil(d3.event.dy) / Math.abs(Math.ceil(d3.event.dy))
+    deltay = 0 if isNaN(deltay)
+    deltax = @angleStep * Math.ceil(d3.event.dx) / Math.abs(Math.ceil(d3.event.dx))
+    deltax = 0 if isNaN(deltax)
+    delta = if Math.abs(deltay) > Math.abs(deltax) then deltay else deltax
+    console.log(delta, d3.event)
+    @angle = @angle - delta
+    @rotate_path()
 
   fire: =>
     return true if @is_destroyed
+    return true if @pause_firing
     timestamp   = Utils.timestamp()
     return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
@@ -85,8 +92,8 @@ class @Root extends Polygon
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragmove))
-    # @svg.on("touchmove", @redraw_touch) # default mouse behavior is to control the root element position
+    @svg.on("touchstart", @redraw) # default touch behavior is to control the root element position
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
 
   
     
