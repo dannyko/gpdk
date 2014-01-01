@@ -1515,8 +1515,8 @@
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 280;
-      return this.g.attr("class", "").style('opacity', '0.3').transition().duration(dur / 2).attr('transform', this.g.attr('transform') + 'scale(5)').transition().duration(dur).ease('sqrt').style("opacity", "0").remove();
+      dur = 1000;
+      return this.g.attr("class", "").style('opacity', '0.3').style('fill', '#300').transition().duration(dur / 2).attr('transform', this.g.attr('transform') + 'scale(5)').transition().duration(dur).style("opacity", "0").remove();
     };
 
     Drone.prototype.draw = function() {
@@ -1792,6 +1792,9 @@
       this.dragspin = function() {
         return Root.prototype.dragspin.apply(_this, arguments);
       };
+      this.drag_start = function() {
+        return Root.prototype.drag_start.apply(_this, arguments);
+      };
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
       };
@@ -1812,7 +1815,6 @@
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
-      this.pause_firing = false;
       this.tick = function() {};
     }
 
@@ -1823,17 +1825,23 @@
       if (!this.collision) {
         return;
       }
-      this.pause_firing = true;
       this.r.x = xy[0];
       this.r.y = xy[1];
-      return this.pause_firing = false;
     };
 
     Root.prototype.spin = function() {
       var delta;
       delta = this.angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta);
       this.angle = this.angle - delta;
-      return this.rotate_path();
+      this.rotate_path();
+    };
+
+    Root.prototype.drag_start = function() {
+      if (!this.collision) {
+        return;
+      }
+      this.r.x = xy[0];
+      this.r.y = xy[1];
     };
 
     Root.prototype.dragspin = function() {
@@ -1847,17 +1855,13 @@
         deltax = 0;
       }
       delta = Math.abs(deltay) > Math.abs(deltax) ? deltay : deltax;
-      console.log(delta, d3.event);
       this.angle = this.angle - delta;
-      return this.rotate_path();
+      this.rotate_path();
     };
 
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
       if (this.is_destroyed) {
-        return true;
-      }
-      if (this.pause_firing) {
         return true;
       }
       timestamp = Utils.timestamp();
@@ -1910,15 +1914,15 @@
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
       this.svg.on("mousewheel", this.spin);
-      this.svg.on("touchstart", this.redraw);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
+      this.svg.on("touchstart", null);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", this.drag_start).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
       this.svg.on("mousemove", null);
       this.svg.on("mousewheel", null);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
+      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null));
     };
 
     Root.prototype.reaction = function(n) {

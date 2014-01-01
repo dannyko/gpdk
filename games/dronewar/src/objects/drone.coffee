@@ -46,15 +46,15 @@ class @Drone extends Circle
 
   destroy: (remove = false) ->
     super(remove)
-    dur = 280
+    dur = 1000
     @g.attr("class", "")
       .style('opacity', '0.3')
+      .style('fill', '#300')
       .transition()
       .duration(dur / 2)
       .attr('transform', @g.attr('transform') + 'scale(5)')
       .transition()
       .duration(dur)
-      .ease('sqrt')
       .style("opacity", "0")
       .remove() 
     
