@@ -19,10 +19,10 @@ class @Physics # numerical integration module for solving differential equations
     timestamp = Utils.timestamp()
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast
     @timestamp = timestamp
-    @game.update_window()
     len = Collision.list.length
     Collision.list[len].update() while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
+    @game?.update_window() # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     return 
   
   @start: (game, delay = 0) -> 

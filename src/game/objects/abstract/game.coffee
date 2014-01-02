@@ -3,23 +3,28 @@ class @Game
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
+  
+  current_width = (padding = 8) ->
+    element   = window.top.document.body # .getElementsByTagName('iframe')[0]
+    x = $(element).width()
+    x = Math.min(x, $(window).width())
+    x = Math.min(x, $(window.top).width())
+    x = (x - padding) if x > padding and padding > 0  
 
-  get_scale = (padding = 8) -> # minimal padding to prevent browser scrollbar issues 
-    element        = window.top.document.body # .getElementsByTagName('iframe')[0]
-    x              = $(element).width()
-    y              = $(element).height()
-    x              = Math.min(x, $(window).width())
-    y              = Math.min(y, $(window).height())
-    x              = Math.min(x, $(window.top).width())
-    y              = Math.min(y, $(window.top).height())
-    x              = (x - padding) if x > padding and padding > 0
-    y              = (y - padding) if y > padding and padding > 0
-    r1             = x / Game.width
-    r2             = y / Game.height
-    scale          = if r1 <= r2 then r1 else r2
-    max_scale      = 1.0
-    min_scale      = 0.4
-    scale          = Math.max(min_scale, Math.min(max_scale, scale))
+  current_height = (padding = 8) ->
+    element   = window.top.document.body # .getElementsByTagName('iframe')[0]
+    y = $(element).height()
+    y = Math.min(y, $(window).height())
+    y = Math.min(y, $(window.top).height())
+    y = (y - padding) if y > padding and padding > 0
+
+  get_scale = -> # minimal padding to prevent browser scrollbar issues 
+    r1        = current_width() / Game.width
+    r2        = current_height() / Game.height
+    scale     = if r1 <= r2 then r1 else r2
+    max_scale = 1.0
+    min_scale = 0.4
+    scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
   update_window: ->
     return Game.scale if Game.width is null or Game.height is null
@@ -40,8 +45,8 @@ class @Game
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
     @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
-    Game.width  = parseInt(@svg.attr("width"), 10)
-    Game.height = parseInt(@svg.attr("height"), 10)
+    Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
+    Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")
     @g          = @svg.append('g') if @g.empty()

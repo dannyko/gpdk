@@ -33,6 +33,18 @@
 
     function Utils() {}
 
+    Utils.clone = function(obj) {
+      var key, temp;
+      if (obj === null || typeof obj !== "object") {
+        return obj;
+      }
+      temp = new obj.constructor();
+      for (key in obj) {
+        temp[key] = Utils.clone(obj[key]);
+      }
+      return temp;
+    };
+
     Utils.addChainedAttributeAccessor = function(obj, attr) {
       return obj[attr] = function() {
         var newValues;
@@ -182,6 +194,7 @@
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
+      this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Physics.verlet(this);
       this.is_destroyed = false;
@@ -226,7 +239,7 @@
 
     Element.prototype.stop = function() {
       var index;
-      index = _.indexOf(Collision.list, this);
+      index = Collision.list.indexOf(this);
       if (index > -1) {
         Collision.list.splice(index, 1);
       }
@@ -264,17 +277,66 @@
   })();
 
   this.Game = (function() {
+    var get_scale;
 
     Game.width = null;
 
     Game.height = null;
 
+    Game.scale = 1;
+
+    get_scale = function(padding) {
+      var element, max_scale, min_scale, r1, r2, scale, x, y;
+      if (padding == null) {
+        padding = 8;
+      }
+      element = window.top.document.body;
+      x = $(element).width();
+      y = $(element).height();
+      x = Math.min(x, $(window).width());
+      y = Math.min(y, $(window).height());
+      x = Math.min(x, $(window.top).width());
+      y = Math.min(y, $(window.top).height());
+      if (x > padding && padding > 0) {
+        x = x - padding;
+      }
+      if (y > padding && padding > 0) {
+        y = y - padding;
+      }
+      r1 = x / Game.width;
+      r2 = y / Game.height;
+      scale = r1 <= r2 ? r1 : r2;
+      max_scale = 1.0;
+      min_scale = 0.4;
+      return scale = Math.max(min_scale, Math.min(max_scale, scale));
+    };
+
+    Game.prototype.update_window = function() {
+      var h, scale, tol, w;
+      if (Game.width === null || Game.height === null) {
+        return Game.scale;
+      }
+      scale = get_scale();
+      tol = .001;
+      if (Math.abs(Game.scale - scale) < tol) {
+        return;
+      }
+      Game.scale = scale;
+      w = Math.ceil(Game.width * scale) + 'px';
+      h = Math.ceil(Game.height * scale) + 'px';
+      this.div.style('width', w).style('height', h);
+      this.svg.style('width', w).style('height', h);
+      this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
+      $(document.body).css('width', w).css('height', h);
+    };
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.element = [];
+      this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
       if (this.svg.empty()) {
-        this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
       Game.width = parseInt(this.svg.attr("width"), 10);
       Game.height = parseInt(this.svg.attr("height"), 10);
@@ -284,10 +346,11 @@
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window();
     }
 
     Game.prototype.start = function() {
-      return Physics.start();
+      return Physics.start(this);
     };
 
     Game.prototype.stop = function() {
@@ -411,29 +474,49 @@
     };
 
     Polygon.prototype.set_path = function(path) {
+      var i, maxd, maxnode, node, _i, _ref;
       this.path = path != null ? path : this.path;
       this.pathref = this.path.map(function(d) {
-        return _.clone(d);
+        return Utils.clone(d);
       });
       this.polygon_path();
-      this.maxnode = new Vec(_.max(this.path, function(node) {
-        return node.d = node.x * node.x + node.y * node.y;
-      }));
+      maxnode = this.path[0];
+      this.path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y;
+      maxd = this.path[0].d;
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = this.path[i];
+        node.d = node.x * node.x + node.y * node.y;
+        if (node.d > maxd) {
+          maxnode = this.path[i];
+        }
+      }
+      this.maxnode = new Vec(maxnode);
       this.size = this.maxnode.length();
       return this.image.attr("d", this.d());
     };
 
     Polygon.prototype.BB = function() {
-      this.bb_width = _.max(this.path, function(node) {
-        return node.x;
-      }).x - _.min(this.path, function(node) {
-        return node.x;
-      }).x;
-      this.bb_height = _.max(this.path, function(node) {
-        return node.y;
-      }).y - _.min(this.path, function(node) {
-        return node.y;
-      }).y;
+      var i, xmax, xmin, ymax, ymin, _i, _ref;
+      xmax = this.path[0].x;
+      ymax = this.path[0].y;
+      xmin = xmax;
+      ymin = ymax;
+      for (i = _i = 1, _ref = this.path.length - 1; 1 <= _ref ? _i < _ref : _i > _ref; i = 1 <= _ref ? ++_i : --_i) {
+        if (this.path[i].x > xmax) {
+          xmax = this.path[i].x;
+        }
+        if (this.path[i].x < xmin) {
+          xmin = this.path[i].x;
+        }
+        if (this.path[i].y > ymax) {
+          ymax = this.path[i].y;
+        }
+        if (this.path[i].y < ymin) {
+          ymin = this.path[i].y;
+        }
+      }
+      this.bb_width = xmax - xmin;
+      this.bb_height = ymax - ymin;
       return Polygon.__super__.BB.apply(this, arguments);
     };
 
@@ -477,7 +560,7 @@
       }
       timestamp = Utils.timestamp();
       if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
-        data = _.filter(this.list, function(d) {
+        data = this.list.filter(function(d) {
           return d.collision;
         }).map(function(d) {
           return {
@@ -679,14 +762,17 @@
     };
 
     nearest_node = function(m, n) {
-      var init, nearest;
-      init = _.initial(m.path);
-      nearest = _.min(init, function(d) {
-        var dd;
-        dd = new Vec(d).add(m.r).subtract(n.r).length_squared();
-        return dd;
-      });
-      return _.indexOf(m.path, nearest);
+      var d, i, nn, nnd, node, _i, _ref;
+      nn = m.path[0];
+      nnd = new Vec(nn).add(m.r).subtract(n.r).length_squared();
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = m.path[i];
+        d = new Vec(node).add(m.r).subtract(n.r).length_squared();
+        if (d < nnd) {
+          nn = m.path[i];
+        }
+      }
+      return m.path.indexOf(nn);
     };
 
     circle_circle_dist = function(m, n) {
@@ -861,6 +947,8 @@
 
     Physics.timestamp = Utils.timestamp();
 
+    Physics.game = null;
+
     Physics.verlet = function(element) {
       return function() {
         var f;
@@ -876,7 +964,7 @@
     };
 
     Physics.integrate = function(cleanup) {
-      var len, timestamp;
+      var len, timestamp, _ref;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -893,12 +981,16 @@
         Collision.list[len].update();
       }
       Collision.detect();
+      if ((_ref = Physics.game) != null) {
+        _ref.update_window();
+      }
     };
 
-    Physics.start = function(delay) {
+    Physics.start = function(game, delay) {
       if (delay == null) {
         delay = 0;
       }
+      this.game = game;
       this.off = false;
       d3.timer(this.integrate, delay);
     };
@@ -1109,11 +1201,11 @@
       (_base1 = this.config).fill || (_base1.fill = '#FFF');
       (_base2 = this.config).r || (_base2.r = new Vec({
         x: Game.paddle.r.x + 2 * Math.random() - 1,
-        y: Game.height - Game.paddle.bb_height - this.config.size
+        y: Game.height - Game.paddle.padding - Game.paddle.bb_height - this.config.size
       }));
       Ball.__super__.constructor.call(this, this.config);
       this.name = 'Ball';
-      this.initial_speed = 20;
+      this.initial_speed = 25;
       this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.v.x = 0;
@@ -1273,7 +1365,7 @@
       Paddle.__super__.constructor.call(this, this.config);
       this.is_root = true;
       this.fixed = true;
-      this.padding = 15;
+      this.padding = 50;
       this.r.x = Game.width / 2;
       this.r.y = Game.height - this.height - this.padding;
       this.min_y_speed = this.config.min_y_speed || 8;
@@ -1324,30 +1416,31 @@
       if (!this.collision) {
         return;
       }
-      this.r.x += e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+      this.r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale;
       if (this.r.x < this.min_x) {
         this.r.x = this.min_x;
       }
       if (this.r.x > this.max_x) {
-        this.r.x = this.max_x;
+        return this.r.x = this.max_x;
       }
-      return this.draw();
     };
 
     Paddle.prototype.start = function() {
       Paddle.__super__.start.apply(this, arguments);
       d3.select(window.top).on("mousemove", this.redraw);
       if (window !== window.top) {
-        return d3.select(window).on("mousemove", this.redraw);
+        d3.select(window).on("mousemove", this.redraw);
       }
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
     };
 
     Paddle.prototype.stop = function() {
       Paddle.__super__.stop.apply(this, arguments);
       d3.select(window.top).on("mousemove", null);
       if (window !== window.top) {
-        return d3.select(window).on("mousemove", null);
+        d3.select(window).on("mousemove", null);
       }
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
     Paddle.prototype.destroy_check = function(n) {
@@ -1565,10 +1658,10 @@
         return Spacepong.prototype.keydown.apply(_this, arguments);
       };
       Spacepong.__super__.constructor.apply(this, arguments);
-      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')');
+      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%');
       this.setup();
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
-      this.lives = this.g.append("text").text("").attr("stroke", "black").attr("fill", "#F90").attr("font-size", "20").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
       d3.select(window.top).on("keydown", this.keydown);
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
@@ -1605,7 +1698,7 @@
         _this = this;
       this.ball_check_needed = false;
       length = this.ball.length;
-      this.ball = _.filter(this.ball, function(ball) {
+      this.ball = this.ball.filter(function(ball) {
         return !ball.is_destroyed;
       });
       txt = length > 0 && this.ball.length === length ? 'MULTIBALL UP' : 'GET READY';
@@ -1617,7 +1710,7 @@
           _this.ball.push(new Ball());
         }
         _this.ball_check_needed = true;
-        return Physics.start();
+        return Physics.start(_this);
       });
     };
 
@@ -1672,18 +1765,18 @@
         }
         this.stop();
         callback = function() {
-          _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+          _this.lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', _this.reset);
           _this.game_over = true;
           return true;
         };
         return this.end(callback);
       }
-      if ((this.ball.length < Spacepong.ball_count() || (_.some(this.ball, function(d) {
+      if ((this.ball.length < Spacepong.ball_count() || (this.ball.some(function(d) {
         return d.is_destroyed;
       }))) && this.ball_check_needed) {
         this.spawn_balls();
       }
-      if ((_.every(this.ship, function(d) {
+      if ((this.ship.every(function(d) {
         return d.is_destroyed;
       })) && this.ship_check_needed && this.ball_check_needed) {
         return this.spawn_ships();

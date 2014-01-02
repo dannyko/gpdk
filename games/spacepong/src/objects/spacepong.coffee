@@ -12,26 +12,28 @@ class @Spacepong extends Game
 
   constructor: (@config = {}) ->
     super
-    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')')
+    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%')
 
     @setup()
 
     @scoretxt = @g.append("text")
       .text("")
-      .attr("stroke", "black")
+      .attr("stroke", "none")
       .attr("fill", "#F90")
-      .attr("font-size", "20")
+      .attr("font-size", "32")
       .attr("x", "20")
-      .attr("y", "40")
-      .attr('font-family', 'arial black')
+      .attr("y", "80")
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
     @lives = @g.append("text")
       .text("")
-      .attr("stroke", "black")
+      .attr("stroke", "none")
       .attr("fill", "#F90")
-      .attr("font-size", "20")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "20")
-      .attr('font-family', 'arial black')
+      .attr("y", "40")
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
@@ -79,7 +81,7 @@ class @Spacepong extends Game
       .each('end', => 
         @ball.push(new Ball()) while @ball.length < Spacepong.ball_count()
         @ball_check_needed = true
-        Physics.start() # unpause the physics engine
+        Physics.start(@) # unpause the physics engine
       )
     return    
 
@@ -150,10 +152,10 @@ class @Spacepong extends Game
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0) for ship in @ship
       @stop()
-      callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
+      callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; @game_over = true ; return true
       return @end(callback)
-    @spawn_balls() if (@ball.length < Spacepong.ball_count() or (_.some  @ball, (d) -> d.is_destroyed)) and @ball_check_needed
-    @spawn_ships() if (_.every @ship, (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed # only spawn ships after balls have been spawned
+    @spawn_balls() if (@ball.length < Spacepong.ball_count() or (@ball.some (d) -> d.is_destroyed)) and @ball_check_needed
+    @spawn_ships() if (@ship.every (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed # only spawn ships after balls have been spawned
 
   reset: =>
     @cleanup()

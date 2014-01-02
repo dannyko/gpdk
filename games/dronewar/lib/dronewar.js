@@ -277,7 +277,7 @@
   })();
 
   this.Game = (function() {
-    var get_scale;
+    var current_height, current_width, get_scale;
 
     Game.width = null;
 
@@ -285,26 +285,38 @@
 
     Game.scale = 1;
 
-    get_scale = function(padding) {
-      var element, max_scale, min_scale, r1, r2, scale, x, y;
+    current_width = function(padding) {
+      var element, x;
       if (padding == null) {
         padding = 8;
       }
       element = window.top.document.body;
       x = $(element).width();
-      y = $(element).height();
       x = Math.min(x, $(window).width());
-      y = Math.min(y, $(window).height());
       x = Math.min(x, $(window.top).width());
-      y = Math.min(y, $(window.top).height());
       if (x > padding && padding > 0) {
-        x = x - padding;
+        return x = x - padding;
       }
+    };
+
+    current_height = function(padding) {
+      var element, y;
+      if (padding == null) {
+        padding = 8;
+      }
+      element = window.top.document.body;
+      y = $(element).height();
+      y = Math.min(y, $(window).height());
+      y = Math.min(y, $(window.top).height());
       if (y > padding && padding > 0) {
-        y = y - padding;
+        return y = y - padding;
       }
-      r1 = x / Game.width;
-      r2 = y / Game.height;
+    };
+
+    get_scale = function() {
+      var max_scale, min_scale, r1, r2, scale;
+      r1 = current_width() / Game.width;
+      r2 = current_height() / Game.height;
       scale = r1 <= r2 ? r1 : r2;
       max_scale = 1.0;
       min_scale = 0.4;
@@ -338,8 +350,8 @@
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      Game.width = parseInt(this.svg.attr("width"), 10);
-      Game.height = parseInt(this.svg.attr("height"), 10);
+      Game.width = 800;
+      Game.height = 600;
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
@@ -964,7 +976,7 @@
     };
 
     Physics.integrate = function(cleanup) {
-      var len, timestamp;
+      var len, timestamp, _ref;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -976,12 +988,14 @@
         return;
       }
       Physics.timestamp = timestamp;
-      Physics.game.update_window();
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update();
       }
       Collision.detect();
+      if ((_ref = Physics.game) != null) {
+        _ref.update_window();
+      }
     };
 
     Physics.start = function(game, delay) {
@@ -1475,7 +1489,7 @@
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      this.config.size = 20;
+      this.config.size = 25;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
       this.max_speed = 12;
@@ -1515,8 +1529,9 @@
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 1000;
-      return this.g.attr("class", "").style('opacity', '0.3').style('fill', '#300').transition().duration(dur / 2).attr('transform', this.g.attr('transform') + 'scale(5)').transition().duration(dur).style("opacity", "0").remove();
+      dur = 500;
+      this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
+      return this.g.attr("class", "").transition().duration(dur).style("opacity", "0").remove();
     };
 
     Drone.prototype.draw = function() {
@@ -1590,7 +1605,7 @@
       this.element = [];
       Nlevel = this.N - this.initialN + 1;
       multiplier = 10;
-      offset = 100;
+      offset = 50;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = new Drone({
           energy: Nlevel * multiplier + offset
@@ -1664,7 +1679,7 @@
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
       callback = function() {
-        _this.lives.text("GAME OVER, PRESS 'R' OR CLICK HERE TO RESTART").on('click', _this.reset);
+        _this.lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', _this.reset);
         return true;
       };
       this.end(callback);
@@ -1792,11 +1807,14 @@
       this.dragspin = function() {
         return Root.prototype.dragspin.apply(_this, arguments);
       };
-      this.drag_start = function() {
-        return Root.prototype.drag_start.apply(_this, arguments);
-      };
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
+      };
+      this.redraw_interp = function(xy) {
+        if (xy == null) {
+          xy = d3.mouse(_this.game_g.node());
+        }
+        return Root.prototype.redraw_interp.apply(_this, arguments);
       };
       this.redraw = function(xy) {
         if (xy == null) {
@@ -1816,17 +1834,68 @@
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
       this.tick = function() {};
+      this.drawing = false;
     }
 
     Root.prototype.redraw = function(xy) {
+      var maxJump;
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
       }
       if (!this.collision) {
         return;
       }
+      maxJump = 30;
+      xy = this.apply_limits(xy);
+      if (Math.abs(this.r.x - xy[0]) > maxJump || Math.abs(this.r.y - xy[1]) > maxJump) {
+        this.redraw_interp(xy);
+        return;
+      }
       this.r.x = xy[0];
       this.r.y = xy[1];
+    };
+
+    Root.prototype.apply_limits = function(xy) {
+      return [Math.min(Math.max(this.bb_width, xy[0]), Game.width - this.bb_width), Math.min(Math.max(this.bb_height, xy[1]), Game.height - this.bb_height)];
+    };
+
+    Root.prototype.redraw_interp = function(xy) {
+      var Nstep, count, dr, func, r1, step,
+        _this = this;
+      if (xy == null) {
+        xy = d3.mouse(this.game_g.node());
+      }
+      if (!this.collision) {
+        return;
+      }
+      if (this.drawing) {
+        return;
+      }
+      this.drawing = true;
+      r1 = new Vec({
+        x: xy[0],
+        y: xy[1]
+      });
+      step = 20;
+      dr = new Vec(r1).subtract(this.r);
+      Nstep = Math.floor(dr.length() / step);
+      count = 1;
+      dr.normalize(step);
+      func = function() {
+        var done;
+        done = false;
+        if (count > Nstep) {
+          done = true;
+          _this.drawing = false;
+        } else {
+          if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
+            _this.r.add(dr);
+          }
+          count++;
+        }
+        return done;
+      };
+      d3.timer(func);
     };
 
     Root.prototype.spin = function() {
@@ -1834,14 +1903,6 @@
       delta = this.angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta);
       this.angle = this.angle - delta;
       this.rotate_path();
-    };
-
-    Root.prototype.drag_start = function() {
-      if (!this.collision) {
-        return;
-      }
-      this.r.x = xy[0];
-      this.r.y = xy[1];
     };
 
     Root.prototype.dragspin = function() {
@@ -1914,15 +1975,14 @@
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
       this.svg.on("mousewheel", this.spin);
-      this.svg.on("touchstart", null);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", this.drag_start).on("drag", this.dragspin));
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
       this.svg.on("mousemove", null);
       this.svg.on("mousewheel", null);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null));
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
     Root.prototype.reaction = function(n) {

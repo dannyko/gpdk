@@ -4,10 +4,10 @@ class @Ball extends Circle
   constructor: (@config = {}) ->
     @config.size   ||= 12
     @config.fill   ||= '#FFF'
-    @config.r      ||= new Vec({x: Game.paddle.r.x + 2 * Math.random() - 1, y: Game.height - Game.paddle.bb_height - @config.size})
+    @config.r      ||= new Vec({x: Game.paddle.r.x + 2 * Math.random() - 1, y: Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size})
     super(@config)
     @name = 'Ball'
-    @initial_speed = 20
+    @initial_speed = 25
     @speed = @initial_speed
     @max_speed = @size * 10
     @v.x   = 0 

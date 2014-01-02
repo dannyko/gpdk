@@ -47,7 +47,7 @@ class @Dronewar extends Game
     @element = [] # reinitialize element list
     Nlevel = (@N - @initialN + 1)
     multiplier = 10
-    offset     = 100
+    offset     = 50
     for i in [0..@N - 1] # create element list
       newAttacker = new Drone({energy: Nlevel * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game
@@ -104,7 +104,7 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK HERE TO RESTART").on('click', @reset) ; return true
+    callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; return true
     @end(callback)
     return
 

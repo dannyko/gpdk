@@ -12,26 +12,48 @@ class @Root extends Polygon
     @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick = -> return
+    @drawing = false
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
+    maxJump = 30 # max jump size
+    xy = @apply_limits(xy)
+    if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
+      @redraw_interp(xy)
+      return
     @r.x = xy[0]
     @r.y = xy[1]
+    return
+
+  apply_limits: (xy) ->
+    [Math.min(Math.max(@bb_width, xy[0]), Game.width - @bb_width), Math.min(Math.max(@bb_height, xy[1]), Game.height - @bb_height)]
+
+  redraw_interp: (xy = d3.mouse(@game_g.node())) =>
+    return unless @collision # don't draw if not active
+    return if @drawing
+    @drawing = true
+    r1   = new Vec({x: xy[0], y: xy[1]})
+    step = 20 # steplength
+    dr   = new Vec(r1).subtract(@r)
+    Nstep = Math.floor(dr.length() / step)
+    count = 1
+    dr.normalize(step) # difference vector pointing towards destination
+    func = =>
+      done = false
+      if count > Nstep
+        done = true 
+        @drawing = false
+      else 
+        @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
+        count++
+      done
+    d3.timer(func)
     return
  
   spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
     @rotate_path()
-    return
-
-  drag_start: =>
-    return unless @collision # don't draw if not active
-    @r.x  = xy[0]
-    @r.y  = xy[1]
-    # dr    = {x: 0.5 * Game.width - @r.x, y: 0.5 * Game.height - @r.y}
-    # scale = 150
-    # @r.add(new Vec(dr).normalize(scale))
     return
 
   dragspin: =>
@@ -99,8 +121,7 @@ class @Root extends Polygon
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
-    @svg.on("touchstart", null) # default touch behavior is to control the root element position
-    @svg.call(d3.behavior.drag().origin(Object).on("dragstart", @drag_start).on("drag", @dragspin))
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
 
   
     
@@ -108,7 +129,7 @@ class @Root extends Polygon
     super
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
     @svg.on("mousewheel", null) # default scroll wheel listener
-    @svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null))
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship

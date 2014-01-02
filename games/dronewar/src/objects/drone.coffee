@@ -2,7 +2,7 @@ class @Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
 
   constructor: (@config = {}) ->
-    @config.size = 20
+    @config.size = 25
     super(@config)
     @stop()
     @max_speed = 12
@@ -46,17 +46,32 @@ class @Drone extends Circle
 
   destroy: (remove = false) ->
     super(remove)
-    dur = 1000
-    @g.attr("class", "")
-      .style('opacity', '0.3')
-      .style('fill', '#300')
-      .transition()
-      .duration(dur / 2)
-      .attr('transform', @g.attr('transform') + 'scale(5)')
+    dur = 500
+    @g.append('circle')
+      .attr("r", @size * .9)
+      .attr("x", 0)
+      .attr("y", 0)
+      .style('fill', '#800')
+      .style('opacity', .7)
       .transition()
       .duration(dur)
-      .style("opacity", "0")
-      .remove() 
+      .attr('transform', 'scale(5)')
+      .remove()
+    @g.attr("class", "")
+     .transition()
+     .duration(dur)
+     .style("opacity", "0")
+     .remove()
+
+    # @g.attr("class", "")
+    #  .style('opacity', '0.3')
+    #  .transition()
+    #  .duration(dur / 2)
+    #  .attr('transform', @g.attr('transform') + 'scale(5)')
+    #  .transition()
+    #  .duration(dur)
+    #  .style("opacity", "0")
+    #  .remove() 
     
   draw: ->
     @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
