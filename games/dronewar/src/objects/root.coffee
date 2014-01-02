@@ -9,15 +9,15 @@ class @Root extends Polygon
     @charge        = 5e4
     @stroke("none")
     @fill("#000")
-    @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
+    @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
-    @tick = -> return
+    @tick    = -> return
     @drawing = false
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
     maxJump = 30 # max jump size
-    xy = @apply_limits(xy)
+    xy      = @apply_limits(xy)
     if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
       @redraw_interp(xy)
       return

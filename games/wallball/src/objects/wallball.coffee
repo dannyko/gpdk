@@ -3,23 +3,26 @@ class @Wallball extends Game
     super
     @setup()
     @game_over = false
+    @div.style('background-color', '#111')
 
     @scoretxt = @g.append("text")
       .text("")
       .attr("stroke", "black")
       .attr("fill", "#F90")
-      .attr("font-size", "20")
+      .attr("font-size", "32")
       .attr("x", "20")
-      .attr("y", "40")
-      .attr('font-family', 'arial black')
+      .attr("y", "80")
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
     @lives = @g.append("text")
       .text("")
       .attr("stroke", "black")
       .attr("fill", "#F90")
-      .attr("font-size", "20")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "20")
-      .attr('font-family', 'arial black')
+      .attr("y", "40")
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
@@ -126,7 +129,7 @@ class @Wallball extends Game
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       @wall.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       @stop()
-      callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; @game_over = true ; return true
+      callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; @game_over = true ; return true
       return @end(callback)
     @spawn_ball() if @ball_check_needed 
 

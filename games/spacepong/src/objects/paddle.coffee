@@ -51,6 +51,7 @@ class @Paddle extends Polygon
     @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
+    return
 
   start: ->
     super

@@ -26,11 +26,12 @@ class @Game
     min_scale = 0.4
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
-  update_window: ->
+  update_window: (force = false) ->
     return Game.scale if Game.width is null or Game.height is null
     scale = get_scale()
     tol   = .001
-    return if Math.abs(Game.scale - scale) < tol # don't update after very small changes
+    unless force
+      return if Math.abs(Game.scale - scale) < tol # don't update after very small changes
     Game.scale = scale 
     w          = Math.ceil(Game.width * scale) + 'px'
     h          = Math.ceil(Game.height * scale) + 'px'
@@ -55,7 +56,7 @@ class @Game
 	    .attr('height', @svg.attr('height'))
 	    .style('width', '')
 	    .style('height', '')
-    @update_window()
+    @update_window(force = true)
 
   start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
     
@@ -67,7 +68,6 @@ class @Game
     else 
       callback()
     return true # game over so return true to stop the d3 timer calling @progress()
-
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
     len = Collision.list.length
