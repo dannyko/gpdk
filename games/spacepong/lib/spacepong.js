@@ -277,7 +277,7 @@
   })();
 
   this.Game = (function() {
-    var get_scale;
+    var current_height, current_width, get_scale;
 
     Game.width = null;
 
@@ -285,41 +285,58 @@
 
     Game.scale = 1;
 
-    get_scale = function(padding) {
-      var element, max_scale, min_scale, r1, r2, scale, x, y;
+    current_width = function(padding) {
+      var element, x;
       if (padding == null) {
         padding = 8;
       }
       element = window.top.document.body;
       x = $(element).width();
-      y = $(element).height();
       x = Math.min(x, $(window).width());
-      y = Math.min(y, $(window).height());
       x = Math.min(x, $(window.top).width());
-      y = Math.min(y, $(window.top).height());
       if (x > padding && padding > 0) {
-        x = x - padding;
+        return x = x - padding;
       }
+    };
+
+    current_height = function(padding) {
+      var element, y;
+      if (padding == null) {
+        padding = 8;
+      }
+      element = window.top.document.body;
+      y = $(element).height();
+      y = Math.min(y, $(window).height());
+      y = Math.min(y, $(window.top).height());
       if (y > padding && padding > 0) {
-        y = y - padding;
+        return y = y - padding;
       }
-      r1 = x / Game.width;
-      r2 = y / Game.height;
+    };
+
+    get_scale = function() {
+      var max_scale, min_scale, r1, r2, scale;
+      r1 = current_width() / Game.width;
+      r2 = current_height() / Game.height;
       scale = r1 <= r2 ? r1 : r2;
       max_scale = 1.0;
       min_scale = 0.4;
       return scale = Math.max(min_scale, Math.min(max_scale, scale));
     };
 
-    Game.prototype.update_window = function() {
+    Game.prototype.update_window = function(force) {
       var h, scale, tol, w;
+      if (force == null) {
+        force = false;
+      }
       if (Game.width === null || Game.height === null) {
         return Game.scale;
       }
       scale = get_scale();
       tol = .001;
-      if (Math.abs(Game.scale - scale) < tol) {
-        return;
+      if (!force) {
+        if (Math.abs(Game.scale - scale) < tol) {
+          return;
+        }
       }
       Game.scale = scale;
       w = Math.ceil(Game.width * scale) + 'px';
@@ -331,6 +348,7 @@
     };
 
     function Game(config) {
+      var force;
       this.config = config != null ? config : {};
       this.element = [];
       this.div = d3.select("#game_div");
@@ -338,15 +356,15 @@
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      Game.width = parseInt(this.svg.attr("width"), 10);
-      Game.height = parseInt(this.svg.attr("height"), 10);
+      Game.width = 800;
+      Game.height = 600;
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
-      this.update_window();
+      this.update_window(force = true);
     }
 
     Game.prototype.start = function() {
@@ -1236,6 +1254,7 @@
           Game.paddle.destroy_check(this);
         } else {
           Gamescore.lives -= 1;
+          Game.sound.play('miss');
           this.destroy();
           return;
         }
@@ -1369,8 +1388,8 @@
       this.r.x = Game.width / 2;
       this.r.y = Game.height - this.height - this.padding;
       this.min_y_speed = this.config.min_y_speed || 8;
-      this.max_x = Game.width - this.config.size - this.tol - this.padding;
-      this.min_x = this.config.size + this.tol + this.padding;
+      this.max_x = Game.width - this.config.size - this.tol - this.padding * 0.5;
+      this.min_x = this.config.size + this.tol + this.padding * 0.5;
       this.overshoot = this.padding;
       this.image.remove();
       this.g.attr("class", "paddle");
@@ -1421,7 +1440,7 @@
         this.r.x = this.min_x;
       }
       if (this.r.x > this.max_x) {
-        return this.r.x = this.max_x;
+        this.r.x = this.max_x;
       }
     };
 
@@ -1461,7 +1480,8 @@
         }
         n.v.x = relative_intersect * n.speed;
         n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x);
-        return this.reaction(n);
+        this.reaction(n);
+        return Game.sound.play('bong');
       } else {
         return n.destroy();
       }
@@ -1577,13 +1597,15 @@
       this.stop();
       if (this.offscreen()) {
         Gamescore.decrement_value();
+        Game.sound.play('loss');
       }
       fill = '#FFF';
       dur = 210;
       this.image.attr('opacity', 1);
-      return this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
+      this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
         return _this.g.remove();
       });
+      return Game.sound.play('boom');
     };
 
     Ship.prototype.destroy_check = function(element) {
@@ -1666,6 +1688,16 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
+        sprite: {
+          whoosh: [0, 1060],
+          boom: [1060, 557],
+          loss: [1618, 486],
+          miss: [2105, 934],
+          bong: [3040, 192]
+        }
+      });
     }
 
     Spacepong.prototype.setup = function() {
@@ -1701,7 +1733,7 @@
       this.ball = this.ball.filter(function(ball) {
         return !ball.is_destroyed;
       });
-      txt = length > 0 && this.ball.length === length ? 'MULTIBALL UP' : 'GET READY';
+      txt = length > 0 && this.ball.length === length ? (Game.sound.play('whoosh'), 'MULTIBALL UP') : 'GET READY';
       Physics.stop();
       ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       dur = 1000;
@@ -1745,6 +1777,7 @@
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.start();
         }
+        Game.sound.play('whoosh');
         return d3.timer(_this.progress);
       });
     };

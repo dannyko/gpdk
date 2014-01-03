@@ -27,6 +27,15 @@ class @Wallball extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
+    Game.sound = new Howl({
+      urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
+      sprite: {
+        start:[0, 899],
+        miss:[899, 1231],
+        ball:[2131, 110]
+      }
+    })
+
   setup: ->
     @paddle = new Paddle() # paddle element i.e. under user control
     @wall   = new Wall()
@@ -115,6 +124,7 @@ class @Wallball extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       Gamescore.value = 0
       Gameprez?.start()
+      Game.sound.play('start')
       @wall.v.y = @wall.speed
       d3.timer(@progress)
     )

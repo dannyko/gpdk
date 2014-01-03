@@ -20,8 +20,8 @@ class @Paddle extends Polygon
     @r.x       = Game.width / 2
     @r.y       = Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = Game.width - @config.size - @tol - @padding
-    @min_x     = @config.size + @tol + @padding
+    @max_x     = Game.width - @config.size - @tol - @padding * 0.5
+    @min_x     = @config.size + @tol + @padding * 0.5
     @overshoot = @padding
     @image.remove()
     @g.attr("class", "paddle")
@@ -77,6 +77,7 @@ class @Paddle extends Polygon
       n.v.x = relative_intersect * n.speed
       n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
       @reaction(n)  
+      Game.sound.play('bong')
     else # hit a ship
       n.destroy()
   

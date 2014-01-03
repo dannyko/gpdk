@@ -388,12 +388,13 @@
     };
 
     Game.prototype.cleanup = function() {
-      var element, len, _results;
+      var element, len, sound, _results;
       len = Collision.list.length;
       _results = [];
       while (len--) {
         element = Collision.list.pop();
-        element.destroy();
+        sound = false;
+        element.destroy(sound);
         _results.push(element = null);
       }
       return _results;
@@ -1610,11 +1611,11 @@
       img.src = Ship.fang().url;
       img.src = Drone.url;
       Game.sound = new Howl({
-        urls: ['dronewar.mp3'],
+        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
         sprite: {
-          music: [0, 28509, true],
-          boom: [28509, 857],
-          shot: [29366, 234]
+          music: [0, 10782],
+          boom: [10782, 856],
+          shot: [11639, 234]
         }
       });
       Game.sound.play('music');
@@ -1770,7 +1771,8 @@
         return d3.timer(_this.progress);
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      how.text("Use the mouse for controlling movement, scrollwheel for rotation");
+      how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
+      Game.sound.play('music');
       Dronewar.__super__.start.apply(this, arguments);
     };
 
@@ -1798,10 +1800,8 @@
     };
 
     Dronewar.prototype.reset = function() {
-      var sound;
       this.cleanup();
-      sound = false;
-      this.g.selectAll("g").remove(sound);
+      this.g.selectAll("g").remove();
       this.lives.text("");
       this.scoretxt.text("");
       this.leveltxt.text("");

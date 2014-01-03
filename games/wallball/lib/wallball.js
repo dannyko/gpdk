@@ -1261,6 +1261,7 @@
           Game.paddle.destroy_check(this);
         } else {
           Gamescore.lives -= 1;
+          Game.sound.play('miss');
           this.destroy();
           return;
         }
@@ -1270,7 +1271,8 @@
 
     Ball.prototype.reaction = function(n) {
       this.v.normalize(this.speed);
-      return this.flash();
+      this.flash();
+      return Game.sound.play('ball');
     };
 
     Ball.prototype.flash = function() {
@@ -1620,6 +1622,14 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
+        sprite: {
+          start: [0, 899],
+          miss: [899, 1231],
+          ball: [2131, 110]
+        }
+      });
     }
 
     Wallball.prototype.setup = function() {
@@ -1683,6 +1693,7 @@
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.start();
         }
+        Game.sound.play('start');
         _this.wall.v.y = _this.wall.speed;
         return d3.timer(_this.progress);
       });

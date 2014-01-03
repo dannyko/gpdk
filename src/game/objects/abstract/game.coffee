@@ -73,5 +73,6 @@ class @Game
     len = Collision.list.length
     while (len--) # decrementing avoids potential indexing issues after popping last element off
       element = Collision.list.pop()
-      element.destroy()
+      sound = false # no sound for cleanup
+      element.destroy(sound)
       element = null

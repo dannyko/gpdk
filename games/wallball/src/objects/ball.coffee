@@ -43,6 +43,7 @@ class @Ball extends Circle
         Game.paddle.destroy_check(@) 
       else 
         Gamescore.lives -= 1
+        Game.sound.play('miss')
         @destroy()
         return
     super
@@ -50,7 +51,8 @@ class @Ball extends Circle
   reaction: (n) ->  
     @v.normalize(@speed)
     @flash()
-    
+    Game.sound.play('ball')
+
   flash: ->
     dur      = 1000 / 3 # color effect transition duration parameter
     # N    = 240 # random color parameter

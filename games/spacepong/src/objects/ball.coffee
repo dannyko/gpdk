@@ -38,6 +38,7 @@ class @Ball extends Circle
         Game.paddle.destroy_check(@) 
       else 
         Gamescore.lives -= 1
+        Game.sound.play('miss')
         @destroy()
         return
     super

@@ -38,6 +38,18 @@ class @Spacepong extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
+    Game.sound = new Howl({
+      urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
+      sprite: {
+        whoosh:[0, 1060],
+        boom:[1060, 557],
+        loss:[1618, 486],
+        miss:[2105, 934],
+        bong:[3040, 192]
+      }
+    })
+
+
   setup: ->
     @paddle = new Paddle() # paddle element i.e. under user control
     Game.paddle = @paddle
@@ -58,7 +70,7 @@ class @Spacepong extends Game
     @ball_check_needed = false
     length = @ball.length
     @ball = @ball.filter((ball) -> !ball.is_destroyed)
-    txt = if length > 0 and @ball.length is length then 'MULTIBALL UP' else 'GET READY'
+    txt = if length > 0 and @ball.length is length then ( Game.sound.play('whoosh') ; 'MULTIBALL UP' ) else ( 'GET READY' )
     Physics.stop() # pause the physics engine
     ready = @g.append("text")
       .text(txt)
@@ -139,6 +151,7 @@ class @Spacepong extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       Gamescore.value = 0
       Gameprez?.start()
+      Game.sound.play('whoosh')
       d3.timer(@progress)
     )
       

@@ -40,11 +40,11 @@ class @Dronewar extends Game
     img.src = Ship.fang().url
     img.src = Drone.url
     Game.sound = new Howl({
-      urls: ['dronewar.mp3'],
+      urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
       sprite: {
-        music:[0, 28509, true ],
-        boom: [28509, 857],
-        shot: [29366, 234]
+        music:[0, 10782],
+        boom: [10782, 856],
+        shot: [11639, 234]
       }
     })
     Game.sound.play('music')
@@ -230,7 +230,8 @@ class @Dronewar extends Game
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    how.text("Use the mouse for controlling movement, scrollwheel for rotation")
+    how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation")
+    Game.sound.play('music')
     super
     return
     
@@ -254,8 +255,7 @@ class @Dronewar extends Game
             
   reset: =>
     @cleanup()
-    sound = false # no sound for reset
-    @g.selectAll("g").remove(sound)
+    @g.selectAll("g").remove()
     @lives.text("")
     @scoretxt.text("")
     @leveltxt.text("")
