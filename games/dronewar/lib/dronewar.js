@@ -323,15 +323,20 @@
       return scale = Math.max(min_scale, Math.min(max_scale, scale));
     };
 
-    Game.prototype.update_window = function() {
+    Game.prototype.update_window = function(force) {
       var h, scale, tol, w;
+      if (force == null) {
+        force = false;
+      }
       if (Game.width === null || Game.height === null) {
         return Game.scale;
       }
       scale = get_scale();
       tol = .001;
-      if (Math.abs(Game.scale - scale) < tol) {
-        return;
+      if (!force) {
+        if (Math.abs(Game.scale - scale) < tol) {
+          return;
+        }
       }
       Game.scale = scale;
       w = Math.ceil(Game.width * scale) + 'px';
@@ -343,6 +348,7 @@
     };
 
     function Game(config) {
+      var force;
       this.config = config != null ? config : {};
       this.element = [];
       this.div = d3.select("#game_div");
@@ -358,7 +364,7 @@
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
-      this.update_window();
+      this.update_window(force = true);
     }
 
     Game.prototype.start = function() {
@@ -1512,7 +1518,8 @@
       if (last !== this.image) {
         last.remove();
       }
-      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill0).style('opacity', 0).transition().duration(dur).ease('sqrt').style('opacity', 0.6).transition().duration(dur).ease('linear').style('fill', fill).transition().duration(dur).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .4);
+      this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill0).style('opacity', 0).transition().duration(dur).ease('sqrt').style('opacity', 0.6).transition().duration(dur).ease('linear').style('fill', fill).transition().duration(dur).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .4);
+      return Game.sound.play('shot');
     };
 
     Drone.prototype.depleted = function() {
@@ -1523,15 +1530,21 @@
       }
     };
 
-    Drone.prototype.destroy = function(remove) {
+    Drone.prototype.destroy = function(sound, remove) {
       var dur;
+      if (sound == null) {
+        sound = true;
+      }
       if (remove == null) {
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
       dur = 500;
       this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
-      return this.g.attr("class", "").transition().duration(dur).style("opacity", "0").remove();
+      this.g.attr("class", "").transition().duration(dur).style("opacity", "0").remove();
+      if (sound) {
+        return Game.sound.play('boom');
+      }
     };
 
     Drone.prototype.draw = function() {
@@ -1596,6 +1609,15 @@
       img.src = Ship.sidewinder().url;
       img.src = Ship.fang().url;
       img.src = Drone.url;
+      Game.sound = new Howl({
+        urls: ['dronewar.mp3'],
+        sprite: {
+          music: [0, 28509, true],
+          boom: [28509, 857],
+          shot: [29366, 234]
+        }
+      });
+      Game.sound.play('music');
     }
 
     Dronewar.prototype.level = function() {
@@ -1776,8 +1798,10 @@
     };
 
     Dronewar.prototype.reset = function() {
+      var sound;
       this.cleanup();
-      this.g.selectAll("g").remove();
+      sound = false;
+      this.g.selectAll("g").remove(sound);
       this.lives.text("");
       this.scoretxt.text("");
       this.leveltxt.text("");

@@ -39,7 +39,15 @@ class @Dronewar extends Game
     img.src = Ship.sidewinder().url
     img.src = Ship.fang().url
     img.src = Drone.url
-
+    Game.sound = new Howl({
+      urls: ['dronewar.mp3'],
+      sprite: {
+        music:[0, 28509, true ],
+        boom: [28509, 857],
+        shot: [29366, 234]
+      }
+    })
+    Game.sound.play('music')
 
 
   level: ->
@@ -246,7 +254,8 @@ class @Dronewar extends Game
             
   reset: =>
     @cleanup()
-    @g.selectAll("g").remove()
+    sound = false # no sound for reset
+    @g.selectAll("g").remove(sound)
     @lives.text("")
     @scoretxt.text("")
     @leveltxt.text("")

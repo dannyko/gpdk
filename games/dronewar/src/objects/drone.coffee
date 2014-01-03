@@ -40,11 +40,12 @@ class @Drone extends Circle
       .duration(dur)
       .ease('linear')
       .style('opacity', (1 - @energy / @config.energy) * .4)
+    Game.sound.play('shot')
 
   depleted: ->
     if @energy <= 0 then true else false
 
-  destroy: (remove = false) ->
+  destroy: (sound = true, remove = false) ->
     super(remove)
     dur = 500
     @g.append('circle')
@@ -62,6 +63,7 @@ class @Drone extends Circle
      .duration(dur)
      .style("opacity", "0")
      .remove()
+    Game.sound.play('boom') if sound
 
     # @g.attr("class", "")
     #  .style('opacity', '0.3')
