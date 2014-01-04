@@ -25,7 +25,7 @@ class @Physics # numerical integration module for solving differential equations
     @game?.update_window() # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     return 
   
-  @start: (game, delay = 0) -> 
+  @start: (game = undefined, delay = 0) -> 
     @game = game
     @off = false 
     d3.timer(@integrate, delay)

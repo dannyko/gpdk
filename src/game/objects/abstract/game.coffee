@@ -23,7 +23,7 @@ class @Game
     r2        = current_height() / Game.height
     scale     = if r1 <= r2 then r1 else r2
     max_scale = 1.0
-    min_scale = 0.4
+    min_scale = 0.39
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
   update_window: (force = false) ->
