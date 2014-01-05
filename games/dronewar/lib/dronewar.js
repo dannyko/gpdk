@@ -319,7 +319,7 @@
       r2 = current_height() / Game.height;
       scale = r1 <= r2 ? r1 : r2;
       max_scale = 1.0;
-      min_scale = 0.4;
+      min_scale = 0.39;
       return scale = Math.max(min_scale, Math.min(max_scale, scale));
     };
 
@@ -1006,6 +1006,9 @@
     };
 
     Physics.start = function(game, delay) {
+      if (game == null) {
+        game = void 0;
+      }
       if (delay == null) {
         delay = 0;
       }
