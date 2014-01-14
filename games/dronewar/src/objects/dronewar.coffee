@@ -49,7 +49,6 @@ class @Dronewar extends Game
     })
     Game.sound.play('music')
 
-
   level: ->
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
@@ -218,7 +217,7 @@ class @Dronewar extends Game
       @root.start()
       Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
-      d3.timer(@progress)
+      # d3.timer(@progress) # leaktest
     )
     how = @g.append("text")
       .text("")

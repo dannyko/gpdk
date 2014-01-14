@@ -1,12 +1,12 @@
 class @Element
   constructor: (@config = {}) ->      
     @dt          = @config.dt          || 0.4 # controls animation smoothness relative to d3.timer queue update rate
-    @r           = @config.r           || new Vec() # position vector (rx, ry)
-    @dr          = @config.dr          || new Vec() # displacement vector (dx, dy)
-    @v           = @config.v           || new Vec() # velocity vector (vx, vy)
-    @f           = @config.f           || new Vec() # force vector (fx, fy)
+    @r           = @config.r           || Factory.spawn(Vec) # position vector (rx, ry)
+    @dr          = @config.dr          || Factory.spawn(Vec) # displacement vector (dx, dy)
+    @v           = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
+    @f           = @config.f           || Factory.spawn(Vec) # force vector (fx, fy)
     @n           = @config.n           || [] # array of references to neighbor elements that this element interacts with
-    @force_param = @config.force_param || [new ForceParam()] # array of objects for computing net force vectors Force.eval(element, param) = Vec({x: fx, y: fy})
+    @force_param = @config.force_param || [] # array of objects for computing net force vectors Force.eval(element, param) = Vec({x: fx, y: fy})
     @size        = @config.size        || 0 # zero default size in units of pixels for abstract class
     @bb_width    = @config.bb_width    || 0 # bounding box width
     @bb_height   = @config.bb_height   || 0 # bounding box height
@@ -71,11 +71,17 @@ class @Element
     @destroy() if @_cleanup and @offscreen()
     return
 
-  destroy: (remove = true) -> 
+  destroy: (remove = false) -> 
     return if @is_destroyed # don't allow elements to be destroyed twice by default
-    @stop()
-    @is_destroyed = true
-    @g.remove() if remove # avoids accumulating indefinite numbers of dead elements
+    @stop() # decouple the element from the physics engine
+    @is_destroyed = true # mark the element as destroyed
+    @g.style('opacity', 0) # make the element invisible if it's in the current viewport
+    @g.remove() if remove # only remove the corresponding DOM element if specifically asked to via an input argument
+    Factory.sleep(@r)
+    Factory.sleep(@dr)
+    Factory.sleep(@v)
+    Factory.sleep(@f)
+    Factory.sleep(@) # put this element on the inactive list for reuse
     return
 
   update: -> # helper to combine these three operations into one loop for efficiency    

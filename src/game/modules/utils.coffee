@@ -16,7 +16,7 @@ class @Utils
         obj        
 
   @timestamp = ->
-    new Date().getTime() # e(new Date()).getTime()-Date.UTC(1970,0,1)
+    Date.now() # e(new Date()).getTime()-Date.UTC(1970,0,1)
 
   @angle     = (a) -> 2 * Math.PI * a / 360
 

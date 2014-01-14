@@ -7,14 +7,24 @@ class @Physics # numerical integration module for solving differential equations
 
   @verlet: (element) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
     -> # reference: http://en.wikipedia.org/wiki/Verlet_integration#Velocity_Verlet
-      element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt)) # store displacement vector
+      element.f.scale(0.5 * element.dt * element.dt)
+      element.dr.x = element.v.x # initialize displacement vector
+      element.dr.y = element.v.y # initialize displacement vector
+      element.dr.scale(element.dt).add(element.f) # store displacement vector
       element.r.add(element.dr) # update position
-      f = new Vec() ; element.force_param.forEach (param) -> f.add(Force.eval(element, param)) # evaluate and store force value with respect to the updated position
+      f = Factory.spawn(Vec, element.f) # copy this object for temporary storage
+      element.f.x = 0 # initialize current force
+      element.f.y = 0 # initialize current force
+      element.force_param.forEach (param) -> 
+        force = Force.eval(element, param)
+        element.f.add(force) # evaluate and store force value with respect to the updated position
+        Factory.sleep(force)
       element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
-      element.f = f
+      Factory.sleep(f)
       return      
 
   @integrate: (cleanup = true) =>
+    console.log(Factory.active) # leaktest
     return true if @off
     timestamp = Utils.timestamp()
     return if timestamp - @timestamp < @tick # prevent the animation speed from running too fast

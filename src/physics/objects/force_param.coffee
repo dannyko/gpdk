@@ -1,7 +1,7 @@
 class @ForceParam # the force config object defines the interface and provides default values for parameters used by the Force module
   constructor: (@config = {}) ->
     @type = @config.type || 'constant'
-    switch @config.type
+    switch @type
       when 'constant' then (
         @fx = @config.x || 0
         @fy = @config.y || 0
@@ -21,12 +21,12 @@ class @ForceParam # the force config object defines the interface and provides d
         @q  = @config.q  || 1
       )
       when 'random' then(
-        @xScale = @config.xScale || 1
-        @yScale = @config.yScale || 1
+        @xScale  = @config.xScale || 1
+        @yScale  = @config.yScale || 1
         @fxBound = @config.fxBound || 10
         @fyBound = @config.fyBound || 10
       )
       when 'gradient' then ( # evaluate the force as the negative gradient of a scalar potential energy function V(x, y)
-        @tol = @config.tol || 0.1
+        @tol    = @config.tol || 0.1
         @energy = @config.energy || (r) ->
       )

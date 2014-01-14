@@ -5,6 +5,63 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     _this = this;
 
+  this.Factory = (function() {
+
+    function Factory() {}
+
+    Factory.active = {};
+
+    Factory.inactive = {};
+
+    Factory.spawn = function(klass, config) {
+      var old, x;
+      if (this.active[klass] === void 0) {
+        this.active[klass] = [];
+      }
+      if (this.inactive[klass] === void 0) {
+        this.inactive[klass] = [];
+      }
+      if (this.inactive[klass].length === 0) {
+        this.active[klass].push(new klass(config));
+      } else {
+        old = this.inactive[klass].pop();
+        for (x in config) {
+          old[x] = config[x];
+        }
+        this.active[klass].push(old);
+      }
+      return this.active[klass][this.active[klass].length - 1];
+    };
+
+    Factory.sleep = function(instance) {
+      var index, old;
+      if (instance === void 0) {
+        console.log('Factory.sleep(): undefined input');
+      }
+      index = this.active[instance.constructor].indexOf(instance);
+      if (index === -1) {
+        console.log('Factory.sleep(): undefined index', instance);
+        return this.inactive[instance.constructor].push(instance);
+      } else {
+        old = this.active[instance.constructor][index];
+        if (old === void 0) {
+          console.log('Factory.sleep(): undefined old', index, this.active[instance.constructor]);
+        }
+        if (index === this.active[instance.constructor].length - 1) {
+          this.active[instance.constructor].pop();
+        } else {
+          this.active[instance.constructor][index] = this.active[instance.constructor].pop();
+        }
+        return this.inactive[instance.constructor].push(old);
+      }
+    };
+
+    void 0;
+
+    return Factory;
+
+  })();
+
   this.Gamescore = (function() {
 
     function Gamescore() {}
@@ -60,7 +117,7 @@
     };
 
     Utils.timestamp = function() {
-      return new Date().getTime();
+      return Date.now();
     };
 
     Utils.angle = function(a) {
@@ -169,12 +226,12 @@
     function Element(config) {
       this.config = config != null ? config : {};
       this.dt = this.config.dt || 0.4;
-      this.r = this.config.r || new Vec();
-      this.dr = this.config.dr || new Vec();
-      this.v = this.config.v || new Vec();
-      this.f = this.config.f || new Vec();
+      this.r = this.config.r || Factory.spawn(Vec);
+      this.dr = this.config.dr || Factory.spawn(Vec);
+      this.v = this.config.v || Factory.spawn(Vec);
+      this.f = this.config.f || Factory.spawn(Vec);
       this.n = this.config.n || [];
-      this.force_param = this.config.force_param || [new ForceParam()];
+      this.force_param = this.config.force_param || [];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
       this.bb_height = this.config.bb_height || 0;
@@ -254,16 +311,22 @@
 
     Element.prototype.destroy = function(remove) {
       if (remove == null) {
-        remove = true;
+        remove = false;
       }
       if (this.is_destroyed) {
         return;
       }
       this.stop();
       this.is_destroyed = true;
+      this.g.style('opacity', 0);
       if (remove) {
         this.g.remove();
       }
+      Factory.sleep(this.r);
+      Factory.sleep(this.dr);
+      Factory.sleep(this.v);
+      Factory.sleep(this.f);
+      Factory.sleep(this);
     };
 
     Element.prototype.update = function() {
@@ -601,7 +664,7 @@
       iter = 1;
       reaction = false;
       _results = [];
-      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
+      while (Collision.check(m, n, reaction) && iter <= maxiter) {
         m.tick();
         n.tick();
         _results.push(iter++);
@@ -650,7 +713,7 @@
     };
 
     Collision.check = function(ei, ej, reaction) {
-      var d, m, n, name, reaction_type, sort;
+      var collision, d, m, n, name, reaction_type, sort;
       if (reaction == null) {
         reaction = true;
       }
@@ -685,7 +748,9 @@
       if (d.collision && reaction) {
         Reaction[reaction_type](m, n, d);
       }
-      return d;
+      collision = d.collision;
+      Factory.sleep(d);
+      return collision;
     };
 
     Collision.rectangle_rectangle = function(m, n) {
@@ -781,12 +846,16 @@
     };
 
     nearest_node = function(m, n) {
-      var d, i, nn, nnd, node, _i, _ref;
+      var d, i, nn, nnd, node, vec, _i, _ref;
       nn = m.path[0];
-      nnd = new Vec(nn).add(m.r).subtract(n.r).length_squared();
+      vec = Factory.spawn(Vec, nn).add(m.r).subtract(n.r);
+      nnd = vec.length_squared();
+      Factory.sleep(vec);
       for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         node = m.path[i];
-        d = new Vec(node).add(m.r).subtract(n.r).length_squared();
+        vec = Factory.spawn(Vec, node).add(m.r).subtract(n.r);
+        d = d.length_squared();
+        Factory.sleep(vec);
         if (d < nnd) {
           nn = m.path[i];
         }
@@ -796,7 +865,7 @@
 
     circle_circle_dist = function(m, n) {
       var d;
-      d = new Vec(m.r).subtract(n.r);
+      d = Factory.spawn(Vec, m.r).subtract(n.r);
       d.dist = d.length();
       d.dmin = m.size + n.size;
       return d;
@@ -806,19 +875,21 @@
       var d, dr, r, ri, rj, rr, t, tr;
       ri = polygon.path[i];
       rj = z_check(polygon.path, i);
-      r = new Vec(rj).subtract(ri);
+      r = Factory.spawn(Vec, rj).subtract(ri);
       rr = r.length_squared();
-      dr = new Vec(circle.r).subtract(ri).subtract(polygon.r);
+      dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r);
       t = r.dot(dr) / rr;
+      Factory.sleep(dr);
       if (t < 0) {
 
       } else if (t > 1) {
-        dr = new Vec(circle.r).subtract(rj).subtract(polygon.r);
+        dr = Factory.spawn(Vec, circle.r).subtract(rj).subtract(polygon.r);
       } else {
-        tr = new Vec(r).scale(t).add(ri).add(polygon.r);
-        dr = new Vec(circle.r).subtract(tr);
+        tr = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r);
+        dr = Factory.spawn(Vec, circle.r).subtract(tr);
+        Factory.sleep(tr);
       }
-      return d = {
+      d = {
         t: t,
         x: dr.x,
         y: dr.y,
@@ -826,14 +897,17 @@
         rr: rr,
         dist: dr.length()
       };
+      Factory.sleep(r);
+      Factory.sleep(dr);
+      return d;
     };
 
     lineseg_intersect = function(m, n, i, j) {
       var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, _ref, _ref1, _ref2, _ref3;
-      ri = new Vec(m.path[i]);
-      rj = new Vec(z_check(m.path, i));
-      si = new Vec(n.path[j]);
-      sj = new Vec(z_check(n.path, j));
+      ri = Factory.spawn(Vec, m.path[i]);
+      rj = Factory.spawn(Vec, z_check(m.path, i));
+      si = Factory.spawn(Vec, n.path[j]);
+      sj = Factory.spawn(Vec, z_check(n.path, j));
       A1 = rj.y - ri.y;
       B1 = ri.x - rj.x;
       C1 = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y);
@@ -850,6 +924,10 @@
       check2 = (Math.min(si.x, sj.x) - n.tol <= (_ref1 = x - n.r.x) && _ref1 <= Math.max(si.x, sj.x) + n.tol);
       check3 = (Math.min(ri.y, rj.y) - m.tol <= (_ref2 = y - m.r.y) && _ref2 <= Math.max(ri.y, rj.y) + m.tol);
       check4 = (Math.min(si.y, sj.y) - n.tol <= (_ref3 = y - n.r.y) && _ref3 <= Math.max(si.y, sj.y) + n.tol);
+      Factory.sleep(ri);
+      Factory.sleep(rj);
+      Factory.sleep(si);
+      Factory.sleep(sj);
       if (check1 && check2 && check3 && check4) {
         return true;
       } else {
@@ -879,8 +957,8 @@
       var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
       switch (param.type) {
         case 'constant':
-          fx = param.x;
-          fy = param.y;
+          fx = param.fx;
+          fy = param.fy;
           break;
         case 'friction':
           fx = -param.alpha * element.v.x;
@@ -892,7 +970,7 @@
           break;
         case 'charge':
         case 'gravity':
-          dr = new Vec({
+          dr = Factory.spawn(Vec, {
             x: param.cx - element.r.x,
             y: param.cy - element.r.y
           });
@@ -900,6 +978,7 @@
           r3 = r2 * Math.sqrt(r2);
           fx = param.q * dr.x / r3;
           fy = param.q * dr.y / r3;
+          Factory.sleep(dr);
           break;
         case 'random':
           fx = 2 * (Math.random() - 0.5) * param.xScale;
@@ -918,19 +997,19 @@
           }
           break;
         case 'gradient':
-          rpx = new Vec(element.r).add({
+          rpx = Factory.spawn(Vec, element.r).add({
             x: param.tol,
             y: 0
           });
-          rmx = new Vec(element.r).add({
+          rmx = Factory.spawn(Vec, element.r).add({
             x: -param.tol,
             y: 0
           });
-          rpy = new Vec(element.r).add({
+          rpy = Factory.spawn(Vec, element.r).add({
             y: param.tol,
             x: 0
           });
-          rmy = new Vec(element.r).add({
+          rmy = Factory.spawn(Vec, element.r).add({
             y: -param.tol,
             x: 0
           });
@@ -945,8 +1024,12 @@
           }
           fx = -0.5 * (epx - emx) / param.tol;
           fy = -0.5 * (epy - emy) / param.tol;
+          Factory.sleep(rpx);
+          Factory.sleep(rmx);
+          Factory.sleep(rpy);
+          Factory.sleep(rmy);
       }
-      return new Vec({
+      return Factory.spawn(Vec, {
         x: fx,
         y: fy
       });
@@ -971,14 +1054,22 @@
     Physics.verlet = function(element) {
       return function() {
         var f;
-        element.dr = new Vec(element.v).scale(element.dt).add(new Vec(element.f).scale(0.5 * element.dt * element.dt));
+        element.f.scale(0.5 * element.dt * element.dt);
+        element.dr.x = element.v.x;
+        element.dr.y = element.v.y;
+        element.dr.scale(element.dt).add(element.f);
         element.r.add(element.dr);
-        f = new Vec();
+        f = Factory.spawn(Vec, element.f);
+        element.f.x = 0;
+        element.f.y = 0;
         element.force_param.forEach(function(param) {
-          return f.add(Force["eval"](element, param));
+          var force;
+          force = Force["eval"](element, param);
+          element.f.add(force);
+          return Factory.sleep(force);
         });
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
-        element.f = f;
+        Factory.sleep(f);
       };
     };
 
@@ -987,6 +1078,7 @@
       if (cleanup == null) {
         cleanup = true;
       }
+      console.log(Factory.active);
       if (Physics.off) {
         return true;
       }
@@ -1034,13 +1126,14 @@
       if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
-      line = new Vec(d);
+      line = Factory.spawn(Vec, d);
       line.x = line.x / d.dist;
       line.y = line.y / d.dist;
       overstep = Math.max(d.dmin - d.dist, 0);
       shift = 0.5 * (Math.max(m.tol, n.tol) + overstep);
       Reaction.elastic_collision(m, n, line, shift);
       m.reaction(n);
+      Factory.sleep(line);
     };
 
     Reaction.circle_polygon = function(circle, polygon, d) {
@@ -1065,36 +1158,42 @@
       dot_a = mseg.n.dot(d);
       dot_b = nseg.n.dot(d);
       if (Math.abs(dot_a) > Math.abs(dot_b)) {
-        normal = new Vec(mseg.n).scale(dot_a / Math.abs(dot_a));
+        normal = Factory.spawn(Vec, mseg.n).scale(dot_a / Math.abs(dot_a));
         segj = nseg;
       } else {
-        normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b));
+        normal = Factory.spawn(Vec, nseg.n).scale(dot_b / Math.abs(dot_b));
         segj = mseg;
       }
       shift = 0.5 * Math.max(m.tol, n.tol);
       Reaction.elastic_collision(m, n, normal, shift);
       m.reaction(n);
+      Factory.sleep(normal);
     };
 
     Reaction.elastic_collision = function(m, n, line, shift) {
       var cPar, dPar, iter, lshift, maxiter, reaction, uPar, uPerp, vPar, vPerp;
-      lshift = new Vec(line).scale(shift);
+      lshift = Factory.spawn(Vec, line).scale(shift);
       maxiter = 32;
       iter = 1;
       reaction = false;
-      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
+      while (Collision.check(m, n, reaction) && iter <= maxiter) {
         m.r = m.r.add(lshift);
         n.r = n.r.subtract(lshift);
         iter++;
       }
       cPar = m.v.dot(line);
-      vPar = new Vec(line).scale(cPar);
-      vPerp = new Vec(m.v).subtract(vPar);
+      vPar = Factory.spawn(Vec, line).scale(cPar);
+      vPerp = Factory.spawn(Vec, m.v).subtract(vPar);
       dPar = n.v.dot(line);
-      uPar = new Vec(line).scale(dPar);
-      uPerp = new Vec(n.v).subtract(uPar);
+      uPar = Factory.spawn(Vec, line).scale(dPar);
+      uPerp = Factory.spawn(Vec, n.v).subtract(uPar);
       m.v = uPar.add(vPerp);
       n.v = vPar.add(uPerp);
+      Factory.sleep(lshift);
+      Factory.sleep(vPar);
+      Factory.sleep(vPerp);
+      Factory.sleep(uPar);
+      Factory.sleep(uPerp);
     };
 
     return Reaction;
@@ -1106,7 +1205,7 @@
     function ForceParam(config) {
       this.config = config != null ? config : {};
       this.type = this.config.type || 'constant';
-      switch (this.config.type) {
+      switch (this.type) {
         case 'constant':
           this.fx = this.config.x || 0;
           this.fy = this.config.y || 0;
@@ -1199,7 +1298,10 @@
     };
 
     Vec.prototype.dist_squared = function(v) {
-      return new Vec(this).subtract(v).length_squared();
+      var dx, dy;
+      dx = this.x - v.x;
+      dy = this.y - v.y;
+      return dx * dx + dy * dy;
     };
 
     Vec.prototype.dist = function(v) {
@@ -1768,10 +1870,7 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
         Gamescore.value = 0;
-        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-          Gameprez.start(_this.max_score_increment);
-        }
-        return d3.timer(_this.progress);
+        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
@@ -1957,16 +2056,22 @@
         return;
       }
       this.lastfire = timestamp;
-      bullet = new Bullet({
-        power: this.bullet_size * this.bullet_size
-      });
-      bullet.size = this.bullet_size;
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
-      bullet.r.x = this.r.x + x * (this.size / 3 + bullet.size);
-      bullet.r.y = this.r.y + y * 20;
-      bullet.v.x = this.bullet_speed * x;
-      bullet.v.y = this.bullet_speed * y;
+      bullet = Factory.spawn(Bullet, {
+        power: this.bullet_size * this.bullet_size,
+        size: this.bullet_size,
+        x: x,
+        y: y,
+        r: Factory.spawn(Vec, {
+          x: this.r.x + x * (this.size / 3 + this.bullet_size),
+          y: this.r.y + y * 20
+        }),
+        v: Factory.spawn(Vec, {
+          x: this.bullet_speed * x,
+          y: this.bullet_speed * y
+        })
+      });
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
     };

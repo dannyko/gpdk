@@ -39,7 +39,9 @@ class @Vec # two-dimensional vectors {x, y}
     @
 
   dist_squared: (v) ->
-    new Vec(@).subtract(v).length_squared()
+    dx = @x - v.x
+    dy = @y - v.y
+    dx * dx + dy * dy
     
   dist: (v) ->
     Math.sqrt(@dist_squared(v))
