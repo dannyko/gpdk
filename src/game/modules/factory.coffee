@@ -11,6 +11,7 @@ class @Factory # a module that keeps track of unused instances to reduce garbage
       @active[klass].push(new klass(config)) # only create a new object if no others are available (i.e. either uncreated or user did not user Factory to create them)
     else
       old = @inactive[klass].pop() # remove one of the inactive elements from the inactive list for re-use instead of creating a new object to reduce garbage collection
+      old.revive?() # trigger revive function
       for x of config # set the new configuration values for the object to prepare it for its new role
         old[x] = config[x] # set configuration value
       @active[klass].push(old) # push newly repurposed object onto active list
@@ -32,4 +33,4 @@ class @Factory # a module that keeps track of unused instances to reduce garbage
 	    else # the instance we want to remove is not the last element of the "active" array for this klass
 	      @active[instance.constructor][index] = @active[instance.constructor].pop() # remove last element of the array and swap it with the one we want to remove
 	    @inactive[instance.constructor].push(old) # push the newly inactive instance onto the corresponding inactive list for this class
-	  undefined
+	  null

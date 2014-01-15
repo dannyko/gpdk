@@ -32,22 +32,19 @@ class @Root extends Polygon
     return unless @collision # don't draw if not active
     return if @drawing
     @drawing = true
-    r1   = new Vec({x: xy[0], y: xy[1]})
+    r1   = Factory.spawn(Vec, {x: xy[0], y: xy[1]})
     step = 20 # steplength
-    dr   = new Vec(r1).subtract(@r)
+    dr   = Factory.spawn(Vec, r1).subtract(@r)
     Nstep = Math.floor(dr.length() / step)
     count = 1
     dr.normalize(step) # difference vector pointing towards destination
-    func = =>
-      done = false
+    redraw_func = =>
       if count > Nstep
-        done = true 
         @drawing = false
       else 
         @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
         count++
-      done
-    d3.timer(func)
+    redraw_func()
     return
  
   spin: =>
@@ -71,20 +68,25 @@ class @Root extends Polygon
     timestamp   = Utils.timestamp()
     return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
-    x = Math.cos(@angle - Math.PI * 0.5)
-    y = Math.sin(@angle - Math.PI * 0.5)
-    bullet      = Factory.spawn(Bullet, { # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
-      power: @bullet_size * @bullet_size
-      size:  @bullet_size
-      x:     x
-      y:     y
-      r:     Factory.spawn(Vec, {x: @r.x + x * (@size / 3 + @bullet_size), y: @r.y + y * 20})
-      v:     Factory.spawn(Vec, {x: @bullet_speed * x, y: @bullet_speed * y})
-    })
-    bullet.stroke(@bullet_stroke)
-    bullet.fill(@bullet_fill)
+    @shoot()
     return
   
+  shoot: ->
+    x = Math.cos(@angle - Math.PI * 0.5)
+    y = Math.sin(@angle - Math.PI * 0.5)
+    bullet = Factory.spawn(Bullet, { # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
+      power: @bullet_size * @bullet_size
+      size:  @bullet_size
+    })
+    bullet.r.x = @r.x + x * (@size / 3 + @bullet_size)
+    bullet.r.y = @r.y + y * 20
+    bullet.v.x = @bullet_speed * x
+    bullet.v.y = @bullet_speed * y
+    bullet.stroke(@bullet_stroke)
+    bullet.fill(@bullet_fill)
+    bullet
+
+
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
     @collision = false
     @bullet_stroke = ship.bullet_stroke
@@ -117,7 +119,11 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => @set_path() ; @collision = true ; d3.timer(@fire))
+      .each('end', () => 
+        @set_path()
+        @collision = true
+        Physics.callbacks.push(@fire)
+      )
       
   start: ->
     super

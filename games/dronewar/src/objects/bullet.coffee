@@ -5,7 +5,8 @@ class @Bullet extends Circle
     @power = @config.power || 1
     
   destroy_check: (n) -> # bullet handles score value updates 
-    return true if n.is_root # don't allow default reaction to occur (let root handle it)
+    if n.is_root # don't allow default reaction to occur (let root handle it)
+      return true 
     if n.is_bullet # i.e. bullet firing rate is too high relative to bullet size and velocity
       n.destroy() unless @is_destroyed # remove extra bullets
       return true

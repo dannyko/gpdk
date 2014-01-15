@@ -8,7 +8,7 @@ class @Dronewar extends Game
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 2
     @N        = @initialN
-    @root     = new Root() # root element i.e. under user control  
+    @root     = Factory.spawn(Root) # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
       .attr("fill", "white")
@@ -56,7 +56,7 @@ class @Dronewar extends Game
     multiplier = 10
     offset     = 50
     for i in [0..@N - 1] # create element list
-      newAttacker = new Drone({energy: Nlevel * multiplier + offset})
+      newAttacker = Factory.spawn(Drone, {energy: Nlevel * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
@@ -217,7 +217,7 @@ class @Dronewar extends Game
       @root.start()
       Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
-      # d3.timer(@progress) # leaktest
+      @progress() # leaktest
     )
     how = @g.append("text")
       .text("")
@@ -250,6 +250,7 @@ class @Dronewar extends Game
       @N++
       @charge *= 10
       @level()
+    requestAnimFrame(@progress)
     return
             
   reset: =>
@@ -260,7 +261,7 @@ class @Dronewar extends Game
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    @root = new Root()
+    @root = Factory.spawn(Root)
     Gamescore.lives = Gamescore.initialLives
     @start()
     return

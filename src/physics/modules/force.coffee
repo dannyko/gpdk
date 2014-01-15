@@ -1,6 +1,6 @@
 class @Force # this simple object does one job: return the value of the force f(x)
 
-  @eval: (element, param) -> 
+  @eval: (element, param, f) -> 
     switch param.type
       when 'constant'          then fx = param.fx ; fy = param.fy
       when 'friction'          then (
@@ -45,4 +45,6 @@ class @Force # this simple object does one job: return the value of the force f(
         Factory.sleep(rpy)
         Factory.sleep(rmy)
       )
-    Factory.spawn(Vec, {x: fx, y: fy})
+    f.x = fx
+    f.y = fy
+    f

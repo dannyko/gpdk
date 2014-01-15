@@ -1,6 +1,6 @@
 class @Element
   constructor: (@config = {}) ->      
-    @dt          = @config.dt          || 0.4 # controls animation smoothness relative to d3.timer queue update rate
+    @dt          = @config.dt          || 0.4 # controls displacement of Physics engine relative to the framerate
     @r           = @config.r           || Factory.spawn(Vec) # position vector (rx, ry)
     @dr          = @config.dr          || Factory.spawn(Vec) # displacement vector (dx, dy)
     @v           = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
@@ -59,32 +59,49 @@ class @Element
   offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > Game.width + @size or @r.y > Game.height + @size
 
   start: ->  
-    Collision.list.push(@) # add element to collision list by default
+    unless Collision.list.indexOf(@) > -1
+      Collision.list.push(@) # add element to collision list by default
     return
 
   stop: -> 
     index = Collision.list.indexOf(@)
-    Collision.list.splice(index, 1) if index > -1
+    if Collision.list.length > 1
+      swap  = Collision.list[index]
+      Collision.list[index] = Collision.list[Collision.list.length - 1]
+      Collision.list[Collision.list.length - 1] = swap
+    if index > -1
+      Collision.list.pop()
     return
 
   cleanup: (@_cleanup = @_cleanup) ->
     @destroy() if @_cleanup and @offscreen()
-    return
+    @is_destroyed
 
   destroy: (remove = false) -> 
     return if @is_destroyed # don't allow elements to be destroyed twice by default
     @stop() # decouple the element from the physics engine
     @is_destroyed = true # mark the element as destroyed
     @g.style('opacity', 0) # make the element invisible if it's in the current viewport
-    @g.remove() if remove # only remove the corresponding DOM element if specifically asked to via an input argument
-    Factory.sleep(@r)
-    Factory.sleep(@dr)
-    Factory.sleep(@v)
-    Factory.sleep(@f)
-    Factory.sleep(@) # put this element on the inactive list for reuse
+    if remove # only remove the corresponding DOM element if specifically asked to via an input argument
+      @g.remove() 
+      @g = null
+    Factory.sleep(@) # put this element on the inactive list for later reuse
     return
-
+  
+  revive: ->
+    if @g is null
+      @g = d3.select("#game_g")
+        .append("g")
+        .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
+    @g.style('opacity', 1) # make the element invisible if it's in the current viewport
+    @is_destroyed = false # mark the element as destroyed
+    @r.x = undefined
+    @r.y = undefined
+    @v.x = 0
+    @v.y = 0
+    @start() # decouple the element from the physics engine
+    @
+    
   update: -> # helper to combine these three operations into one loop for efficiency    
     @tick()
     @draw()
-    @cleanup()

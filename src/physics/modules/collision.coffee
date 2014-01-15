@@ -10,6 +10,7 @@ class @Collision
       data = @list.filter((d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
       @quadtree = d3.geom.quadtree(data)
       @lastquad = timestamp
+    @quadtree
 
   @quadtree = @update_quadtree() # initialize
 
@@ -149,7 +150,7 @@ class @Collision
     for i in [1..@path.length - 2]
       node = m.path[i]
       vec  = Factory.spawn(Vec, node).add(m.r).subtract(n.r)
-      d    = d.length_squared()
+      d    = vec.length_squared()
       Factory.sleep(vec)
       nn = m.path[i] if d < nnd
     m.path.indexOf(nn) # node of polygon m closest to the other element n's center
@@ -175,13 +176,14 @@ class @Collision
       tr   = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r)
       dr   = Factory.spawn(Vec, circle.r).subtract(tr)
       Factory.sleep(tr)
-    d  = # literal definiton of the output object
+    d  = Factory.spawn(Vec, {
       t: t
       x: dr.x
       y: dr.y
       r: [r.x, r.y]
       rr: rr
       dist: dr.length()
+    })
     Factory.sleep(r)
     Factory.sleep(dr)
     return d
@@ -198,7 +200,12 @@ class @Collision
     B2  = si.x - sj.x
     C2  = A2 * (si.x + n.r.x) + B2 * (si.y + n.r.y)
     det = A1 * B2 - A2 * B1
-    return false if det == 0 # lines are parallel
+    if det == 0 # lines are parallel
+      Factory.sleep(ri)
+      Factory.sleep(rj)
+      Factory.sleep(si)
+      Factory.sleep(sj)    
+      return false 
     x = (B2 * C1 - B1 * C2) / det
     y = (A1 * C2 - A2 * C1) / det
     check1 = Math.min(ri.x, rj.x) - m.tol <= x - m.r.x <= Math.max(ri.x, rj.x) + m.tol

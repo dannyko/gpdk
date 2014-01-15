@@ -87,6 +87,6 @@ class @Drone extends Circle
     scale = .8
     if dr2 > Game.height * Game.height * 0.25 * scale * scale
       scale = .01
-      f  =  Force.eval(@, @force_param[0])
-      @v.add(f.normalize(@max_speed * scale))
+      Force.eval(@, @force_param[0], @f)
+      @v.add(@f.normalize(@max_speed * scale))
     return false

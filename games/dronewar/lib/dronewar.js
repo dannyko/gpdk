@@ -25,6 +25,9 @@
         this.active[klass].push(new klass(config));
       } else {
         old = this.inactive[klass].pop();
+        if (typeof old.revive === "function") {
+          old.revive();
+        }
         for (x in config) {
           old[x] = config[x];
         }
@@ -56,7 +59,7 @@
       }
     };
 
-    void 0;
+    null;
 
     return Factory;
 
@@ -117,7 +120,7 @@
     };
 
     Utils.timestamp = function() {
-      return Date.now();
+      return (new Date()).getTime() - Date.UTC(1970, 0, 1);
     };
 
     Utils.angle = function(a) {
@@ -291,14 +294,21 @@
     };
 
     Element.prototype.start = function() {
-      Collision.list.push(this);
+      if (!(Collision.list.indexOf(this) > -1)) {
+        Collision.list.push(this);
+      }
     };
 
     Element.prototype.stop = function() {
-      var index;
+      var index, swap;
       index = Collision.list.indexOf(this);
+      if (Collision.list.length > 1) {
+        swap = Collision.list[index];
+        Collision.list[index] = Collision.list[Collision.list.length - 1];
+        Collision.list[Collision.list.length - 1] = swap;
+      }
       if (index > -1) {
-        Collision.list.splice(index, 1);
+        Collision.list.pop();
       }
     };
 
@@ -307,6 +317,7 @@
       if (this._cleanup && this.offscreen()) {
         this.destroy();
       }
+      return this.is_destroyed;
     };
 
     Element.prototype.destroy = function(remove) {
@@ -321,18 +332,28 @@
       this.g.style('opacity', 0);
       if (remove) {
         this.g.remove();
+        this.g = null;
       }
-      Factory.sleep(this.r);
-      Factory.sleep(this.dr);
-      Factory.sleep(this.v);
-      Factory.sleep(this.f);
       Factory.sleep(this);
+    };
+
+    Element.prototype.revive = function() {
+      if (this.g === null) {
+        this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
+      }
+      this.g.style('opacity', 1);
+      this.is_destroyed = false;
+      this.r.x = void 0;
+      this.r.y = void 0;
+      this.v.x = 0;
+      this.v.y = 0;
+      this.start();
+      return this;
     };
 
     Element.prototype.update = function() {
       this.tick();
-      this.draw();
-      return this.cleanup();
+      return this.draw();
     };
 
     return Element;
@@ -652,8 +673,9 @@
           };
         });
         this.quadtree = d3.geom.quadtree(data);
-        return this.lastquad = timestamp;
+        this.lastquad = timestamp;
       }
+      return this.quadtree;
     };
 
     Collision.quadtree = Collision.update_quadtree();
@@ -854,7 +876,7 @@
       for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         node = m.path[i];
         vec = Factory.spawn(Vec, node).add(m.r).subtract(n.r);
-        d = d.length_squared();
+        d = vec.length_squared();
         Factory.sleep(vec);
         if (d < nnd) {
           nn = m.path[i];
@@ -889,14 +911,14 @@
         dr = Factory.spawn(Vec, circle.r).subtract(tr);
         Factory.sleep(tr);
       }
-      d = {
+      d = Factory.spawn(Vec, {
         t: t,
         x: dr.x,
         y: dr.y,
         r: [r.x, r.y],
         rr: rr,
         dist: dr.length()
-      };
+      });
       Factory.sleep(r);
       Factory.sleep(dr);
       return d;
@@ -916,6 +938,10 @@
       C2 = A2 * (si.x + n.r.x) + B2 * (si.y + n.r.y);
       det = A1 * B2 - A2 * B1;
       if (det === 0) {
+        Factory.sleep(ri);
+        Factory.sleep(rj);
+        Factory.sleep(si);
+        Factory.sleep(sj);
         return false;
       }
       x = (B2 * C1 - B1 * C2) / det;
@@ -953,7 +979,7 @@
 
     function Force() {}
 
-    Force["eval"] = function(element, param) {
+    Force["eval"] = function(element, param, f) {
       var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
       switch (param.type) {
         case 'constant':
@@ -1029,10 +1055,9 @@
           Factory.sleep(rpy);
           Factory.sleep(rmy);
       }
-      return Factory.spawn(Vec, {
-        x: fx,
-        y: fy
-      });
+      f.x = fx;
+      f.y = fy;
+      return f;
     };
 
     return Force;
@@ -1043,58 +1068,62 @@
 
     function Physics() {}
 
-    Physics.off = false;
+    Physics.tick = 1000 / 60;
 
-    Physics.tick = 1000 / 80;
+    Physics.off = false;
 
     Physics.timestamp = Utils.timestamp();
 
     Physics.game = null;
 
+    Physics.callbacks = [];
+
+    window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
+      return window.setTimeout(callback, this.tick);
+    };
+
     Physics.verlet = function(element) {
       return function() {
-        var f;
+        var f, force;
         element.f.scale(0.5 * element.dt * element.dt);
         element.dr.x = element.v.x;
         element.dr.y = element.v.y;
         element.dr.scale(element.dt).add(element.f);
         element.r.add(element.dr);
+        if (element.cleanup()) {
+          return;
+        }
         f = Factory.spawn(Vec, element.f);
         element.f.x = 0;
         element.f.y = 0;
+        force = Factory.spawn(Vec);
         element.force_param.forEach(function(param) {
-          var force;
-          force = Force["eval"](element, param);
-          element.f.add(force);
-          return Factory.sleep(force);
+          Force["eval"](element, param, force);
+          return element.f.add(force);
         });
+        Factory.sleep(force);
         element.v.add(f.add(element.f).scale(0.5 * element.dt));
         Factory.sleep(f);
       };
     };
 
     Physics.integrate = function(cleanup) {
-      var len, timestamp, _ref;
+      var len;
       if (cleanup == null) {
         cleanup = true;
       }
-      console.log(Factory.active);
       if (Physics.off) {
         return true;
       }
-      timestamp = Utils.timestamp();
-      if (timestamp - Physics.timestamp < Physics.tick) {
-        return;
-      }
-      Physics.timestamp = timestamp;
+      requestAnimFrame(Physics.integrate);
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update();
       }
       Collision.detect();
-      if ((_ref = Physics.game) != null) {
-        _ref.update_window();
-      }
+      return Physics.callbacks.forEach(function(d) {
+        return d();
+      });
     };
 
     Physics.start = function(game, delay) {
@@ -1106,16 +1135,17 @@
       }
       this.game = game;
       this.off = false;
-      d3.timer(this.integrate, delay);
+      this.integrate();
     };
 
     Physics.stop = function() {
+      this.callbacks = [];
       this.off = true;
     };
 
     return Physics;
 
-  }).call(this);
+  })();
 
   this.Reaction = (function() {
 
@@ -1271,7 +1301,8 @@
       var c, s, _ref;
       c = Math.cos(a);
       s = Math.sin(a);
-      return _ref = [c * this.x - s * this.y, this.y = s * this.x + c * this.y], this.x = _ref[0], this.y = _ref[1], _ref;
+      _ref = [c * this.x - s * this.y, s * this.x + c * this.y], this.x = _ref[0], this.y = _ref[1];
+      return this;
     };
 
     Vec.prototype.dot = function(v) {
@@ -1662,15 +1693,15 @@
     };
 
     Drone.prototype.offscreen = function() {
-      var dr2, dx, dy, f, scale;
+      var dr2, dx, dy, scale;
       dx = this.r.x - Game.width * 0.5;
       dy = this.r.y - Game.height * 0.5;
       dr2 = dx * dx + dy * dy;
       scale = .8;
       if (dr2 > Game.height * Game.height * 0.25 * scale * scale) {
         scale = .01;
-        f = Force["eval"](this, this.force_param[0]);
-        this.v.add(f.normalize(this.max_speed * scale));
+        Force["eval"](this, this.force_param[0], this.f);
+        this.v.add(this.f.normalize(this.max_speed * scale));
       }
       return false;
     };
@@ -1702,7 +1733,7 @@
       this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 2;
       this.N = this.initialN;
-      this.root = new Root();
+      this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
       this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial bold');
@@ -1735,7 +1766,7 @@
       multiplier = 10;
       offset = 50;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        newAttacker = new Drone({
+        newAttacker = Factory.spawn(Drone, {
           energy: Nlevel * multiplier + offset
         });
         this.element.push(newAttacker);
@@ -1870,7 +1901,10 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
         Gamescore.value = 0;
-        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.start(_this.max_score_increment);
+        }
+        return _this.progress();
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
@@ -1899,6 +1933,7 @@
         this.charge *= 10;
         this.level();
       }
+      requestAnimFrame(this.progress);
     };
 
     Dronewar.prototype.reset = function() {
@@ -1909,7 +1944,7 @@
       this.leveltxt.text("");
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
-      this.root = new Root();
+      this.root = Factory.spawn(Root);
       Gamescore.lives = Gamescore.initialLives;
       this.start();
     };
@@ -1986,7 +2021,7 @@
     };
 
     Root.prototype.redraw_interp = function(xy) {
-      var Nstep, count, dr, func, r1, step,
+      var Nstep, count, dr, r1, redraw_func, step,
         _this = this;
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
@@ -1998,30 +2033,27 @@
         return;
       }
       this.drawing = true;
-      r1 = new Vec({
+      r1 = Factory.spawn(Vec, {
         x: xy[0],
         y: xy[1]
       });
       step = 20;
-      dr = new Vec(r1).subtract(this.r);
+      dr = Factory.spawn(Vec, r1).subtract(this.r);
       Nstep = Math.floor(dr.length() / step);
       count = 1;
       dr.normalize(step);
-      func = function() {
-        var done;
-        done = false;
+      redraw_func = function() {
         if (count > Nstep) {
-          done = true;
-          _this.drawing = false;
+          return _this.drawing = false;
         } else {
           if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
             _this.r.add(dr);
           }
           count++;
+          return requestAnimFrame(redraw_func);
         }
-        return done;
       };
-      d3.timer(func);
+      redraw_func();
     };
 
     Root.prototype.spin = function() {
@@ -2047,7 +2079,7 @@
     };
 
     Root.prototype.fire = function() {
-      var bullet, timestamp, x, y;
+      var timestamp;
       if (this.is_destroyed) {
         return true;
       }
@@ -2056,24 +2088,24 @@
         return;
       }
       this.lastfire = timestamp;
+      this.shoot();
+    };
+
+    Root.prototype.shoot = function() {
+      var bullet, x, y;
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
       bullet = Factory.spawn(Bullet, {
         power: this.bullet_size * this.bullet_size,
-        size: this.bullet_size,
-        x: x,
-        y: y,
-        r: Factory.spawn(Vec, {
-          x: this.r.x + x * (this.size / 3 + this.bullet_size),
-          y: this.r.y + y * 20
-        }),
-        v: Factory.spawn(Vec, {
-          x: this.bullet_speed * x,
-          y: this.bullet_speed * y
-        })
+        size: this.bullet_size
       });
+      bullet.r.x = this.r.x + x * (this.size / 3 + this.bullet_size);
+      bullet.r.y = this.r.y + y * 20;
+      bullet.v.x = this.bullet_speed * x;
+      bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
+      return bullet;
     };
 
     Root.prototype.ship = function(ship, dur) {
@@ -2099,7 +2131,7 @@
       return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {
         _this.set_path();
         _this.collision = true;
-        return d3.timer(_this.fire);
+        return Physics.callbacks.push(_this.fire);
       });
     };
 
