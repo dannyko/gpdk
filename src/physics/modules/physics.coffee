@@ -42,7 +42,16 @@ class @Physics # numerical integration module for solving differential equations
     len = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
     Collision.list[len].update() while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
-    Physics.callbacks.forEach((d) -> d())
+    len = Physics.callbacks.length 
+    while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      break if Physics.callbacks.length == 0
+      bool = Physics.callbacks[len]()
+      if bool # returning a value of true means we can remove this callback
+        if len < Physics.callbacks.length - 1 # reorder to put element to remove at the end
+          swap = Physics.callbacks[Physics.callbacks.length - 1]
+          Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[len]
+          Physics.callbacks[len] = swap
+        Physics.callbacks.pop()
     # Physics.game?.update_window() # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
   
   @start: (game = undefined, delay = 0) -> 

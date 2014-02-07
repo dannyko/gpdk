@@ -58,9 +58,13 @@ class @Game
 	    .style('height', '')
     @update_window(force = true)
 
-  start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
+  start: -> 
+    Physics.start(@) # start all elements and associate physics engine with this game instance
+    return
     
-  stop: -> Physics.stop() # stop all elements
+  stop: -> 
+    Physics.stop() 
+    return # stop all elements
 
   end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
     if Gameprez?
@@ -75,4 +79,4 @@ class @Game
       element = Collision.list.pop()
       sound = false # no sound for cleanup
       element.destroy(sound)
-      element = null
+    return

@@ -2,17 +2,22 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
+    @init()
+
+  init: ->
     @r.x           = Game.width / 2
     @r.y           = Game.height - 180
+    @angle         = 0
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
     @lastfire      = Utils.timestamp()
-    @charge        = 5e4
+    @charge        = 5e4 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
     @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick    = -> return
     @drawing = false
+    @
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
@@ -41,10 +46,12 @@ class @Root extends Polygon
     redraw_func = =>
       if count > Nstep
         @drawing = false
+        return true
       else 
         @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
         count++
-    redraw_func()
+        return false
+    Physics.callbacks.push(redraw_func)
     return
  
   spin: =>

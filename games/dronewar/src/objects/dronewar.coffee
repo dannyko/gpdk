@@ -6,7 +6,7 @@ class @Dronewar extends Game
     super
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 2
+    @initialN = @config.initialN || 1
     @N        = @initialN
     @root     = Factory.spawn(Root) # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
@@ -52,11 +52,11 @@ class @Dronewar extends Game
   level: ->
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
-    Nlevel = (@N - @initialN + 1)
     multiplier = 10
     offset     = 50
-    for i in [0..@N - 1] # create element list
-      newAttacker = Factory.spawn(Drone, {energy: Nlevel * multiplier + offset})
+    for i in [0...@N - 1] # create element list
+      newAttacker = Factory.spawn(Drone, {energy: @N * multiplier + offset})
+      console.log('Dronewar:', newAttacker, newAttacker.g.style('opacity'))
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
@@ -217,7 +217,7 @@ class @Dronewar extends Game
       @root.start()
       Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
-      @progress() # leaktest
+      Physics.callbacks.push(@progress)
     )
     how = @g.append("text")
       .text("")
@@ -237,7 +237,7 @@ class @Dronewar extends Game
   progress: =>  # timer callback to monitor game progress
     @update_drone()
     @scoretxt.text('SCORE: ' + Gamescore.value)
-    @leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
+    @leveltxt.text('LEVEL: ' + (@N - @initialN))
     if Gamescore.lives >= 0
       @lives.text('LIVES: ' + Gamescore.lives) 
     else 
@@ -248,20 +248,18 @@ class @Dronewar extends Game
     all_is_destroyed = @element.every (element) -> element.is_destroyed
     if all_is_destroyed # i.e. went offscreen or hit by bullet
       @N++
-      @charge *= 10
+      @charge *= 20
       @level()
-    requestAnimFrame(@progress)
     return
             
   reset: =>
     @cleanup()
-    @g.selectAll("g").remove()
     @lives.text("")
     @scoretxt.text("")
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    @root = Factory.spawn(Root)
+    @root = Factory.spawn(Root).init()
     Gamescore.lives = Gamescore.initialLives
     @start()
     return

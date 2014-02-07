@@ -45,25 +45,31 @@ class @Drone extends Circle
   depleted: ->
     if @energy <= 0 then true else false
 
-  destroy: (sound = true, remove = false) ->
-    super(remove)
-    dur = 500
-    @g.append('circle')
-      .attr("r", @size * .9)
-      .attr("x", 0)
-      .attr("y", 0)
-      .style('fill', '#800')
-      .style('opacity', .7)
-      .transition()
-      .duration(dur)
-      .attr('transform', 'scale(5)')
-      .remove()
-    @g.attr("class", "")
-     .transition()
-     .duration(dur)
-     .style("opacity", "0")
-     .remove()
-    Game.sound.play('boom') if sound
+  destroy: (effects = true) ->
+    if effects
+      @stop()
+      dur = 500
+      @g.append('circle')
+        .attr("r", @size * .9)
+        .attr("x", 0)
+        .attr("y", 0)
+        .style('fill', '#800')
+        .style('opacity', .7)
+        .transition()
+        .duration(dur)
+        .attr('transform', 'scale(5)')
+        .remove()
+      @g.transition()
+       .duration(dur)
+       .style("opacity", "0")
+       .each('end', =>
+          @g.selectAll('circle').remove()
+          super()
+        )
+      Game.sound.play('boom') if sound
+    else
+      super()
+
 
     # @g.attr("class", "")
     #  .style('opacity', '0.3')

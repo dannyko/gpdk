@@ -65,11 +65,11 @@ class @Element
 
   stop: -> 
     index = Collision.list.indexOf(@)
-    if Collision.list.length > 1
-      swap  = Collision.list[index]
-      Collision.list[index] = Collision.list[Collision.list.length - 1]
-      Collision.list[Collision.list.length - 1] = swap
     if index > -1
+      if Collision.list.length > 1
+        swap  = Collision.list[index]
+        Collision.list[index] = Collision.list[Collision.list.length - 1]
+        Collision.list[Collision.list.length - 1] = swap
       Collision.list.pop()
     return
 

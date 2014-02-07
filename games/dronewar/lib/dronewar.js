@@ -302,12 +302,12 @@
     Element.prototype.stop = function() {
       var index, swap;
       index = Collision.list.indexOf(this);
-      if (Collision.list.length > 1) {
-        swap = Collision.list[index];
-        Collision.list[index] = Collision.list[Collision.list.length - 1];
-        Collision.list[Collision.list.length - 1] = swap;
-      }
       if (index > -1) {
+        if (Collision.list.length > 1) {
+          swap = Collision.list[index];
+          Collision.list[index] = Collision.list[Collision.list.length - 1];
+          Collision.list[Collision.list.length - 1] = swap;
+        }
         Collision.list.pop();
       }
     };
@@ -452,11 +452,11 @@
     }
 
     Game.prototype.start = function() {
-      return Physics.start(this);
+      Physics.start(this);
     };
 
     Game.prototype.stop = function() {
-      return Physics.stop();
+      Physics.stop();
     };
 
     Game.prototype.end = function(callback) {
@@ -472,16 +472,13 @@
     };
 
     Game.prototype.cleanup = function() {
-      var element, len, sound, _results;
+      var element, len, sound;
       len = Collision.list.length;
-      _results = [];
       while (len--) {
         element = Collision.list.pop();
         sound = false;
         element.destroy(sound);
-        _results.push(element = null);
       }
-      return _results;
     };
 
     return Game;
@@ -1108,7 +1105,7 @@
     };
 
     Physics.integrate = function(cleanup) {
-      var len;
+      var bool, len, swap, _results;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -1121,9 +1118,25 @@
         Collision.list[len].update();
       }
       Collision.detect();
-      return Physics.callbacks.forEach(function(d) {
-        return d();
-      });
+      len = Physics.callbacks.length;
+      _results = [];
+      while (len--) {
+        if (Physics.callbacks.length === 0) {
+          break;
+        }
+        bool = Physics.callbacks[len]();
+        if (bool) {
+          if (len < Physics.callbacks.length - 1) {
+            swap = Physics.callbacks[Physics.callbacks.length - 1];
+            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[len];
+            Physics.callbacks[len] = swap;
+          }
+          _results.push(Physics.callbacks.pop());
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
     };
 
     Physics.start = function(game, delay) {
@@ -1667,20 +1680,25 @@
       }
     };
 
-    Drone.prototype.destroy = function(sound, remove) {
-      var dur;
-      if (sound == null) {
-        sound = true;
+    Drone.prototype.destroy = function(effects) {
+      var dur,
+        _this = this;
+      if (effects == null) {
+        effects = true;
       }
-      if (remove == null) {
-        remove = false;
-      }
-      Drone.__super__.destroy.call(this, remove);
-      dur = 500;
-      this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
-      this.g.attr("class", "").transition().duration(dur).style("opacity", "0").remove();
-      if (sound) {
-        return Game.sound.play('boom');
+      if (effects) {
+        this.stop();
+        dur = 500;
+        this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
+        this.g.transition().duration(dur).style("opacity", "0").each('end', function() {
+          _this.g.selectAll('circle').remove();
+          return Drone.__super__.destroy.call(_this);
+        });
+        if (sound) {
+          return Game.sound.play('boom');
+        }
+      } else {
+        return Drone.__super__.destroy.call(this);
       }
     };
 
@@ -1731,7 +1749,7 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 2;
+      this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
@@ -1758,17 +1776,17 @@
     }
 
     Dronewar.prototype.level = function() {
-      var Nlevel, dur, i, multiplier, n, newAttacker, offset, _i, _ref,
+      var dur, i, multiplier, n, newAttacker, offset, _i, _ref,
         _this = this;
       this.svg.style("cursor", "none");
       this.element = [];
-      Nlevel = this.N - this.initialN + 1;
       multiplier = 10;
       offset = 50;
-      for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+      for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = Factory.spawn(Drone, {
-          energy: Nlevel * multiplier + offset
+          energy: this.N * multiplier + offset
         });
+        console.log('Dronewar:', newAttacker, newAttacker.g.style('opacity'));
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
         this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
@@ -1904,7 +1922,7 @@
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.start(_this.max_score_increment);
         }
-        return _this.progress();
+        return Physics.callbacks.push(_this.progress);
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
@@ -1916,7 +1934,7 @@
       var all_is_destroyed, dur;
       this.update_drone();
       this.scoretxt.text('SCORE: ' + Gamescore.value);
-      this.leveltxt.text('LEVEL: ' + (this.N - this.initialN + 1));
+      this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
       if (Gamescore.lives >= 0) {
         this.lives.text('LIVES: ' + Gamescore.lives);
       } else {
@@ -1930,21 +1948,19 @@
       });
       if (all_is_destroyed) {
         this.N++;
-        this.charge *= 10;
+        this.charge *= 20;
         this.level();
       }
-      requestAnimFrame(this.progress);
     };
 
     Dronewar.prototype.reset = function() {
       this.cleanup();
-      this.g.selectAll("g").remove();
       this.lives.text("");
       this.scoretxt.text("");
       this.leveltxt.text("");
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
-      this.root = Factory.spawn(Root);
+      this.root = Factory.spawn(Root).init();
       Gamescore.lives = Gamescore.initialLives;
       this.start();
     };
@@ -1985,8 +2001,13 @@
       };
       Root.__super__.constructor.call(this, this.config);
       this.is_root = true;
+      this.init();
+    }
+
+    Root.prototype.init = function() {
       this.r.x = Game.width / 2;
       this.r.y = Game.height - 180;
+      this.angle = 0;
       this.angleStep = 2 * Math.PI / 60;
       this.lastfire = Utils.timestamp();
       this.charge = 5e4;
@@ -1996,7 +2017,8 @@
       this.ship();
       this.tick = function() {};
       this.drawing = false;
-    }
+      return this;
+    };
 
     Root.prototype.redraw = function(xy) {
       var maxJump;
@@ -2044,16 +2066,17 @@
       dr.normalize(step);
       redraw_func = function() {
         if (count > Nstep) {
-          return _this.drawing = false;
+          _this.drawing = false;
+          return true;
         } else {
           if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
             _this.r.add(dr);
           }
           count++;
-          return requestAnimFrame(redraw_func);
+          return false;
         }
       };
-      redraw_func();
+      Physics.callbacks.push(redraw_func);
     };
 
     Root.prototype.spin = function() {
