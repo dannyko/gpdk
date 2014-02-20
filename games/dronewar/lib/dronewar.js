@@ -120,7 +120,7 @@
     };
 
     Utils.timestamp = function() {
-      return (new Date()).getTime() - Date.UTC(1970, 0, 1);
+      return Date.now();
     };
 
     Utils.angle = function(a) {
@@ -256,7 +256,7 @@
       this.svg = this.config.svg || d3.select("#game_svg");
       this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
-      this.tick = this.config.tick || Physics.verlet(this);
+      this.tick = this.config.tick || Physics.verlet;
       this.is_destroyed = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
@@ -351,8 +351,8 @@
       return this;
     };
 
-    Element.prototype.update = function() {
-      this.tick();
+    Element.prototype.update = function(fps) {
+      this.tick(this, fps);
       return this.draw();
     };
 
@@ -1065,61 +1065,68 @@
 
     function Physics() {}
 
-    Physics.tick = 1000 / 60;
+    Physics.fps = 60;
+
+    Physics.tick = 1000 / Physics.fps;
 
     Physics.off = false;
 
-    Physics.timestamp = Utils.timestamp();
+    Physics.timestamp = 0;
 
     Physics.game = null;
 
     Physics.callbacks = [];
 
+    Physics.debug = false;
+
     window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
       return window.setTimeout(callback, this.tick);
     };
 
-    Physics.verlet = function(element) {
-      return function() {
-        var f, force;
-        element.f.scale(0.5 * element.dt * element.dt);
-        element.dr.x = element.v.x;
-        element.dr.y = element.v.y;
-        element.dr.scale(element.dt).add(element.f);
-        element.r.add(element.dr);
-        if (element.cleanup()) {
-          return;
-        }
-        f = Factory.spawn(Vec, element.f);
-        element.f.x = 0;
-        element.f.y = 0;
-        force = Factory.spawn(Vec);
-        element.force_param.forEach(function(param) {
-          Force["eval"](element, param, force);
-          return element.f.add(force);
-        });
-        Factory.sleep(force);
-        element.v.add(f.add(element.f).scale(0.5 * element.dt));
-        Factory.sleep(f);
-      };
+    Physics.verlet = function(element, fps) {
+      var dt, f, force, maxScale, minScale, scale;
+      maxScale = 10;
+      minScale = 1 / maxScale;
+      scale = Math.max(minScale, Math.min(Physics.fps / fps, maxScale));
+      dt = element.dt * scale;
+      element.f.scale(0.5 * dt * dt);
+      element.dr.x = element.v.x;
+      element.dr.y = element.v.y;
+      element.dr.scale(dt).add(element.f);
+      element.r.add(element.dr);
+      if (element.cleanup()) {
+        return;
+      }
+      f = Factory.spawn(Vec, element.f);
+      element.f.x = 0;
+      element.f.y = 0;
+      force = Factory.spawn(Vec);
+      element.force_param.forEach(function(param) {
+        Force["eval"](element, param, force);
+        return element.f.add(force);
+      });
+      Factory.sleep(force);
+      element.v.add(f.add(element.f).scale(0.5 * dt));
+      Factory.sleep(f);
     };
 
-    Physics.integrate = function(cleanup) {
-      var bool, len, swap, _results;
-      if (cleanup == null) {
-        cleanup = true;
-      }
+    Physics.integrate = function(t) {
+      var bool, dt, fps, len, swap;
       if (Physics.off) {
         return true;
       }
-      requestAnimFrame(Physics.integrate);
+      dt = Physics.timestamp > 0 ? t - Physics.timestamp : Physics.tick;
+      Physics.timestamp = t;
+      fps = 1000 / dt;
+      if (Physics.debug) {
+        console.log('fps: ' + fps);
+      }
       len = Collision.list.length;
       while (len--) {
-        Collision.list[len].update();
+        Collision.list[len].update(fps);
       }
       Collision.detect();
       len = Physics.callbacks.length;
-      _results = [];
       while (len--) {
         if (Physics.callbacks.length === 0) {
           break;
@@ -1131,12 +1138,9 @@
             Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[len];
             Physics.callbacks[len] = swap;
           }
-          _results.push(Physics.callbacks.pop());
-        } else {
-          _results.push(void 0);
+          Physics.callbacks.pop();
         }
       }
-      return _results;
     };
 
     Physics.start = function(game, delay) {
@@ -1148,7 +1152,7 @@
       }
       this.game = game;
       this.off = false;
-      this.integrate();
+      d3.timer(Physics.integrate);
     };
 
     Physics.stop = function() {
@@ -1694,7 +1698,7 @@
           _this.g.selectAll('circle').remove();
           return Drone.__super__.destroy.call(_this);
         });
-        if (sound) {
+        if (Game.sound) {
           return Game.sound.play('boom');
         }
       } else {

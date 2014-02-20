@@ -6,7 +6,7 @@ class @Element
     @v           = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
     @f           = @config.f           || Factory.spawn(Vec) # force vector (fx, fy)
     @n           = @config.n           || [] # array of references to neighbor elements that this element interacts with
-    @force_param = @config.force_param || [] # array of objects for computing net force vectors Force.eval(element, param) = Vec({x: fx, y: fy})
+    @force_param = @config.force_param || [] # array of objects for computing net force vectors 
     @size        = @config.size        || 0 # zero default size in units of pixels for abstract class
     @bb_width    = @config.bb_width    || 0 # bounding box width
     @bb_height   = @config.bb_height   || 0 # bounding box height
@@ -30,8 +30,9 @@ class @Element
     @svg         = @config.svg         || d3.select("#game_svg") # the container
     @game_g      = @config.game_g      || d3.select("#game_g") # the container's main group
     @quadtree    = @config.quadtree    || null
-    @tick        = @config.tick        || Physics.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
+    @tick        = @config.tick        || Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @is_destroyed= false
+    @is_sleeping = false
     @_cleanup    = true # call destroy() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
@@ -64,6 +65,7 @@ class @Element
     return
 
   stop: -> 
+    @is_sleeping = true
     index = Collision.list.indexOf(@)
     if index > -1
       if Collision.list.length > 1
@@ -77,31 +79,34 @@ class @Element
     @destroy() if @_cleanup and @offscreen()
     @is_destroyed
 
-  destroy: (remove = false) -> 
-    return if @is_destroyed # don't allow elements to be destroyed twice by default
+  sleep: ->
     @stop() # decouple the element from the physics engine
+    @g.style('opacity', 0) # make the element invisible if it's in the current viewport  
+    Factory.sleep(@)
+
+  destroy: (remove = false) -> # destroying with remove = false is the same as sleeping plus setting is_destroyed = true.
+    return if @is_destroyed # don't allow elements to be destroyed twice by default
+    @sleep()
     @is_destroyed = true # mark the element as destroyed
-    @g.style('opacity', 0) # make the element invisible if it's in the current viewport
     if remove # only remove the corresponding DOM element if specifically asked to via an input argument
-      @g.remove() 
+      @g.remove()
       @g = null
-    Factory.sleep(@) # put this element on the inactive list for later reuse
     return
   
-  revive: ->
+  wake: ->
     if @g is null
       @g = d3.select("#game_g")
         .append("g")
         .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
     @g.style('opacity', 1) # make the element invisible if it's in the current viewport
     @is_destroyed = false # mark the element as destroyed
-    @r.x = undefined
-    @r.y = undefined
+    @r.x = 0
+    @r.y = 0
     @v.x = 0
     @v.y = 0
     @start() # decouple the element from the physics engine
     @
     
-  update: -> # helper to combine these three operations into one loop for efficiency    
-    @tick()
+  update: (fps) -> # helper to combine these three operations into one loop for efficiency    
+    @tick(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
     @draw()

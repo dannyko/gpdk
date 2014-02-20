@@ -66,7 +66,7 @@ class @Drone extends Circle
           @g.selectAll('circle').remove()
           super()
         )
-      Game.sound.play('boom') if sound
+      Game.sound.play('boom') if Game.sound
     else
       super()
 

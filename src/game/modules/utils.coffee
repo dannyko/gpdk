@@ -1,6 +1,6 @@
 class @Utils
   @clone: (obj) ->
-    return obj  if obj is null or typeof (obj) isnt "object"
+    return obj if obj is null or typeof (obj) isnt "object"
     temp = new obj.constructor()
     for key of obj
       temp[key] = Utils.clone(obj[key])
@@ -16,7 +16,8 @@ class @Utils
         obj        
 
   @timestamp = ->
-    (new Date()).getTime()-Date.UTC(1970,0,1) # Date.now() 
+    Date.now() # (new Date()).getTime()-Date.UTC(1970,0,1) 
+
 
   @angle     = (a) -> 2 * Math.PI * a / 360
 
