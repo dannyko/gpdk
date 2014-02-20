@@ -4,6 +4,10 @@ class @Root extends Polygon
     @is_root       = true
     @init()
 
+  wake: ->
+    super
+    @init()
+
   init: ->
     @r.x           = Game.width / 2
     @r.y           = Game.height - 180
@@ -40,12 +44,14 @@ class @Root extends Polygon
     r1   = Factory.spawn(Vec, {x: xy[0], y: xy[1]})
     step = 20 # steplength
     dr   = Factory.spawn(Vec, r1).subtract(@r)
+    Factory.sleep(r1)
     Nstep = Math.floor(dr.length() / step)
     count = 1
     dr.normalize(step) # difference vector pointing towards destination
     redraw_func = =>
       if count > Nstep
         @drawing = false
+        Factory.sleep(dr)
         return true
       else 
         @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height

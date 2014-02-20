@@ -5,7 +5,7 @@ class @Physics # numerical integration module for solving differential equations
   @timestamp: 0 # to keep track of integration frequency
   @game = null # initialize reference to game instance associated with the physics engine
   @callbacks = []
-  @debug = false
+  @debug = true
 
   window.requestAnimFrame =
     window.requestAnimationFrame       || 
@@ -44,7 +44,7 @@ class @Physics # numerical integration module for solving differential equations
     return true if Physics.off
     # requestAnimFrame(Physics.integrate) # keep running the loop
     dt = if Physics.timestamp > 0 then (t - Physics.timestamp) else Physics.tick
-    # return if 1.5 * dt < Physics.tick # prevent the animation from running too fast, and then messing up/getting janky
+    return if 1.75 * dt < Physics.tick # prevent the animation from running too fast, and then messing up/getting janky
     Physics.timestamp = t
     fps = 1000 / dt
     console.log('fps: ' + fps) if Physics.debug

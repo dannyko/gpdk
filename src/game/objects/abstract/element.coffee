@@ -81,8 +81,10 @@ class @Element
 
   sleep: ->
     @stop() # decouple the element from the physics engine
-    @g.style('opacity', 0) # make the element invisible if it's in the current viewport  
-    Factory.sleep(@)
+    @g.style('opacity', 0) # make the element invisible if it's in the current viewport
+    Factory.sleep(@) # push this element onto the inactive array
+    @is_sleeping = true
+    return
 
   destroy: (remove = false) -> # destroying with remove = false is the same as sleeping plus setting is_destroyed = true.
     return if @is_destroyed # don't allow elements to be destroyed twice by default
@@ -100,10 +102,13 @@ class @Element
         .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
     @g.style('opacity', 1) # make the element invisible if it's in the current viewport
     @is_destroyed = false # mark the element as destroyed
+    @is_sleeping  = false
     @r.x = 0
     @r.y = 0
     @v.x = 0
     @v.y = 0
+    @f.x = 0
+    @f.y = 0
     @start() # decouple the element from the physics engine
     @
     

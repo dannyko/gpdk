@@ -56,7 +56,6 @@ class @Dronewar extends Game
     offset     = 50
     for i in [0...@N - 1] # create element list
       newAttacker = Factory.spawn(Drone, {energy: @N * multiplier + offset})
-      console.log('Dronewar:', newAttacker, newAttacker.g.style('opacity'))
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
@@ -259,7 +258,7 @@ class @Dronewar extends Game
     @leveltxt.text("")
     @svg.style("cursor", "auto")
     @N = @initialN
-    @root = Factory.spawn(Root).init()
+    @root.wake() # reset the root element
     Gamescore.lives = Gamescore.initialLives
     @start()
     return
