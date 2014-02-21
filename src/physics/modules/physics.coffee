@@ -18,7 +18,7 @@ class @Physics # numerical integration module for solving differential equations
 
   @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
     maxScale = 10
-    minScale = 1 / maxScale 
+    minScale = 1
     scale    = Math.max(minScale, Math.min(Physics.fps / fps, maxScale)) ;
     dt       = element.dt * scale
     element.f.scale(0.5 * dt * dt)
