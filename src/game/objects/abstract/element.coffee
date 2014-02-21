@@ -65,7 +65,6 @@ class @Element
     return
 
   stop: -> 
-    @is_sleeping = true
     index = Collision.list.indexOf(@)
     if index > -1
       if Collision.list.length > 1
@@ -83,7 +82,6 @@ class @Element
     @stop() # decouple the element from the physics engine
     @g.style('opacity', 0) # make the element invisible if it's in the current viewport
     Factory.sleep(@) # push this element onto the inactive array
-    @is_sleeping = true
     return
 
   destroy: (remove = false) -> # destroying with remove = false is the same as sleeping plus setting is_destroyed = true.

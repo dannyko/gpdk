@@ -1,15 +1,11 @@
 class @Collision
   @use_bb   = false # don't use bounding box for all collisions and reactions by default
-  @lastquad = Utils.timestamp()
   @list     = [] # initialize list of elements
 
   @update_quadtree: (force_update = false) -> 
     return unless @list.length > 0
-    timestamp = Utils.timestamp()
-    if force_update or timestamp - @lastquad > @list.length or not @quadtree?
-      data = @list.filter((d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
-      @quadtree = d3.geom.quadtree(data)
-      @lastquad = timestamp
+    data = @list.filter((d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
+    @quadtree = d3.geom.quadtree(data)
     @quadtree
 
   @quadtree = @update_quadtree() # initialize
@@ -168,12 +164,13 @@ class @Collision
     rr = r.length_squared() 
     dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r)
     t  = r.dot(dr) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
-    Factory.sleep(dr)
     if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
     else if t > 1 # ditto with respect to other node j
+      Factory.sleep(dr)
       dr   = Factory.spawn(Vec, circle.r).subtract(rj).subtract(polygon.r)
     else # compute the distance from the point to the polygon
       tr   = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r)
+      Factory.sleep(dr)
       dr   = Factory.spawn(Vec, circle.r).subtract(tr)
       Factory.sleep(tr)
     d  = Factory.spawn(Vec, {

@@ -13,7 +13,7 @@ class @Root extends Polygon
     @r.y           = Game.height - 180
     @angle         = 0
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @lastfire      = Utils.timestamp()
+    @lastfire      = 0 # initialize timestamp
     @charge        = 5e4 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
@@ -76,11 +76,10 @@ class @Root extends Polygon
     @rotate_path()
     return
 
-  fire: =>
+  fire: (timestamp) =>
     return true if @is_destroyed
-    timestamp   = Utils.timestamp()
-    return unless @collision and timestamp - @lastfire >= @wait
-    @lastfire   = timestamp
+    return unless @collision and (timestamp - @lastfire) >= @wait
+    @lastfire = timestamp
     @shoot()
     return
   
@@ -97,7 +96,7 @@ class @Root extends Polygon
     bullet.v.y = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet
+    return
 
 
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween

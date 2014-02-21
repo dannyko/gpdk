@@ -1,5 +1,9 @@
 class @Force # this simple object does one job: return the value of the force f(x)
-
+  @dr  = {x: 0, y: 0}
+  @rpx = {x: 0, y: 0}
+  @rmx = {x: 0, y: 0}
+  @rpy = {x: 0, y: 0}
+  @rmy = {x: 0, y: 0}
   @eval: (element, param, f) -> 
     switch param.type
       when 'constant'          then fx = param.fx ; fy = param.fy
@@ -9,12 +13,12 @@ class @Force # this simple object does one job: return the value of the force f(
       )
       when 'spring'            then fx = -(element.r.x - param.cx) ; fy = -(element.r.y - param.cy)
       when 'charge', 'gravity' then (
-        dr = Factory.spawn(Vec, {x: param.cx - element.r.x, y: param.cy - element.r.y})
-        r2 = dr.length_squared()
+        @dr.x = param.cx - element.r.x
+        @dr.y = param.cy - element.r.y
+        r2 = @dr.x * @dr.x + @dr.y * @dr.y
         r3 = r2 * Math.sqrt(r2)
-        fx = param.q * dr.x / r3
-        fy = param.q * dr.y / r3
-        Factory.sleep(dr)
+        fx = param.q * @dr.x / r3
+        fy = param.q * @dr.y / r3
       )
       when 'random' then(
         fx = 2 * (Math.random() - 0.5) * param.xScale
@@ -25,10 +29,18 @@ class @Force # this simple object does one job: return the value of the force f(
         fy =  param.fyBound if element.r.y < 0 # enforce boundary
       )
       when 'gradient' then ( # evaluate the force as the negative gradient of a scalar potential energy function V(x, y)
-        rpx = Factory.spawn(Vec, element.r).add({x:  param.tol, y: 0}) # r + dx
-        rmx = Factory.spawn(Vec, element.r).add({x: -param.tol, y: 0}) # r - dx
-        rpy = Factory.spawn(Vec, element.r).add({y:  param.tol, x: 0}) # r + dy
-        rmy = Factory.spawn(Vec, element.r).add({y: -param.tol, x: 0}) # r - dy
+        rpx.x = element.r.x 
+        rpx.y = element.r.y
+        rpx.x += param.tol # r + dx
+        rmx.x = element.r.x 
+        rmx.y = element.r.y
+        rmx.x -= param.tol # r - dx
+        rpy.x = element.r.x
+        rpy.y = element.r.y 
+        rpy.y += param.tol # r + dy
+        rmy.x = element.r.x
+        rmy.y = element.r.y
+        rmy.y -= param.tol # r - dy
         epx = param.energy(rpx) # V(r + dx)
         emx = param.energy(rmx) # V(r - dx)
         epy = param.energy(rpy) # V(r + dy)
@@ -40,10 +52,6 @@ class @Force # this simple object does one job: return the value of the force f(
         # compute the numerical gradient using a centered finite-difference approximation:
         fx  = -0.5 * (epx - emx) / param.tol # fx = -dV / dx 
         fy  = -0.5 * (epy - emy) / param.tol # fy = -dV / dy
-        Factory.sleep(rpx)
-        Factory.sleep(rmx)
-        Factory.sleep(rpy)
-        Factory.sleep(rmy)
       )
     f.x = fx
     f.y = fy

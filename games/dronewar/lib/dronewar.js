@@ -20,6 +20,11 @@
         return new klass(config);
       } else {
         old = this.inactive[klass].pop();
+        if (old.is_sleeping === false) {
+          console.log('Factory.spawn: active instance found in inactive list!', old);
+          Factory.spawn(klass, config);
+          return;
+        }
         if (typeof old.wake === "function") {
           old.wake();
         }
@@ -31,11 +36,14 @@
     };
 
     Factory.sleep = function(instance) {
-      if (instance === void 0) {
-        console.log('Factory.sleep(): undefined input');
+      if (instance === void 0 || instance.is_sleeping) {
+        console.log('Factory.sleep(): undefined or sleeping input', instance);
         return;
       }
       this.inactive[instance.constructor].push(instance);
+      if (instance.is_sleeping !== void 0) {
+        instance.is_sleeping = true;
+      }
     };
 
     return Factory;
@@ -279,7 +287,6 @@
 
     Element.prototype.stop = function() {
       var index, swap;
-      this.is_sleeping = true;
       index = Collision.list.indexOf(this);
       if (index > -1) {
         if (Collision.list.length > 1) {
@@ -303,7 +310,6 @@
       this.stop();
       this.g.style('opacity', 0);
       Factory.sleep(this);
-      this.is_sleeping = true;
     };
 
     Element.prototype.destroy = function(remove) {
@@ -633,32 +639,26 @@
 
     Collision.use_bb = false;
 
-    Collision.lastquad = Utils.timestamp();
-
     Collision.list = [];
 
     Collision.update_quadtree = function(force_update) {
-      var data, timestamp;
+      var data;
       if (force_update == null) {
         force_update = false;
       }
       if (!(this.list.length > 0)) {
         return;
       }
-      timestamp = Utils.timestamp();
-      if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
-        data = this.list.filter(function(d) {
-          return d.collision;
-        }).map(function(d) {
-          return {
-            x: d.r.x,
-            y: d.r.y,
-            d: d
-          };
-        });
-        this.quadtree = d3.geom.quadtree(data);
-        this.lastquad = timestamp;
-      }
+      data = this.list.filter(function(d) {
+        return d.collision;
+      }).map(function(d) {
+        return {
+          x: d.r.x,
+          y: d.r.y,
+          d: d
+        };
+      });
+      this.quadtree = d3.geom.quadtree(data);
       return this.quadtree;
     };
 
@@ -885,13 +885,14 @@
       rr = r.length_squared();
       dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r);
       t = r.dot(dr) / rr;
-      Factory.sleep(dr);
       if (t < 0) {
 
       } else if (t > 1) {
+        Factory.sleep(dr);
         dr = Factory.spawn(Vec, circle.r).subtract(rj).subtract(polygon.r);
       } else {
         tr = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r);
+        Factory.sleep(dr);
         dr = Factory.spawn(Vec, circle.r).subtract(tr);
         Factory.sleep(tr);
       }
@@ -963,8 +964,33 @@
 
     function Force() {}
 
+    Force.dr = {
+      x: 0,
+      y: 0
+    };
+
+    Force.rpx = {
+      x: 0,
+      y: 0
+    };
+
+    Force.rmx = {
+      x: 0,
+      y: 0
+    };
+
+    Force.rpy = {
+      x: 0,
+      y: 0
+    };
+
+    Force.rmy = {
+      x: 0,
+      y: 0
+    };
+
     Force["eval"] = function(element, param, f) {
-      var dr, emx, emy, epx, epy, fx, fy, r2, r3, rmx, rmy, rpx, rpy;
+      var emx, emy, epx, epy, fx, fy, r2, r3;
       switch (param.type) {
         case 'constant':
           fx = param.fx;
@@ -980,15 +1006,12 @@
           break;
         case 'charge':
         case 'gravity':
-          dr = Factory.spawn(Vec, {
-            x: param.cx - element.r.x,
-            y: param.cy - element.r.y
-          });
-          r2 = dr.length_squared();
+          this.dr.x = param.cx - element.r.x;
+          this.dr.y = param.cy - element.r.y;
+          r2 = this.dr.x * this.dr.x + this.dr.y * this.dr.y;
           r3 = r2 * Math.sqrt(r2);
-          fx = param.q * dr.x / r3;
-          fy = param.q * dr.y / r3;
-          Factory.sleep(dr);
+          fx = param.q * this.dr.x / r3;
+          fy = param.q * this.dr.y / r3;
           break;
         case 'random':
           fx = 2 * (Math.random() - 0.5) * param.xScale;
@@ -1007,22 +1030,18 @@
           }
           break;
         case 'gradient':
-          rpx = Factory.spawn(Vec, element.r).add({
-            x: param.tol,
-            y: 0
-          });
-          rmx = Factory.spawn(Vec, element.r).add({
-            x: -param.tol,
-            y: 0
-          });
-          rpy = Factory.spawn(Vec, element.r).add({
-            y: param.tol,
-            x: 0
-          });
-          rmy = Factory.spawn(Vec, element.r).add({
-            y: -param.tol,
-            x: 0
-          });
+          rpx.x = element.r.x;
+          rpx.y = element.r.y;
+          rpx.x += param.tol;
+          rmx.x = element.r.x;
+          rmx.y = element.r.y;
+          rmx.x -= param.tol;
+          rpy.x = element.r.x;
+          rpy.y = element.r.y;
+          rpy.y += param.tol;
+          rmy.x = element.r.x;
+          rmy.y = element.r.y;
+          rmy.y -= param.tol;
           epx = param.energy(rpx);
           emx = param.energy(rmx);
           epy = param.energy(rpy);
@@ -1034,10 +1053,6 @@
           }
           fx = -0.5 * (epx - emx) / param.tol;
           fy = -0.5 * (epy - emy) / param.tol;
-          Factory.sleep(rpx);
-          Factory.sleep(rmx);
-          Factory.sleep(rpy);
-          Factory.sleep(rmy);
       }
       f.x = fx;
       f.y = fy;
@@ -1064,37 +1079,38 @@
 
     Physics.callbacks = [];
 
-    Physics.debug = true;
+    Physics.debug = false;
 
     window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
       return window.setTimeout(callback, this.tick);
     };
 
     Physics.verlet = function(element, fps) {
-      var dt, f, force, maxScale, minScale, scale;
-      maxScale = 10;
-      minScale = 1 / maxScale;
-      scale = Math.max(minScale, Math.min(Physics.fps / fps, maxScale));
-      dt = element.dt * scale;
-      element.f.scale(0.5 * dt * dt);
-      element.dr.x = element.v.x;
-      element.dr.y = element.v.y;
-      element.dr.scale(dt).add(element.f);
-      element.r.add(element.dr);
-      if (element.cleanup()) {
-        return;
+      var Nstep, f, force, step;
+      Nstep = Math.round(Physics.fps / fps);
+      step = 0;
+      while (step < Nstep) {
+        element.f.scale(0.5 * element.dt * element.dt);
+        element.dr.x = element.v.x;
+        element.dr.y = element.v.y;
+        element.dr.scale(element.dt).add(element.f);
+        element.r.add(element.dr);
+        if (element.cleanup()) {
+          return;
+        }
+        f = Factory.spawn(Vec, element.f);
+        element.f.x = 0;
+        element.f.y = 0;
+        force = Factory.spawn(Vec);
+        element.force_param.forEach(function(param) {
+          Force["eval"](element, param, force);
+          return element.f.add(force);
+        });
+        Factory.sleep(force);
+        element.v.add(f.add(element.f).scale(0.5 * element.dt));
+        Factory.sleep(f);
+        ++step;
       }
-      f = Factory.spawn(Vec, element.f);
-      element.f.x = 0;
-      element.f.y = 0;
-      force = Factory.spawn(Vec);
-      element.force_param.forEach(function(param) {
-        Force["eval"](element, param, force);
-        return element.f.add(force);
-      });
-      Factory.sleep(force);
-      element.v.add(f.add(element.f).scale(0.5 * dt));
-      Factory.sleep(f);
     };
 
     Physics.integrate = function(t) {
@@ -1121,7 +1137,7 @@
         if (Physics.callbacks.length === 0) {
           break;
         }
-        bool = Physics.callbacks[len]();
+        bool = Physics.callbacks[len](t);
         if (bool) {
           if (len < Physics.callbacks.length - 1) {
             swap = Physics.callbacks[Physics.callbacks.length - 1];
@@ -1644,7 +1660,7 @@
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
       this.max_speed = 12;
-      this.energy = this.config.energy || 1;
+      this.energy = this.config.energy || 10;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
@@ -1776,7 +1792,7 @@
       this.svg.style("cursor", "none");
       this.element = [];
       multiplier = 10;
-      offset = 50;
+      offset = 150;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = Factory.spawn(Drone, {
           energy: this.N * multiplier + offset
@@ -1972,7 +1988,7 @@
       this.config = config != null ? config : {
         size: 0
       };
-      this.fire = function() {
+      this.fire = function(timestamp) {
         return Root.prototype.fire.apply(_this, arguments);
       };
       this.dragspin = function() {
@@ -2008,7 +2024,7 @@
       this.r.y = Game.height - 180;
       this.angle = 0;
       this.angleStep = 2 * Math.PI / 60;
-      this.lastfire = Utils.timestamp();
+      this.lastfire = 0;
       this.charge = 5e4;
       this.stroke("none");
       this.fill("#000");
@@ -2102,13 +2118,11 @@
       this.rotate_path();
     };
 
-    Root.prototype.fire = function() {
-      var timestamp;
+    Root.prototype.fire = function(timestamp) {
       if (this.is_destroyed) {
         return true;
       }
-      timestamp = Utils.timestamp();
-      if (!(this.collision && timestamp - this.lastfire >= this.wait)) {
+      if (!(this.collision && (timestamp - this.lastfire) >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
@@ -2129,7 +2143,6 @@
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
-      return bullet;
     };
 
     Root.prototype.ship = function(ship, dur) {

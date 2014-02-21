@@ -53,7 +53,7 @@ class @Dronewar extends Game
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
     multiplier = 10
-    offset     = 50
+    offset     = 150
     for i in [0...@N - 1] # create element list
       newAttacker = Factory.spawn(Drone, {energy: @N * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game

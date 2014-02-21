@@ -5,7 +5,7 @@ class @Physics # numerical integration module for solving differential equations
   @timestamp: 0 # to keep track of integration frequency
   @game = null # initialize reference to game instance associated with the physics engine
   @callbacks = []
-  @debug = true
+  @debug = false
 
   window.requestAnimFrame =
     window.requestAnimationFrame       || 
@@ -17,26 +17,26 @@ class @Physics # numerical integration module for solving differential equations
       window.setTimeout(callback, @tick)
 
   @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
-    maxScale = 10
-    minScale = 1
-    scale    = Math.max(minScale, Math.min(Physics.fps / fps, maxScale)) ;
-    dt       = element.dt * scale
-    element.f.scale(0.5 * dt * dt)
-    element.dr.x = element.v.x # initialize displacement vector
-    element.dr.y = element.v.y # initialize displacement vector
-    element.dr.scale(dt).add(element.f) # store displacement vector
-    element.r.add(element.dr) # update position
-    return if element.cleanup() # don't setup for the next update if element is destroyed
-    f = Factory.spawn(Vec, element.f) # copy this object for temporary storage
-    element.f.x = 0 # initialize current force
-    element.f.y = 0 # initialize current force
-    force = Factory.spawn(Vec) # initialize temporary variable to store each force component's value
-    element.force_param.forEach (param) -> 
-      Force.eval(element, param, force) # assign force component to temporary force variable
-      element.f.add(force) # accumulate the forces acting on this element one at a time
-    Factory.sleep(force) # deactivate the temporary variable to conserve memory/reduce GC overhead
-    element.v.add(f.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
-    Factory.sleep(f)
+    Nstep = Math.round(Physics.fps / fps)
+    step  = 0
+    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
+      element.f.scale(0.5 * element.dt * element.dt)
+      element.dr.x = element.v.x # initialize displacement vector
+      element.dr.y = element.v.y # initialize displacement vector
+      element.dr.scale(element.dt).add(element.f) # store displacement vector
+      element.r.add(element.dr) # update position
+      return if element.cleanup() # don't setup for the next update if element is destroyed
+      f = Factory.spawn(Vec, element.f) # copy this object for temporary storage
+      element.f.x = 0 # initialize current force
+      element.f.y = 0 # initialize current force
+      force = Factory.spawn(Vec) # initialize temporary variable to store each force component's value
+      element.force_param.forEach (param) -> 
+        Force.eval(element, param, force) # assign force component to temporary force variable
+        element.f.add(force) # accumulate the forces acting on this element one at a time
+      Factory.sleep(force) # deactivate the temporary variable to conserve memory/reduce GC overhead
+      element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
+      Factory.sleep(f)
+      ++step
     return      
 
   @integrate: (t) ->
@@ -54,7 +54,7 @@ class @Physics # numerical integration module for solving differential equations
     len = Physics.callbacks.length 
     while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
       break if Physics.callbacks.length == 0
-      bool = Physics.callbacks[len]()
+      bool = Physics.callbacks[len](t)
       if bool # returning a value of true means we can remove this callback
         if len < Physics.callbacks.length - 1 # reorder to put element to remove at the end
           swap = Physics.callbacks[Physics.callbacks.length - 1]

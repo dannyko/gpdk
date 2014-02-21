@@ -8,14 +8,20 @@ class @Factory # a module that keeps track of unused instances to reduce garbage
       return (new klass(config)) # only create a new object if no others are available (i.e. either uncreated or user did not user Factory to create them)
     else
       old = @inactive[klass].pop() # remove one of the inactive elements from the inactive list for re-use instead of creating a new object to reduce garbage collection
+      if old.is_sleeping is false
+        console.log('Factory.spawn: active instance found in inactive list!', old)
+        Factory.spawn(klass, config)
+        return
       old.wake?() # trigger reset function if newly spawned element was revived rather than created
       for x of config # set the new configuration values for the object to prepare it for its new role
         old[x] = config[x] # set configuration value
     return old # new; not old anymore
 
   @sleep: (instance) -> # inactivate the instance and add it to the inactive array for its class type
-    if instance is undefined
-      console.log('Factory.sleep(): undefined input')
+    if instance is undefined or instance.is_sleeping
+      console.log('Factory.sleep(): undefined or sleeping input', instance)
       return
     @inactive[instance.constructor].push(instance) # push the newly inactive instance onto the corresponding inactive list for this class
+    unless instance.is_sleeping is undefined
+      instance.is_sleeping = true
     return
