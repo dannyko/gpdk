@@ -5,27 +5,40 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     _this = this;
 
-  this.Gamescore = (function() {
+  this.Factory = (function() {
 
-    function Gamescore() {}
+    function Factory() {}
 
-    Gamescore.value = 0;
+    Factory.inactive = {};
 
-    Gamescore.increment = 100;
-
-    Gamescore.initialLives = 2;
-
-    Gamescore.lives = Gamescore.initialLives;
-
-    Gamescore.increment_value = function() {
-      return this.value += this.increment;
+    Factory.spawn = function(klass, config) {
+      var old, x;
+      if (this.inactive[klass] === void 0) {
+        this.inactive[klass] = [];
+      }
+      if (this.inactive[klass].length === 0) {
+        return new klass(config);
+      } else {
+        old = this.inactive[klass].pop();
+        if (typeof old.wake === "function") {
+          old.wake();
+        }
+        for (x in config) {
+          old[x] = config[x];
+        }
+      }
+      return old;
     };
 
-    Gamescore.decrement_value = function() {
-      return this.value -= this.increment;
+    Factory.sleep = function(instance) {
+      if (instance === void 0) {
+        console.log('Factory.sleep(): undefined input');
+        return;
+      }
+      this.inactive[instance.constructor].push(instance);
     };
 
-    return Gamescore;
+    return Factory;
 
   })();
 
@@ -347,6 +360,20 @@
       $(document.body).css('width', w).css('height', h);
     };
 
+    Game.prototype.preload_images = function(image_list) {
+      var callback,
+        _this = this;
+      callback = function(image) {
+        image_list.pop();
+        if (image_list.length > 0) {
+          return $.preloadImage(image_list[image_list.length - 1], callback);
+        } else {
+          return _this.run();
+        }
+      };
+      return $.preloadImage(image_list[list.length - 1], callback);
+    };
+
     function Game(config) {
       var force;
       this.config = config != null ? config : {};
@@ -365,6 +392,30 @@
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
+      (function($) {
+        return $.extend(jQuery, {
+          preloadImage: function(src, callback) {
+            var f, i;
+            i = new Image();
+            f = false;
+            i.onload = function() {
+              f = true;
+              if (callback !== void 0) {
+                callback(this);
+              }
+              return $(this).remove();
+            };
+            if (!f) {
+              return $(i).attr('src', src).css({
+                position: 'absolute',
+                display: 'none',
+                width: 1,
+                height: 1
+              }).appendTo(document.body);
+            }
+          }
+        });
+      })(jQuery);
     }
 
     Game.prototype.start = function() {
@@ -380,7 +431,7 @@
         callback = function() {};
       }
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.end(Gamescore.value, callback);
+        Gameprez.end(Game.score, callback);
       } else {
         callback();
       }
@@ -1642,8 +1693,8 @@
         this.element[i].draw();
       }
       n = this.element.length * 2;
-      this.speed = .04 + Gamescore.value / 1000000;
-      dur = 300 + 200 / (100 + Gamescore.value);
+      this.speed = .04 + Game.score / 1000000;
+      dur = 300 + 200 / (100 + Game.score);
       d3.selectAll(".drone").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
         return i * dur;
       }).duration(dur * 4).style("opacity", 1).each('end', function(d) {
@@ -1693,7 +1744,7 @@
           this.root.draw([this.root.r.x, this.root.r.y]);
           break;
         case 82:
-          if (Gamescore.lives < 0) {
+          if (Game.lives < 0) {
             this.reset();
           }
       }
@@ -1782,10 +1833,10 @@
     Dronewar.prototype.progress = function() {
       var all_is_destroyed, dur;
       this.update_drone();
-      this.scoretxt.text('SCORE: ' + Gamescore.value);
-      this.leveltxt.text('LEVEL: ' + (this.N - this.initialN + 1));
-      if (Gamescore.lives >= 0) {
-        this.lives.text('LIVES: ' + Gamescore.lives);
+      this.scoretxt.text('SCORE: ' + Game.score);
+      this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
+      if (Game.lives >= 0) {
+        this.lives.text('LIVES: ' + Game.lives);
       } else {
         dur = 420;
         this.root.game_over(dur);
@@ -1811,7 +1862,7 @@
       this.svg.style("cursor", "auto");
       this.N = this.initialN;
       this.root = new Root();
-      Gamescore.lives = Gamescore.initialLives;
+      Game.lives = Game.initialLives;
       this.start();
     };
 
@@ -2017,7 +2068,7 @@
       if (n.is_bullet) {
         return;
       }
-      Gamescore.lives -= 1;
+      Game.lives -= 1;
       n.destroy();
       N = 240;
       fill = '#ff0';

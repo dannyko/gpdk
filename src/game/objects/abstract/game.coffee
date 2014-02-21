@@ -42,6 +42,15 @@ class @Game
     $(document.body).css('width', w).css('height', h)
     return
 
+  preload_images: (image_list) ->
+    callback = (image) =>
+       image_list.pop()
+       if image_list.length > 0
+         $.preloadImage( image_list[image_list.length - 1], callback )
+       else
+         @run()
+    $.preloadImage( image_list[list.length - 1], callback)
+
   constructor: (@config = {}) ->
     @element    = [] # initialize
     @div        = d3.select("#game_div")
@@ -58,6 +67,26 @@ class @Game
 	    .style('width', '')
 	    .style('height', '')
     @update_window(force = true)
+    # extend jQuery:
+    ( ($) -> # image preload with callbacks using jQuery, taken from: http://designdotworks.blogspot.com/2009/05/jquery-image-preloading-with-callbacks.html?showComment=1391404596835#c6592061457251911304
+     $.extend(jQuery, {  
+       preloadImage: (src, callback) ->
+         i = new Image() 
+         f = false
+         i.onload = ->  
+           f = true  
+           unless callback is undefined
+             callback(this) 
+           $(this).remove()   
+         if not f
+           $(i).attr('src', src).css({  
+             position: 'absolute',  
+             display: 'none',  
+             width: 1,  
+             height: 1  
+           }).appendTo(document.body)
+     })
+    )(jQuery)
 
   start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
     
