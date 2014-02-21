@@ -16,12 +16,12 @@ class @Paddle extends Polygon
     super(@config)
     @is_root   = true # Make this the player controlled element
     @fixed     = true    
-    @padding   = 15
+    @padding   = 50
     @r.x       = Game.width / 2
     @r.y       = Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = Game.width - @config.size - @tol - @padding
-    @min_x     = @config.size + @tol + @padding
+    @max_x     = Game.width - @config.size - @tol - @padding * 0.5
+    @min_x     = @config.size + @tol + @padding * 0.5
     @overshoot = @padding
     @image.remove()
     @g.attr("class", "paddle")
@@ -48,20 +48,22 @@ class @Paddle extends Polygon
 
   redraw: (e = d3.event) =>
     return unless @collision # don't draw if not active
-    @r.x += e.movementX || e.mozMovementX || e.webkitMovementX || 0
+    @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
-    @draw()
+    return
 
   start: ->
     super
     d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
     d3.select(window).on("mousemove", @redraw) if window isnt window.top # default mouse behavior is to control the root element position
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
     
   stop: ->
     super
     d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
     d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is in iframe
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
 
   destroy_check: (n) -> # what happens when paddle gets hit by a ball
     if n.type is 'Circle' # hit a ball
@@ -75,6 +77,7 @@ class @Paddle extends Polygon
       n.v.x = relative_intersect * n.speed
       n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
       @reaction(n)  
+      Game.sound.play('bong')
     else # hit a ship
       n.destroy()
   

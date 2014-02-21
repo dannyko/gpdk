@@ -44,7 +44,7 @@ class @Ship extends Polygon
     return if @is_destroyed # don't allow destruction twice (i.e. before transition finishes)
     @is_destroyed = true
     @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
-    Game.decrement_score() if @offscreen() # penalize score for missing a ship
+    (Gamescore.decrement_value() ; Game.sound.play('loss') ) if @offscreen() # penalize score for missing a ship
     fill = '#FFF' 
     dur  = 210 # color effect transition duration parameter
     @image.attr('opacity', 1)
@@ -56,6 +56,7 @@ class @Ship extends Polygon
       .each('end', =>  
         @g.remove()
       )
+    Game.sound.play('boom')
 
   destroy_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
     if element.name is 'Ball' # hit by ball, destroy and awaard points

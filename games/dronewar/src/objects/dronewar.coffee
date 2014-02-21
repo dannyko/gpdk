@@ -4,9 +4,9 @@ class @Dronewar extends Game
 
   constructor: ->
     super
-    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
+    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 5
+    @initialN = @config.initialN || 2
     @N        = @initialN
     @root     = new Root() # root element i.e. under user control  
     @scoretxt = @g.append("text").text("")
@@ -15,7 +15,7 @@ class @Dronewar extends Game
       .attr("font-size", "18")
       .attr("x", "20")
       .attr("y", "40")
-      .attr('font-family', 'arial black')
+      .attr('font-family', 'arial bold')
     @lives    = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -23,7 +23,7 @@ class @Dronewar extends Game
       .attr("font-size", "18")
       .attr("x", "20")
       .attr("y", "20")
-      .attr('font-family', 'arial black')
+      .attr('font-family', 'arial bold')
     @leveltxt = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -31,22 +31,36 @@ class @Dronewar extends Game
       .attr("font-size", "18")
       .attr("x", "20")
       .attr("y", "60")
-      .attr('font-family', 'arial black')
+      .attr('font-family', 'arial bold')
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
+    d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
     img     = new Image()
     img.src = Ship.viper().url
     img.src = Ship.sidewinder().url
     img.src = Ship.fang().url
     img.src = Drone.url
+    Game.sound = new Howl({
+      urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+      sprite: {
+        music:[0, 10782],
+        boom: [10782, 856],
+        shot: [11639, 234]
+      }
+    })
+    Game.sound.play('music')
+
 
   level: ->
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
+    Nlevel = (@N - @initialN + 1)
+    multiplier = 10
+    offset     = 50
     for i in [0..@N - 1] # create element list
-      newAttacker = new Drone()
+      newAttacker = new Drone({energy: Nlevel * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game
-      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-      @element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+      @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].draw()
     n = @element.length * 2
     @speed = .04 + Game.score / 1000000
@@ -98,7 +112,7 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    callback = => @lives.text("GAME OVER, PRESS 'R' TO RESTART") ; return true
+    callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; return true
     @end(callback)
     return
 
@@ -202,9 +216,9 @@ class @Dronewar extends Game
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
-      d3.timer(@progress)
-      Game.score = 0
+      Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
+      d3.timer(@progress)
     )
     how = @g.append("text")
       .text("")
@@ -216,11 +230,12 @@ class @Dronewar extends Game
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    how.text("Use the mouse for controlling movement, scrollwheel for rotation")
+    how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation")
+    Game.sound.play('music')
     super
     return
     
-  progress: =>  # set a timer to monitor game progress
+  progress: =>  # timer callback to monitor game progress
     @update_drone()
     @scoretxt.text('SCORE: ' + Game.score)
     @leveltxt.text('LEVEL: ' + (@N - @initialN))

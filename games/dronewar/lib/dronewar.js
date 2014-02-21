@@ -33,6 +33,18 @@
 
     function Utils() {}
 
+    Utils.clone = function(obj) {
+      var key, temp;
+      if (obj === null || typeof obj !== "object") {
+        return obj;
+      }
+      temp = new obj.constructor();
+      for (key in obj) {
+        temp[key] = Utils.clone(obj[key]);
+      }
+      return temp;
+    };
+
     Utils.addChainedAttributeAccessor = function(obj, attr) {
       return obj[attr] = function() {
         var newValues;
@@ -182,6 +194,7 @@
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
+      this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Physics.verlet(this);
       this.is_destroyed = false;
@@ -226,7 +239,7 @@
 
     Element.prototype.stop = function() {
       var index;
-      index = _.indexOf(Collision.list, this);
+      index = Collision.list.indexOf(this);
       if (index > -1) {
         Collision.list.splice(index, 1);
       }
@@ -264,30 +277,98 @@
   })();
 
   this.Game = (function() {
+    var current_height, current_width, get_scale;
 
     Game.width = null;
 
     Game.height = null;
 
+    Game.scale = 1;
+
+    current_width = function(padding) {
+      var element, x;
+      if (padding == null) {
+        padding = 8;
+      }
+      element = window.top.document.body;
+      x = $(element).width();
+      x = Math.min(x, $(window).width());
+      x = Math.min(x, $(window.top).width());
+      if (x > padding && padding > 0) {
+        return x = x - padding;
+      }
+    };
+
+    current_height = function(padding) {
+      var element, y;
+      if (padding == null) {
+        padding = 8;
+      }
+      element = window.top.document.body;
+      y = $(element).height();
+      y = Math.min(y, $(window).height());
+      y = Math.min(y, $(window.top).height());
+      if (y > padding && padding > 0) {
+        return y = y - padding;
+      }
+    };
+
+    get_scale = function() {
+      var max_scale, min_scale, r1, r2, scale;
+      r1 = current_width() / Game.width;
+      r2 = current_height() / Game.height;
+      scale = r1 <= r2 ? r1 : r2;
+      max_scale = 1.0;
+      min_scale = 0.39;
+      return scale = Math.max(min_scale, Math.min(max_scale, scale));
+    };
+
+    Game.prototype.update_window = function(force) {
+      var h, scale, tol, w;
+      if (force == null) {
+        force = false;
+      }
+      if (Game.width === null || Game.height === null) {
+        return Game.scale;
+      }
+      scale = get_scale();
+      tol = .001;
+      if (!force) {
+        if (Math.abs(Game.scale - scale) < tol) {
+          return;
+        }
+      }
+      Game.scale = scale;
+      w = Math.ceil(Game.width * scale) + 'px';
+      h = Math.ceil(Game.height * scale) + 'px';
+      this.div.style('width', w).style('height', h);
+      this.svg.style('width', w).style('height', h);
+      this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
+      $(document.body).css('width', w).css('height', h);
+    };
+
     function Game(config) {
+      var force;
       this.config = config != null ? config : {};
       this.element = [];
+      this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
       if (this.svg.empty()) {
-        this.svg = d3.select('body').append('svg').attr('width', '800px').attr('height', '600px').attr('id', 'game_svg');
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      Game.width = parseInt(this.svg.attr("width"), 10);
-      Game.height = parseInt(this.svg.attr("height"), 10);
+      Game.width = 800;
+      Game.height = 600;
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window(force = true);
     }
 
     Game.prototype.start = function() {
-      return Physics.start();
+      return Physics.start(this);
     };
 
     Game.prototype.stop = function() {
@@ -307,12 +388,13 @@
     };
 
     Game.prototype.cleanup = function() {
-      var element, len, _results;
+      var element, len, sound, _results;
       len = Collision.list.length;
       _results = [];
       while (len--) {
         element = Collision.list.pop();
-        element.destroy();
+        sound = false;
+        element.destroy(sound);
         _results.push(element = null);
       }
       return _results;
@@ -411,29 +493,49 @@
     };
 
     Polygon.prototype.set_path = function(path) {
+      var i, maxd, maxnode, node, _i, _ref;
       this.path = path != null ? path : this.path;
       this.pathref = this.path.map(function(d) {
-        return _.clone(d);
+        return Utils.clone(d);
       });
       this.polygon_path();
-      this.maxnode = new Vec(_.max(this.path, function(node) {
-        return node.d = node.x * node.x + node.y * node.y;
-      }));
+      maxnode = this.path[0];
+      this.path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y;
+      maxd = this.path[0].d;
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = this.path[i];
+        node.d = node.x * node.x + node.y * node.y;
+        if (node.d > maxd) {
+          maxnode = this.path[i];
+        }
+      }
+      this.maxnode = new Vec(maxnode);
       this.size = this.maxnode.length();
       return this.image.attr("d", this.d());
     };
 
     Polygon.prototype.BB = function() {
-      this.bb_width = _.max(this.path, function(node) {
-        return node.x;
-      }).x - _.min(this.path, function(node) {
-        return node.x;
-      }).x;
-      this.bb_height = _.max(this.path, function(node) {
-        return node.y;
-      }).y - _.min(this.path, function(node) {
-        return node.y;
-      }).y;
+      var i, xmax, xmin, ymax, ymin, _i, _ref;
+      xmax = this.path[0].x;
+      ymax = this.path[0].y;
+      xmin = xmax;
+      ymin = ymax;
+      for (i = _i = 1, _ref = this.path.length - 1; 1 <= _ref ? _i < _ref : _i > _ref; i = 1 <= _ref ? ++_i : --_i) {
+        if (this.path[i].x > xmax) {
+          xmax = this.path[i].x;
+        }
+        if (this.path[i].x < xmin) {
+          xmin = this.path[i].x;
+        }
+        if (this.path[i].y > ymax) {
+          ymax = this.path[i].y;
+        }
+        if (this.path[i].y < ymin) {
+          ymin = this.path[i].y;
+        }
+      }
+      this.bb_width = xmax - xmin;
+      this.bb_height = ymax - ymin;
       return Polygon.__super__.BB.apply(this, arguments);
     };
 
@@ -477,7 +579,7 @@
       }
       timestamp = Utils.timestamp();
       if (force_update || timestamp - this.lastquad > this.list.length || (this.quadtree == null)) {
-        data = _.filter(this.list, function(d) {
+        data = this.list.filter(function(d) {
           return d.collision;
         }).map(function(d) {
           return {
@@ -679,14 +781,17 @@
     };
 
     nearest_node = function(m, n) {
-      var init, nearest;
-      init = _.initial(m.path);
-      nearest = _.min(init, function(d) {
-        var dd;
-        dd = new Vec(d).add(m.r).subtract(n.r).length_squared();
-        return dd;
-      });
-      return _.indexOf(m.path, nearest);
+      var d, i, nn, nnd, node, _i, _ref;
+      nn = m.path[0];
+      nnd = new Vec(nn).add(m.r).subtract(n.r).length_squared();
+      for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        node = m.path[i];
+        d = new Vec(node).add(m.r).subtract(n.r).length_squared();
+        if (d < nnd) {
+          nn = m.path[i];
+        }
+      }
+      return m.path.indexOf(nn);
     };
 
     circle_circle_dist = function(m, n) {
@@ -861,6 +966,8 @@
 
     Physics.timestamp = Utils.timestamp();
 
+    Physics.game = null;
+
     Physics.verlet = function(element) {
       return function() {
         var f;
@@ -876,7 +983,7 @@
     };
 
     Physics.integrate = function(cleanup) {
-      var len, timestamp;
+      var len, timestamp, _ref;
       if (cleanup == null) {
         cleanup = true;
       }
@@ -893,12 +1000,19 @@
         Collision.list[len].update();
       }
       Collision.detect();
+      if ((_ref = Physics.game) != null) {
+        _ref.update_window();
+      }
     };
 
-    Physics.start = function(delay) {
+    Physics.start = function(game, delay) {
+      if (game == null) {
+        game = void 0;
+      }
       if (delay == null) {
         delay = 0;
       }
+      this.game = game;
       this.off = false;
       d3.timer(this.integrate, delay);
     };
@@ -1149,9 +1263,9 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
-        bullet_size: 3,
-        bullet_speed: 15,
-        bullet_tick: 25
+        bullet_size: 4,
+        bullet_speed: 35,
+        bullet_tick: 200
       };
     };
 
@@ -1250,9 +1364,9 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#C00',
-        bullet_size: 5,
-        bullet_speed: 10,
-        bullet_tick: 20
+        bullet_size: 6,
+        bullet_speed: 25,
+        bullet_tick: 300
       };
     };
 
@@ -1330,9 +1444,9 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#099',
-        bullet_size: 4,
-        bullet_speed: 10,
-        bullet_tick: 30
+        bullet_size: 5,
+        bullet_speed: 30,
+        bullet_tick: 250
       };
     };
 
@@ -1348,19 +1462,27 @@
       this.config = config != null ? config : {};
       Bullet.__super__.constructor.apply(this, arguments);
       this.is_bullet = true;
-      this.size = 3;
-      this.fill("#000");
+      this.power = this.config.power || 1;
     }
 
     Bullet.prototype.destroy_check = function(n) {
       if (n.is_root) {
         return true;
       }
+      if (n.is_bullet) {
+        if (!this.is_destroyed) {
+          n.destroy();
+        }
+        return true;
+      }
       this.destroy();
-      n.destroy();
-      Gamescore.increment_value();
-      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-        Gameprez.score(Gamescore.value);
+      n.deplete(this.power);
+      if (n.depleted()) {
+        Gamescore.increment_value();
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.score(Gamescore.value);
+        }
+        n.destroy();
       }
       return true;
     };
@@ -1377,26 +1499,56 @@
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      this.config.size = 20;
+      this.config.size = 25;
       Drone.__super__.constructor.call(this, this.config);
       this.stop();
-      this.max_speed = 18;
+      this.max_speed = 12;
+      this.energy = this.config.energy || 1;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
-    Drone.prototype.destroy = function(remove) {
-      var N, dur, fill;
+    Drone.prototype.deplete = function(power) {
+      var dur, fill, fill0, last;
+      if (power == null) {
+        power = 1;
+      }
+      this.energy = this.energy - power;
+      dur = 50;
+      fill0 = '#300';
+      fill = "#FF0";
+      last = this.g.select('circle:last-child');
+      if (last !== this.image) {
+        last.remove();
+      }
+      this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill0).style('opacity', 0).transition().duration(dur).ease('sqrt').style('opacity', 0.6).transition().duration(dur).ease('linear').style('fill', fill).transition().duration(dur).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .4);
+      return Game.sound.play('shot');
+    };
+
+    Drone.prototype.depleted = function() {
+      if (this.energy <= 0) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    Drone.prototype.destroy = function(sound, remove) {
+      var dur;
+      if (sound == null) {
+        sound = true;
+      }
       if (remove == null) {
         remove = false;
       }
       Drone.__super__.destroy.call(this, remove);
-      dur = 100;
-      N = 320;
-      fill = "hsl(" + Math.random() * N + ", 50%, 70%)";
-      this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).transition().duration(dur).ease('sqrt').attr("fill", fill).remove();
-      return this.g.attr("class", "").transition().delay(dur).duration(dur * 2).ease('sqrt').style("opacity", "0").remove();
+      dur = 500;
+      this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
+      this.g.attr("class", "").transition().duration(dur).style("opacity", "0").remove();
+      if (sound) {
+        return Game.sound.play('boom');
+      }
     };
 
     Drone.prototype.draw = function() {
@@ -1405,6 +1557,20 @@
         this.v.normalize(this.max_speed);
       }
       return Drone.__super__.draw.apply(this, arguments);
+    };
+
+    Drone.prototype.offscreen = function() {
+      var dr2, dx, dy, f, scale;
+      dx = this.r.x - Game.width * 0.5;
+      dy = this.r.y - Game.height * 0.5;
+      dr2 = dx * dx + dy * dy;
+      scale = .8;
+      if (dr2 > Game.height * Game.height * 0.25 * scale * scale) {
+        scale = .01;
+        f = Force["eval"](this, this.force_param[0]);
+        this.v.add(f.normalize(this.max_speed * scale));
+      }
+      return false;
     };
 
     return Drone;
@@ -1430,32 +1596,49 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 5;
+      this.initialN = this.config.initialN || 2;
       this.N = this.initialN;
       this.root = new Root();
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial black');
-      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial black');
-      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial black');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
+      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial bold');
       d3.select(window.top).on("keydown", this.keydown);
+      if (window !== window.top) {
+        d3.select(window).on("keydown", this.keydown);
+      }
       img = new Image();
       img.src = Ship.viper().url;
       img.src = Ship.sidewinder().url;
       img.src = Ship.fang().url;
       img.src = Drone.url;
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+        sprite: {
+          music: [0, 10782],
+          boom: [10782, 856],
+          shot: [11639, 234]
+        }
+      });
+      Game.sound.play('music');
     }
 
     Dronewar.prototype.level = function() {
-      var dur, i, n, newAttacker, _i, _ref,
+      var Nlevel, dur, i, multiplier, n, newAttacker, offset, _i, _ref,
         _this = this;
       this.svg.style("cursor", "none");
       this.element = [];
+      Nlevel = this.N - this.initialN + 1;
+      multiplier = 10;
+      offset = 50;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
-        newAttacker = new Drone();
+        newAttacker = new Drone({
+          energy: Nlevel * multiplier + offset
+        });
         this.element.push(newAttacker);
-        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.9 * Game.width;
-        this.element[i].r.y = Game.height * 0.25 + (Math.random() - 0.5) * 0.9 * 0.25 * Game.height;
+        this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
+        this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
         this.element[i].draw();
       }
       n = this.element.length * 2;
@@ -1522,7 +1705,7 @@
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
       callback = function() {
-        _this.lives.text("GAME OVER, PRESS 'R' TO RESTART");
+        _this.lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', _this.reset);
         return true;
       };
       this.end(callback);
@@ -1584,12 +1767,15 @@
         go.transition().duration(dur).style("opacity", 0).remove();
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
-        d3.timer(_this.progress);
         Gamescore.value = 0;
-        return typeof Gameprez !== "undefined" && Gameprez !== null ? Gameprez.start(_this.max_score_increment) : void 0;
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gameprez.start(_this.max_score_increment);
+        }
+        return d3.timer(_this.progress);
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      how.text("Use the mouse for controlling movement, scrollwheel for rotation");
+      how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
+      Game.sound.play('music');
       Dronewar.__super__.start.apply(this, arguments);
     };
 
@@ -1645,12 +1831,21 @@
       this.fire = function() {
         return Root.prototype.fire.apply(_this, arguments);
       };
+      this.dragspin = function() {
+        return Root.prototype.dragspin.apply(_this, arguments);
+      };
       this.spin = function() {
         return Root.prototype.spin.apply(_this, arguments);
       };
+      this.redraw_interp = function(xy) {
+        if (xy == null) {
+          xy = d3.mouse(_this.game_g.node());
+        }
+        return Root.prototype.redraw_interp.apply(_this, arguments);
+      };
       this.redraw = function(xy) {
         if (xy == null) {
-          xy = d3.mouse(_this.svg.node());
+          xy = d3.mouse(_this.game_g.node());
         }
         return Root.prototype.redraw.apply(_this, arguments);
       };
@@ -1666,18 +1861,68 @@
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
       this.tick = function() {};
+      this.drawing = false;
     }
 
     Root.prototype.redraw = function(xy) {
+      var maxJump;
       if (xy == null) {
-        xy = d3.mouse(this.svg.node());
+        xy = d3.mouse(this.game_g.node());
       }
       if (!this.collision) {
         return;
       }
+      maxJump = 30;
+      xy = this.apply_limits(xy);
+      if (Math.abs(this.r.x - xy[0]) > maxJump || Math.abs(this.r.y - xy[1]) > maxJump) {
+        this.redraw_interp(xy);
+        return;
+      }
       this.r.x = xy[0];
       this.r.y = xy[1];
-      return this.draw();
+    };
+
+    Root.prototype.apply_limits = function(xy) {
+      return [Math.min(Math.max(this.bb_width, xy[0]), Game.width - this.bb_width), Math.min(Math.max(this.bb_height, xy[1]), Game.height - this.bb_height)];
+    };
+
+    Root.prototype.redraw_interp = function(xy) {
+      var Nstep, count, dr, func, r1, step,
+        _this = this;
+      if (xy == null) {
+        xy = d3.mouse(this.game_g.node());
+      }
+      if (!this.collision) {
+        return;
+      }
+      if (this.drawing) {
+        return;
+      }
+      this.drawing = true;
+      r1 = new Vec({
+        x: xy[0],
+        y: xy[1]
+      });
+      step = 20;
+      dr = new Vec(r1).subtract(this.r);
+      Nstep = Math.floor(dr.length() / step);
+      count = 1;
+      dr.normalize(step);
+      func = function() {
+        var done;
+        done = false;
+        if (count > Nstep) {
+          done = true;
+          _this.drawing = false;
+        } else {
+          if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
+            _this.r.add(dr);
+          }
+          count++;
+        }
+        return done;
+      };
+      d3.timer(func);
     };
 
     Root.prototype.spin = function() {
@@ -1685,20 +1930,36 @@
       delta = this.angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta);
       this.angle = this.angle - delta;
       this.rotate_path();
-      return this.draw();
+    };
+
+    Root.prototype.dragspin = function() {
+      var delta, deltax, deltay;
+      deltay = this.angleStep * Math.ceil(d3.event.dy) / Math.abs(Math.ceil(d3.event.dy));
+      if (isNaN(deltay)) {
+        deltay = 0;
+      }
+      deltax = this.angleStep * Math.ceil(d3.event.dx) / Math.abs(Math.ceil(d3.event.dx));
+      if (isNaN(deltax)) {
+        deltax = 0;
+      }
+      delta = Math.abs(deltay) > Math.abs(deltax) ? deltay : deltax;
+      this.angle = this.angle - delta;
+      this.rotate_path();
     };
 
     Root.prototype.fire = function() {
       var bullet, timestamp, x, y;
-      timestamp = Utils.timestamp();
       if (this.is_destroyed) {
         return true;
       }
+      timestamp = Utils.timestamp();
       if (!(this.collision && timestamp - this.lastfire >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
-      bullet = new Bullet();
+      bullet = new Bullet({
+        power: this.bullet_size * this.bullet_size
+      });
       bullet.size = this.bullet_size;
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
@@ -1708,7 +1969,6 @@
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
-      bullet.draw();
     };
 
     Root.prototype.ship = function(ship, dur) {
@@ -1741,15 +2001,15 @@
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
       this.svg.on("mousemove", this.redraw);
-      this.svg.on("mousedown", this.fire);
-      return this.svg.on("mousewheel", this.spin);
+      this.svg.on("mousewheel", this.spin);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
       this.svg.on("mousemove", null);
-      this.svg.on("mousedown", null);
-      return this.svg.on("mousewheel", null);
+      this.svg.on("mousewheel", null);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
     Root.prototype.reaction = function(n) {

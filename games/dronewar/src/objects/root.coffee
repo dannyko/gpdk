@@ -9,28 +9,69 @@ class @Root extends Polygon
     @charge        = 5e4
     @stroke("none")
     @fill("#000")
-    @bitmap = @g.insert("image", 'path').attr('id', 'ship_image')
+    @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
-    @tick = -> return
+    @tick    = -> return
+    @drawing = false
 
-  redraw: (xy = d3.mouse(@svg.node())) =>
+  redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
+    maxJump = 30 # max jump size
+    xy      = @apply_limits(xy)
+    if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
+      @redraw_interp(xy)
+      return
     @r.x = xy[0]
     @r.y = xy[1]
-    @draw()
+    return
 
-  spin: () =>
+  apply_limits: (xy) ->
+    [Math.min(Math.max(@bb_width, xy[0]), Game.width - @bb_width), Math.min(Math.max(@bb_height, xy[1]), Game.height - @bb_height)]
+
+  redraw_interp: (xy = d3.mouse(@game_g.node())) =>
+    return unless @collision # don't draw if not active
+    return if @drawing
+    @drawing = true
+    r1   = new Vec({x: xy[0], y: xy[1]})
+    step = 20 # steplength
+    dr   = new Vec(r1).subtract(@r)
+    Nstep = Math.floor(dr.length() / step)
+    count = 1
+    dr.normalize(step) # difference vector pointing towards destination
+    func = =>
+      done = false
+      if count > Nstep
+        done = true 
+        @drawing = false
+      else 
+        @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
+        count++
+      done
+    d3.timer(func)
+    return
+ 
+  spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
     @rotate_path()
-    @draw()
+    return
 
-  fire: () =>
-    timestamp   = Utils.timestamp()
+  dragspin: =>
+    deltay = @angleStep * Math.ceil(d3.event.dy) / Math.abs(Math.ceil(d3.event.dy))
+    deltay = 0 if isNaN(deltay)
+    deltax = @angleStep * Math.ceil(d3.event.dx) / Math.abs(Math.ceil(d3.event.dx))
+    deltax = 0 if isNaN(deltax)
+    delta = if Math.abs(deltay) > Math.abs(deltax) then deltay else deltax
+    @angle = @angle - delta
+    @rotate_path()
+    return
+
+  fire: =>
     return true if @is_destroyed
+    timestamp   = Utils.timestamp()
     return unless @collision and timestamp - @lastfire >= @wait
     @lastfire   = timestamp
-    bullet      = new Bullet()
+    bullet      = new Bullet({power: @bullet_size * @bullet_size})
     bullet.size = @bullet_size
     x           = Math.cos(@angle - Math.PI * 0.5)
     y           = Math.sin(@angle - Math.PI * 0.5)
@@ -40,7 +81,6 @@ class @Root extends Polygon
     bullet.v.y  = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
-    bullet.draw()
     return
   
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
@@ -80,15 +120,16 @@ class @Root extends Polygon
   start: ->
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    @svg.on("mousedown", @fire)   # default mouse button listener
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
+
   
     
   stop: ->
     super
     @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
-    @svg.on("mousedown", null)  # default mouse button listener
     @svg.on("mousewheel", null) # default scroll wheel listener
+    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship

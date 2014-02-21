@@ -27,7 +27,8 @@ class @Element
                   .append("g")
                   .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
     @g           = @config.g           || @g
-    @svg         = @config.svg         || d3.select("#game_svg")
+    @svg         = @config.svg         || d3.select("#game_svg") # the container
+    @game_g      = @config.game_g      || d3.select("#game_g") # the container's main group
     @quadtree    = @config.quadtree    || null
     @tick        = @config.tick        || Physics.verlet(@) # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @is_destroyed= false
@@ -62,7 +63,7 @@ class @Element
     return
 
   stop: -> 
-    index = _.indexOf(Collision.list, @)
+    index = Collision.list.indexOf(@)
     Collision.list.splice(index, 1) if index > -1
     return
 

@@ -28,15 +28,31 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     return
 
   set_path: (@path = @path) -> # update path data and metadata
-    @pathref  = @path.map((d) -> _.clone(d)) # original path array for reference
+    @pathref  = @path.map((d) -> Utils.clone(d)) # original path array for reference
     @polygon_path() # set path metadata
-    @maxnode  = new Vec(_.max @path, (node) -> node.d = node.x * node.x + node.y * node.y) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
+    maxnode    = @path[0] # initialize
+    @path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y
+    maxd    = @path[0].d
+    for i in [1..@path.length - 2]
+      node   = @path[i]
+      node.d = node.x * node.x + node.y * node.y
+      maxnode = @path[i] if node.d > maxd
+    @maxnode  = new Vec(maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size     = @maxnode.length()
     @image.attr("d", @d())
   
   BB: ->
-    @bb_width  = _.max(@path, (node) -> node.x).x - _.min(@path, (node) -> node.x).x
-    @bb_height = _.max(@path, (node) -> node.y).y - _.min(@path, (node) -> node.y).y
+    xmax = @path[0].x # initialize
+    ymax = @path[0].y # initialize
+    xmin = xmax # initialize
+    ymin = ymax # initialize
+    for i in [1...@path.length - 1]
+      xmax = @path[i].x if @path[i].x > xmax
+      xmin = @path[i].x if @path[i].x < xmin
+      ymax = @path[i].y if @path[i].y > ymax
+      ymin = @path[i].y if @path[i].y < ymin
+    @bb_width  = xmax - xmin # splat code from http://coffeescriptcookbook.com/chapters/arrays/max-array-value
+    @bb_height = ymax - ymin # splat syntax from http://coffeescriptcookbook.com/chapters/arrays/max-array-value
     super
     
   rotate_path: -> # transform original path coordinates based on the angle of rotation

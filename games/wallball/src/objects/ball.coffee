@@ -4,7 +4,7 @@ class @Ball extends Circle
   constructor: (@config = {}) ->
     @config.size   ||= 12
     @config.fill   ||= '#FFF'
-    @config.r      ||= new Vec({x: Game.paddle.r.x, y: Game.height - Game.paddle.bb_height - @config.size})
+    @config.r      ||= new Vec({x: Game.paddle.r.x, y: Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size})
     super(@config)
     @speed_factor = 0.005
     @initial_speed = 20
@@ -42,7 +42,8 @@ class @Ball extends Circle
       if Math.abs(@r.x - Game.paddle.r.x) <= Game.paddle.size # physics engine missed the collision with the paddle
         Game.paddle.destroy_check(@) 
       else 
-        Game.lives -= 1
+        Gamescore.lives -= 1
+        Game.sound.play('miss')
         @destroy()
         return
     super
@@ -50,7 +51,8 @@ class @Ball extends Circle
   reaction: (n) ->  
     @v.normalize(@speed)
     @flash()
-    
+    Game.sound.play('ball')
+
   flash: ->
     dur      = 1000 / 3 # color effect transition duration parameter
     # N    = 240 # random color parameter
