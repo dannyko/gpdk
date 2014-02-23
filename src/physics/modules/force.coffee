@@ -4,7 +4,7 @@ class @Force # this simple object does one job: return the value of the force f(
   @rmx = {x: 0, y: 0}
   @rpy = {x: 0, y: 0}
   @rmy = {x: 0, y: 0}
-  @eval: (element, param, f) -> 
+  @eval: (element, param, f, accumulateSwitch = false) -> 
     switch param.type
       when 'constant'          then fx = param.fx ; fy = param.fy
       when 'friction'          then (
@@ -53,6 +53,10 @@ class @Force # this simple object does one job: return the value of the force f(
         fx  = -0.5 * (epx - emx) / param.tol # fx = -dV / dx 
         fy  = -0.5 * (epy - emy) / param.tol # fy = -dV / dy
       )
-    f.x = fx
-    f.y = fy
+    if accumulateSwitch
+      f.x += fx
+      f.y += fy
+    else
+      f.x = fx
+      f.y = fy
     f

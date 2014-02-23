@@ -6,9 +6,9 @@ class @Dronewar extends Game
     super
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 1
+    @initialN = @config.initialN || 2
     @N        = @initialN
-    @root     = Factory.spawn(Root) # root element i.e. under user control  
+    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
       .attr("fill", "white")
@@ -34,62 +34,71 @@ class @Dronewar extends Game
       .attr('font-family', 'arial bold')
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
-    img     = new Image()
-    img.src = Ship.viper().url
-    img.src = Ship.sidewinder().url
-    img.src = Ship.fang().url
-    img.src = Drone.url
-    Game.sound = new Howl({
-      urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
-      sprite: {
-        music:[0, 10782],
-        boom: [10782, 856],
-        shot: [11639, 234]
-      }
-    })
-    Game.sound.play('music')
+    # load audio:
+    audioSwitch = false
+    if audioSwitch
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+        sprite: {
+          music:[0, 10782],
+          boom: [10782, 856],
+          shot: [11639, 234]
+        }
+      })
+    Game.sound?.play('music')
+
+  launch_drone: (d) -> 
+      dx    = @root.r.x - d.r.x
+      dy    = @root.r.y - d.r.y
+      d1    = Math.sqrt(dx * dx + dy * dy)
+      dx   /= d1
+      dy   /= d1
+      d.v.x = @N * dx * @speed
+      d.v.y = @N * dy * @speed        
+      d.start() # couple the drone instance to the physics engine
+
+  droneParam = {type: null, cx: null, cy: null, q: null}
+
+  drone_param: ->
+    droneParam.type = 'charge'
+    droneParam.cx   = @root.r.x
+    droneParam.cy   = @root.r.y
+    droneParam.q    = @root.charge * 500 * @speed * @speed # charge 
+    droneParam
 
   level: ->
     @svg.style("cursor", "none")
     @element = [] # reinitialize element list
     multiplier = 10
     offset     = 150
+    @speed = .04 + Gamescore.value / 1000000
     for i in [0...@N - 1] # create element list
       newAttacker = Factory.spawn(Drone, {energy: @N * multiplier + offset})
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
-      @element[i].draw()
+      @launch_drone(@element[i])
+
     n = @element.length * 2
-    @speed = .04 + Gamescore.value / 1000000
     dur = 300 + 200 / (100 + Gamescore.value)
-    d3.selectAll(".drone")
-      .data(@element)
-      .style("opacity", 0)
-      .transition()
-      .delay( (d, i) -> i * dur )
-      .duration(dur * 4)
-      .style("opacity", 1)
-      .each('end', (d) => 
-        dx = @root.r.x - d.r.x
-        dy = @root.r.y - d.r.y
-        d1  = Math.sqrt(dx * dx + dy * dy)
-        dx /= d1
-        dy /= d1
-        d.v.x = @N * dx * @speed
-        d.v.y = @N * dy * @speed        
-        d.start()
-      )
+
+    # d3.selectAll(".drone")
+     # .data(@element)
+      # .style("opacity", 0)
+      # .transition()
+      # .delay( (d, i) -> i * dur )
+      # .duration(dur * 4)
+      # .style("opacity", 1)
+      # .each('end', (d) => 
+      #   @launch_drone(d)
+     #  )
     return
 
   update_drone: ->
     return unless @element.length > 0
-    @param = 
-      type: 'charge'
-      cx: @root.r.x
-      cy: @root.r.y
-      q:  @root.charge * 500 * @speed * @speed # charge
-    drone.force_param[0] = @param for drone in @element
+    @drone_param() # update droneParam object
+    for drone in @element
+      drone.force_param[0] = droneParam # copy object reference into this instance of the drone element's force array 
     return
 
   keydown: () =>
@@ -229,7 +238,7 @@ class @Dronewar extends Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation")
-    Game.sound.play('music')
+    Game.sound?.play('music')
     super
     return
     
@@ -246,7 +255,8 @@ class @Dronewar extends Game
       return true
     all_is_destroyed = @element.every (element) -> element.is_destroyed
     if all_is_destroyed # i.e. went offscreen or hit by bullet
-      @N++
+      drone_increment = 4
+      @N += drone_increment
       @charge *= 20
       @level()
     return

@@ -2,6 +2,11 @@ class @Vec # two-dimensional vectors {x, y}
   constructor: (@config = {}) ->
     @x = @config.x || 0
     @y = @config.y || 0 
+
+  init: (v = {x: 0, y: 0}) ->
+    @x = v.x
+    @y = v.y
+    @
   
   scale: (c) ->
     @x *= c

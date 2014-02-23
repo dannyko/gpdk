@@ -74,9 +74,8 @@ class @Game
     return true # game over so return true to stop the d3 timer calling @progress()
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
-    len = Collision.list.length
-    while (len--) # decrementing avoids potential indexing issues after popping last element off
-      element = Collision.list.pop()
-      sound = false # no sound for cleanup
-      element.destroy(sound)
+    len = Collision.list.length          # length
+    while (len--)                        # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.destroy()
+      soundSwitch = false                # no sound for cleanup
+      Collision.list[len].destroy(soundSwitch)
     return

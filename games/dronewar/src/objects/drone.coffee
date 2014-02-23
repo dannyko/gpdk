@@ -4,7 +4,6 @@ class @Drone extends Circle
   constructor: (@config = {}) ->
     @config.size = 25
     super(@config)
-    @stop()
     @max_speed = 12
     @energy = @config.energy || 10
     @image.remove()
@@ -14,7 +13,7 @@ class @Drone extends Circle
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
-        
+
   deplete: (power = 1) ->
     @energy = @energy - power
     dur = 50
@@ -26,21 +25,10 @@ class @Drone extends Circle
       .attr("r", @size * .9)
       .attr("x", 0)
       .attr("y", 0)
-      .style("fill", fill0)
-      .style('opacity', 0)
-      .transition()
-      .duration(dur)
-      .ease('sqrt')
-      .style('opacity', 0.6)
-      .transition()
-      .duration(dur)
-      .ease('linear')
       .style('fill', fill)
-      .transition()
-      .duration(dur)
-      .ease('linear')
       .style('opacity', (1 - @energy / @config.energy) * .4)
-    Game.sound.play('shot')
+    Game.sound?.play('shot')
+    return
 
   depleted: ->
     if @energy <= 0 then true else false
@@ -66,9 +54,11 @@ class @Drone extends Circle
           @g.selectAll('circle').remove()
           super()
         )
-      Game.sound.play('boom') if Game.sound
+      Game.sound?.play('boom')
     else
-      super()
+      super
+      @g.selectAll('circle').remove()
+    return
 
 
     # @g.attr("class", "")

@@ -17,26 +17,34 @@ class @Physics # numerical integration module for solving differential equations
       window.setTimeout(callback, @tick)
 
   @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
-    Nstep = Math.round(Physics.fps / fps)
-    step  = 0
-    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
-      element.f.scale(0.5 * element.dt * element.dt)
+    verlet_step = (dt = element.dt) ->
+      element.f.scale(0.5 * dt * dt)
       element.dr.x = element.v.x # initialize displacement vector
       element.dr.y = element.v.y # initialize displacement vector
-      element.dr.scale(element.dt).add(element.f) # store displacement vector
+      element.dr.scale(dt).add(element.f) # store displacement vector
       element.r.add(element.dr) # update position
       return if element.cleanup() # don't setup for the next update if element is destroyed
       f = Factory.spawn(Vec, element.f) # copy this object for temporary storage
       element.f.x = 0 # initialize current force
       element.f.y = 0 # initialize current force
-      force = Factory.spawn(Vec) # initialize temporary variable to store each force component's value
-      element.force_param.forEach (param) -> 
-        Force.eval(element, param, force) # assign force component to temporary force variable
-        element.f.add(force) # accumulate the forces acting on this element one at a time
-      Factory.sleep(force) # deactivate the temporary variable to conserve memory/reduce GC overhead
-      element.v.add(f.add(element.f).scale(0.5 * element.dt)) # Verlet velocity update, assuming that the force is velocity-independent
+      accumulateSwitch = true # parameter for Force module
+      element.force_param.forEach (param) -> # loop over force parameter array elements
+        Force.eval(element, param, element.f, accumulateSwitch) # accumulate the forces acting on this element one at a time
+      element.v.add(f.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
       Factory.sleep(f)
+
+    Nstep = Math.round(Physics.fps / fps)
+    step  = 0
+    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
+      verlet_step()
       ++step
+    tol = .01
+    if Physics.fps > fps # check if game is running slow and handle the remainder
+      diff = Physics.fps - fps # compute difference
+      scale = diff / Physics.fps # percent difference
+      dt = element.dt * scale
+      if dt > tol # ignore very small adjustments
+        verlet_step(dt) 
     return      
 
   @integrate: (t) ->

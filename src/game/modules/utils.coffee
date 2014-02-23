@@ -1,4 +1,8 @@
 class @Utils
+  @set: (obj, config) ->
+    for x of config # set the new configuration values for the object to prepare it for its new role
+      obj[x] = config[x] # set configuration value
+
   @clone: (obj) ->
     return obj if obj is null or typeof (obj) isnt "object"
     temp = new obj.constructor()

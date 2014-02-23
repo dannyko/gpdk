@@ -13,7 +13,7 @@ class @Root extends Polygon
     @r.y           = Game.height - 180
     @angle         = 0
     @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @lastfire      = 0 # initialize timestamp
+    @lastfire      = undefined # initialize timestamp
     @charge        = 5e4 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
@@ -25,7 +25,7 @@ class @Root extends Polygon
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
-    maxJump = 30 # max jump size
+    maxJump = 70 # max jump size
     xy      = @apply_limits(xy)
     if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
       @redraw_interp(xy)
@@ -41,20 +41,18 @@ class @Root extends Polygon
     return unless @collision # don't draw if not active
     return if @drawing
     @drawing = true
-    r1   = Factory.spawn(Vec, {x: xy[0], y: xy[1]})
+    @dr.init({x: xy[0], y: xy[1]})
     step = 20 # steplength
-    dr   = Factory.spawn(Vec, r1).subtract(@r)
-    Factory.sleep(r1)
-    Nstep = Math.floor(dr.length() / step)
+    @dr.subtract(@r)
+    Nstep = Math.floor(@dr.length() / step)
     count = 1
-    dr.normalize(step) # difference vector pointing towards destination
+    @dr.normalize(step) # difference vector pointing towards destination
     redraw_func = =>
       if count > Nstep
         @drawing = false
-        Factory.sleep(dr)
         return true
       else 
-        @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
+        @r.add(@dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
         count++
         return false
     Physics.callbacks.push(redraw_func)
@@ -78,7 +76,8 @@ class @Root extends Polygon
 
   fire: (timestamp) =>
     return true if @is_destroyed
-    return unless @collision and (timestamp - @lastfire) >= @wait
+    @lastfire = timestamp if @lastfire is undefined
+    return unless (timestamp - @lastfire) >= @wait
     @lastfire = timestamp
     @shoot()
     return
@@ -96,8 +95,8 @@ class @Root extends Polygon
     bullet.v.y = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
+    bullet.start()
     return
-
 
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
     @collision = false
@@ -142,8 +141,6 @@ class @Root extends Polygon
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
     @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
-
-  
     
   stop: ->
     super
@@ -154,7 +151,7 @@ class @Root extends Polygon
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship
     Gamescore.lives -= 1 # decrement lives for this game
-    n.destroy()
+    # n.destroy()
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter
@@ -164,7 +161,7 @@ class @Root extends Polygon
       .attr('opacity', 1)
       .transition()
       .duration(dur)
-      .ease('sqrt')
+      .ease('poly(0.5)')
       .attr("fill", fill)
       .transition()
       .duration(dur)

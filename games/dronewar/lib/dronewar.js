@@ -11,39 +11,42 @@
 
     Factory.inactive = {};
 
-    Factory.spawn = function(klass, config) {
-      var old, x;
+    Factory.spawn = function(klass, config, callback) {
+      var old;
       if (this.inactive[klass] === void 0) {
         this.inactive[klass] = [];
       }
       if (this.inactive[klass].length === 0) {
-        return new klass(config);
+        old = new klass(config);
       } else {
         old = this.inactive[klass].pop();
-        if (old.is_sleeping === false) {
-          console.log('Factory.spawn: active instance found in inactive list!', old);
+        if (old.is_sleeping === false || old.is_destroyed === false) {
+          console.log('Factory.spawn: not sleeping & undestroyed instance found in inactive list!', old);
           Factory.spawn(klass, config);
           return;
         }
-        if (typeof old.wake === "function") {
-          old.wake();
+        if (old.wake != null) {
+          old.wake(config);
+        } else {
+          Utils.set(old, config);
         }
-        for (x in config) {
-          old[x] = config[x];
-        }
+      }
+      if (typeof callback === "function") {
+        callback(old);
       }
       return old;
     };
 
     Factory.sleep = function(instance) {
-      if (instance === void 0 || instance.is_sleeping) {
-        console.log('Factory.sleep(): undefined or sleeping input', instance);
+      if (instance === void 0) {
+        console.log('Factory.sleep(): undefined input', instance);
+        return;
+      }
+      if (instance.is_sleeping === true) {
+        console.log('Factory.sleep(): sleeping instance', this.inactive[instance.constructor].indexOf(instance));
         return;
       }
       this.inactive[instance.constructor].push(instance);
-      if (instance.is_sleeping !== void 0) {
-        instance.is_sleeping = true;
-      }
     };
 
     return Factory;
@@ -58,7 +61,7 @@
 
     Gamescore.increment = 100;
 
-    Gamescore.initialLives = 2;
+    Gamescore.initialLives = 0;
 
     Gamescore.lives = Gamescore.initialLives;
 
@@ -77,6 +80,15 @@
   this.Utils = (function() {
 
     function Utils() {}
+
+    Utils.set = function(obj, config) {
+      var x, _results;
+      _results = [];
+      for (x in config) {
+        _results.push(obj[x] = config[x]);
+      }
+      return _results;
+    };
 
     Utils.clone = function(obj) {
       var key, temp;
@@ -247,7 +259,6 @@
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
-      this.start();
     }
 
     Element.prototype.reaction = function(element) {
@@ -280,8 +291,17 @@
     };
 
     Element.prototype.start = function() {
-      if (!(Collision.list.indexOf(this) > -1)) {
+      var index;
+      if (this.is_sleeping) {
+        console.log('element.start: is_destroyed or is_sleeping', this);
+      }
+      index = Collision.list.indexOf(this);
+      if (index > -1) {
+        console.log('element.start: already on physics list!', this);
+      } else {
         Collision.list.push(this);
+        this.is_destroyed = false;
+        this.g.style('opacity', 1);
       }
     };
 
@@ -307,40 +327,33 @@
     };
 
     Element.prototype.sleep = function() {
-      this.stop();
-      this.g.style('opacity', 0);
       Factory.sleep(this);
+      this.is_sleeping = true;
     };
 
     Element.prototype.destroy = function(remove) {
       if (remove == null) {
         remove = false;
       }
-      if (this.is_destroyed) {
-        return;
-      }
+      this.g.style('opacity', 0);
+      this.stop();
       this.sleep();
       this.is_destroyed = true;
-      if (remove) {
-        this.g.remove();
-        this.g = null;
-      }
     };
 
-    Element.prototype.wake = function() {
-      if (this.g === null) {
-        this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
-      }
-      this.g.style('opacity', 1);
-      this.is_destroyed = false;
+    Element.prototype.wake = function(config) {
       this.is_sleeping = false;
       this.r.x = 0;
       this.r.y = 0;
+      this.dr.x = 0;
+      this.dr.y = 0;
       this.v.x = 0;
       this.v.y = 0;
       this.f.x = 0;
       this.f.y = 0;
-      this.start();
+      if (config != null) {
+        Utils.set(this, config);
+      }
       return this;
     };
 
@@ -465,12 +478,11 @@
     };
 
     Game.prototype.cleanup = function() {
-      var element, len, sound;
+      var len, soundSwitch;
       len = Collision.list.length;
       while (len--) {
-        element = Collision.list.pop();
-        sound = false;
-        element.destroy(sound);
+        soundSwitch = false;
+        Collision.list[len].destroy(soundSwitch);
       }
     };
 
@@ -632,6 +644,132 @@
 
   })(Element);
 
+  this.ForceParam = (function() {
+
+    function ForceParam(config) {
+      this.config = config != null ? config : {};
+      this.type = this.config.type || 'constant';
+      switch (this.type) {
+        case 'constant':
+          this.fx = this.config.x || 0;
+          this.fy = this.config.y || 0;
+          break;
+        case 'friction':
+          this.alpha = this.config.alpha || 1;
+          this.vscale = this.config.vscale || .99;
+          this.vcut = this.config.vcut || 1e-2;
+          break;
+        case 'spring':
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
+          break;
+        case 'charge':
+        case 'gravity':
+          this.cx = this.config.cx || 0;
+          this.cy = this.config.cy || 0;
+          this.q = this.config.q || 1;
+          break;
+        case 'random':
+          this.xScale = this.config.xScale || 1;
+          this.yScale = this.config.yScale || 1;
+          this.fxBound = this.config.fxBound || 10;
+          this.fyBound = this.config.fyBound || 10;
+          break;
+        case 'gradient':
+          this.tol = this.config.tol || 0.1;
+          this.energy = this.config.energy || function(r) {};
+      }
+    }
+
+    return ForceParam;
+
+  })();
+
+  this.Vec = (function() {
+
+    function Vec(config) {
+      this.config = config != null ? config : {};
+      this.x = this.config.x || 0;
+      this.y = this.config.y || 0;
+    }
+
+    Vec.prototype.init = function(v) {
+      if (v == null) {
+        v = {
+          x: 0,
+          y: 0
+        };
+      }
+      this.x = v.x;
+      this.y = v.y;
+      return this;
+    };
+
+    Vec.prototype.scale = function(c) {
+      this.x *= c;
+      this.y *= c;
+      return this;
+    };
+
+    Vec.prototype.add = function(v) {
+      this.x += v.x;
+      this.y += v.y;
+      return this;
+    };
+
+    Vec.prototype.subtract = function(v) {
+      this.x -= v.x;
+      this.y -= v.y;
+      return this;
+    };
+
+    Vec.prototype.rotate = function(a) {
+      var c, s;
+      c = Math.cos(a);
+      s = Math.sin(a);
+      this.x = c * this.x - s * this.y;
+      this.y = s * this.x + c * this.y;
+      return this;
+    };
+
+    Vec.prototype.dot = function(v) {
+      return this.x * v.x + this.y * v.y;
+    };
+
+    Vec.prototype.length_squared = function() {
+      return this.dot(this);
+    };
+
+    Vec.prototype.length = function() {
+      return Math.sqrt(this.length_squared());
+    };
+
+    Vec.prototype.normalize = function(length) {
+      var inverseLength;
+      if (length == null) {
+        length = 1;
+      }
+      inverseLength = length / this.length();
+      this.x *= inverseLength;
+      this.y *= inverseLength;
+      return this;
+    };
+
+    Vec.prototype.dist_squared = function(v) {
+      var dx, dy;
+      dx = this.x - v.x;
+      dy = this.y - v.y;
+      return dx * dx + dy * dy;
+    };
+
+    Vec.prototype.dist = function(v) {
+      return Math.sqrt(this.dist_squared(v));
+    };
+
+    return Vec;
+
+  })();
+
   this.Collision = (function() {
     var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, nearest_node, z_check;
 
@@ -658,8 +796,7 @@
           d: d
         };
       });
-      this.quadtree = d3.geom.quadtree(data);
-      return this.quadtree;
+      return this.quadtree = d3.geom.quadtree(data);
     };
 
     Collision.quadtree = Collision.update_quadtree();
@@ -670,7 +807,7 @@
       iter = 1;
       reaction = false;
       _results = [];
-      while (Collision.check(m, n, reaction) && iter <= maxiter) {
+      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
         m.tick();
         n.tick();
         _results.push(iter++);
@@ -719,7 +856,7 @@
     };
 
     Collision.check = function(ei, ej, reaction) {
-      var collision, d, m, n, name, reaction_type, sort;
+      var d, m, n, name, reaction_type, sort;
       if (reaction == null) {
         reaction = true;
       }
@@ -754,9 +891,7 @@
       if (d.collision && reaction) {
         Reaction[reaction_type](m, n, d);
       }
-      collision = d.collision;
-      Factory.sleep(d);
-      return collision;
+      return d;
     };
 
     Collision.rectangle_rectangle = function(m, n) {
@@ -852,16 +987,12 @@
     };
 
     nearest_node = function(m, n) {
-      var d, i, nn, nnd, node, vec, _i, _ref;
+      var d, i, nn, nnd, node, _i, _ref;
       nn = m.path[0];
-      vec = Factory.spawn(Vec, nn).add(m.r).subtract(n.r);
-      nnd = vec.length_squared();
-      Factory.sleep(vec);
+      nnd = (nn.x + m.r.x - n.r.x) * (nn.x + m.r.x - n.r.x) + (nn.y + m.r.y - n.r.y) * (nn.y + m.r.y - n.r.y);
       for (i = _i = 1, _ref = this.path.length - 2; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
         node = m.path[i];
-        vec = Factory.spawn(Vec, node).add(m.r).subtract(n.r);
-        d = vec.length_squared();
-        Factory.sleep(vec);
+        d = (node.x + m.r.x - n.r.x) * (node.x + m.r.x - n.r.x) + (node.y + m.r.y - n.r.y) * (node.y + m.r.y - n.r.y);
         if (d < nnd) {
           nn = m.path[i];
         }
@@ -871,50 +1002,72 @@
 
     circle_circle_dist = function(m, n) {
       var d;
-      d = Factory.spawn(Vec, m.r).subtract(n.r);
-      d.dist = d.length();
+      d = {
+        x: m.r.x - n.r.x,
+        y: m.r.y - n.r.y
+      };
+      d.dist = Math.sqrt(d.x * d.x + d.y * d.y);
       d.dmin = m.size + n.size;
       return d;
     };
 
     circle_lineseg_dist = function(circle, polygon, i) {
-      var d, dr, r, ri, rj, rr, t, tr;
+      var d, dr, r, ri, rj, rr, t;
       ri = polygon.path[i];
       rj = z_check(polygon.path, i);
-      r = Factory.spawn(Vec, rj).subtract(ri);
-      rr = r.length_squared();
-      dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r);
-      t = r.dot(dr) / rr;
+      r = {
+        x: rj.x - ri.x,
+        y: rj.y - ri.y
+      };
+      rr = r.x * r.x + r.y * r.y;
+      dr = {
+        x: circle.r.x - ri.x - polygon.r.x,
+        y: circle.r.y - ri.y - polygon.r.y
+      };
+      t = (r.x * dr.x + r.y * dr.y) / rr;
       if (t < 0) {
 
       } else if (t > 1) {
-        Factory.sleep(dr);
-        dr = Factory.spawn(Vec, circle.r).subtract(rj).subtract(polygon.r);
+        dr.x = circle.r.x - rj.x - polygon.r.x;
+        dr.y = circle.r.y - rj.y - polygon.r.y;
       } else {
-        tr = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r);
-        Factory.sleep(dr);
-        dr = Factory.spawn(Vec, circle.r).subtract(tr);
-        Factory.sleep(tr);
+        dr.x = r.x * t + ri.x + polygon.r.x;
+        dr.y = r.y * t + ri.y + polygon.r.y;
+        dr.x *= -1;
+        dr.y *= -1;
+        dr.x += circle.r.x;
+        dr.y += circle.r.y;
       }
-      d = Factory.spawn(Vec, {
+      return d = {
         t: t,
         x: dr.x,
         y: dr.y,
         r: [r.x, r.y],
         rr: rr,
-        dist: dr.length()
-      });
-      Factory.sleep(r);
-      Factory.sleep(dr);
-      return d;
+        dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
+      };
     };
 
     lineseg_intersect = function(m, n, i, j) {
-      var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, _ref, _ref1, _ref2, _ref3;
-      ri = Factory.spawn(Vec, m.path[i]);
-      rj = Factory.spawn(Vec, z_check(m.path, i));
-      si = Factory.spawn(Vec, n.path[j]);
-      sj = Factory.spawn(Vec, z_check(n.path, j));
+      var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, z, _ref, _ref1, _ref2, _ref3;
+      ri = {
+        x: m.path[i].x,
+        y: m.path[i].y
+      };
+      z = z_check(m.path, i);
+      rj = {
+        x: z.x,
+        y: z.y
+      };
+      si = {
+        x: n.path[j].x,
+        y: n.path[j].y
+      };
+      z = z_check(n.path, j);
+      sj = {
+        x: z.x,
+        y: z.y
+      };
       A1 = rj.y - ri.y;
       B1 = ri.x - rj.x;
       C1 = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y);
@@ -923,10 +1076,6 @@
       C2 = A2 * (si.x + n.r.x) + B2 * (si.y + n.r.y);
       det = A1 * B2 - A2 * B1;
       if (det === 0) {
-        Factory.sleep(ri);
-        Factory.sleep(rj);
-        Factory.sleep(si);
-        Factory.sleep(sj);
         return false;
       }
       x = (B2 * C1 - B1 * C2) / det;
@@ -935,10 +1084,6 @@
       check2 = (Math.min(si.x, sj.x) - n.tol <= (_ref1 = x - n.r.x) && _ref1 <= Math.max(si.x, sj.x) + n.tol);
       check3 = (Math.min(ri.y, rj.y) - m.tol <= (_ref2 = y - m.r.y) && _ref2 <= Math.max(ri.y, rj.y) + m.tol);
       check4 = (Math.min(si.y, sj.y) - n.tol <= (_ref3 = y - n.r.y) && _ref3 <= Math.max(si.y, sj.y) + n.tol);
-      Factory.sleep(ri);
-      Factory.sleep(rj);
-      Factory.sleep(si);
-      Factory.sleep(sj);
       if (check1 && check2 && check3 && check4) {
         return true;
       } else {
@@ -989,8 +1134,11 @@
       y: 0
     };
 
-    Force["eval"] = function(element, param, f) {
+    Force["eval"] = function(element, param, f, accumulateSwitch) {
       var emx, emy, epx, epy, fx, fy, r2, r3;
+      if (accumulateSwitch == null) {
+        accumulateSwitch = false;
+      }
       switch (param.type) {
         case 'constant':
           fx = param.fx;
@@ -1054,8 +1202,13 @@
           fx = -0.5 * (epx - emx) / param.tol;
           fy = -0.5 * (epy - emy) / param.tol;
       }
-      f.x = fx;
-      f.y = fy;
+      if (accumulateSwitch) {
+        f.x += fx;
+        f.y += fy;
+      } else {
+        f.x = fx;
+        f.y = fy;
+      }
       return f;
     };
 
@@ -1086,14 +1239,16 @@
     };
 
     Physics.verlet = function(element, fps) {
-      var Nstep, f, force, step;
-      Nstep = Math.round(Physics.fps / fps);
-      step = 0;
-      while (step < Nstep) {
-        element.f.scale(0.5 * element.dt * element.dt);
+      var Nstep, diff, dt, scale, step, tol, verlet_step;
+      verlet_step = function(dt) {
+        var accumulateSwitch, f;
+        if (dt == null) {
+          dt = element.dt;
+        }
+        element.f.scale(0.5 * dt * dt);
         element.dr.x = element.v.x;
         element.dr.y = element.v.y;
-        element.dr.scale(element.dt).add(element.f);
+        element.dr.scale(dt).add(element.f);
         element.r.add(element.dr);
         if (element.cleanup()) {
           return;
@@ -1101,15 +1256,27 @@
         f = Factory.spawn(Vec, element.f);
         element.f.x = 0;
         element.f.y = 0;
-        force = Factory.spawn(Vec);
+        accumulateSwitch = true;
         element.force_param.forEach(function(param) {
-          Force["eval"](element, param, force);
-          return element.f.add(force);
+          return Force["eval"](element, param, element.f, accumulateSwitch);
         });
-        Factory.sleep(force);
-        element.v.add(f.add(element.f).scale(0.5 * element.dt));
-        Factory.sleep(f);
+        element.v.add(f.add(element.f).scale(0.5 * dt));
+        return Factory.sleep(f);
+      };
+      Nstep = Math.round(Physics.fps / fps);
+      step = 0;
+      while (step < Nstep) {
+        verlet_step();
         ++step;
+      }
+      tol = .01;
+      if (Physics.fps > fps) {
+        diff = Physics.fps - fps;
+        scale = diff / Physics.fps;
+        dt = element.dt * scale;
+        if (dt > tol) {
+          verlet_step(dt);
+        }
       }
     };
 
@@ -1179,14 +1346,13 @@
       if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
-      line = Factory.spawn(Vec, d);
+      line = new Vec(d);
       line.x = line.x / d.dist;
       line.y = line.y / d.dist;
       overstep = Math.max(d.dmin - d.dist, 0);
       shift = 0.5 * (Math.max(m.tol, n.tol) + overstep);
       Reaction.elastic_collision(m, n, line, shift);
       m.reaction(n);
-      Factory.sleep(line);
     };
 
     Reaction.circle_polygon = function(circle, polygon, d) {
@@ -1211,159 +1377,39 @@
       dot_a = mseg.n.dot(d);
       dot_b = nseg.n.dot(d);
       if (Math.abs(dot_a) > Math.abs(dot_b)) {
-        normal = Factory.spawn(Vec, mseg.n).scale(dot_a / Math.abs(dot_a));
+        normal = new Vec(mseg.n).scale(dot_a / Math.abs(dot_a));
         segj = nseg;
       } else {
-        normal = Factory.spawn(Vec, nseg.n).scale(dot_b / Math.abs(dot_b));
+        normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b));
         segj = mseg;
       }
       shift = 0.5 * Math.max(m.tol, n.tol);
       Reaction.elastic_collision(m, n, normal, shift);
       m.reaction(n);
-      Factory.sleep(normal);
     };
 
     Reaction.elastic_collision = function(m, n, line, shift) {
       var cPar, dPar, iter, lshift, maxiter, reaction, uPar, uPerp, vPar, vPerp;
-      lshift = Factory.spawn(Vec, line).scale(shift);
+      lshift = new Vec(line).scale(shift);
       maxiter = 32;
       iter = 1;
       reaction = false;
-      while (Collision.check(m, n, reaction) && iter <= maxiter) {
+      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
         m.r = m.r.add(lshift);
         n.r = n.r.subtract(lshift);
         iter++;
       }
       cPar = m.v.dot(line);
-      vPar = Factory.spawn(Vec, line).scale(cPar);
-      vPerp = Factory.spawn(Vec, m.v).subtract(vPar);
+      vPar = new Vec(line).scale(cPar);
+      vPerp = new Vec(m.v).subtract(vPar);
       dPar = n.v.dot(line);
-      uPar = Factory.spawn(Vec, line).scale(dPar);
-      uPerp = Factory.spawn(Vec, n.v).subtract(uPar);
+      uPar = new Vec(line).scale(dPar);
+      uPerp = new Vec(n.v).subtract(uPar);
       m.v = uPar.add(vPerp);
       n.v = vPar.add(uPerp);
-      Factory.sleep(lshift);
-      Factory.sleep(vPar);
-      Factory.sleep(vPerp);
-      Factory.sleep(uPar);
-      Factory.sleep(uPerp);
     };
 
     return Reaction;
-
-  })();
-
-  this.ForceParam = (function() {
-
-    function ForceParam(config) {
-      this.config = config != null ? config : {};
-      this.type = this.config.type || 'constant';
-      switch (this.type) {
-        case 'constant':
-          this.fx = this.config.x || 0;
-          this.fy = this.config.y || 0;
-          break;
-        case 'friction':
-          this.alpha = this.config.alpha || 1;
-          this.vscale = this.config.vscale || .99;
-          this.vcut = this.config.vcut || 1e-2;
-          break;
-        case 'spring':
-          this.cx = this.config.cx || 0;
-          this.cy = this.config.cy || 0;
-          break;
-        case 'charge':
-        case 'gravity':
-          this.cx = this.config.cx || 0;
-          this.cy = this.config.cy || 0;
-          this.q = this.config.q || 1;
-          break;
-        case 'random':
-          this.xScale = this.config.xScale || 1;
-          this.yScale = this.config.yScale || 1;
-          this.fxBound = this.config.fxBound || 10;
-          this.fyBound = this.config.fyBound || 10;
-          break;
-        case 'gradient':
-          this.tol = this.config.tol || 0.1;
-          this.energy = this.config.energy || function(r) {};
-      }
-    }
-
-    return ForceParam;
-
-  })();
-
-  this.Vec = (function() {
-
-    function Vec(config) {
-      this.config = config != null ? config : {};
-      this.x = this.config.x || 0;
-      this.y = this.config.y || 0;
-    }
-
-    Vec.prototype.scale = function(c) {
-      this.x *= c;
-      this.y *= c;
-      return this;
-    };
-
-    Vec.prototype.add = function(v) {
-      this.x += v.x;
-      this.y += v.y;
-      return this;
-    };
-
-    Vec.prototype.subtract = function(v) {
-      this.x -= v.x;
-      this.y -= v.y;
-      return this;
-    };
-
-    Vec.prototype.rotate = function(a) {
-      var c, s;
-      c = Math.cos(a);
-      s = Math.sin(a);
-      this.x = c * this.x - s * this.y;
-      this.y = s * this.x + c * this.y;
-      return this;
-    };
-
-    Vec.prototype.dot = function(v) {
-      return this.x * v.x + this.y * v.y;
-    };
-
-    Vec.prototype.length_squared = function() {
-      return this.dot(this);
-    };
-
-    Vec.prototype.length = function() {
-      return Math.sqrt(this.length_squared());
-    };
-
-    Vec.prototype.normalize = function(length) {
-      var inverseLength;
-      if (length == null) {
-        length = 1;
-      }
-      inverseLength = length / this.length();
-      this.x *= inverseLength;
-      this.y *= inverseLength;
-      return this;
-    };
-
-    Vec.prototype.dist_squared = function(v) {
-      var dx, dy;
-      dx = this.x - v.x;
-      dy = this.y - v.y;
-      return dx * dx + dy * dy;
-    };
-
-    Vec.prototype.dist = function(v) {
-      return Math.sqrt(this.dist_squared(v));
-    };
-
-    return Vec;
 
   })();
 
@@ -1421,8 +1467,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 4,
-        bullet_speed: 35,
-        bullet_tick: 200
+        bullet_speed: 20,
+        bullet_tick: 60
       };
     };
 
@@ -1522,8 +1568,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 6,
-        bullet_speed: 25,
-        bullet_tick: 300
+        bullet_speed: 12,
+        bullet_tick: 90
       };
     };
 
@@ -1602,8 +1648,8 @@
         bullet_stroke: 'none',
         bullet_fill: '#099',
         bullet_size: 5,
-        bullet_speed: 30,
-        bullet_tick: 250
+        bullet_speed: 15,
+        bullet_tick: 100
       };
     };
 
@@ -1627,12 +1673,8 @@
         return true;
       }
       if (n.is_bullet) {
-        if (!this.is_destroyed) {
-          n.destroy();
-        }
         return true;
       }
-      this.destroy();
       n.deplete(this.power);
       if (n.depleted()) {
         Gamescore.increment_value();
@@ -1641,6 +1683,7 @@
         }
         n.destroy();
       }
+      this.destroy();
       return true;
     };
 
@@ -1658,7 +1701,6 @@
       this.config = config != null ? config : {};
       this.config.size = 25;
       Drone.__super__.constructor.call(this, this.config);
-      this.stop();
       this.max_speed = 12;
       this.energy = this.config.energy || 10;
       this.image.remove();
@@ -1667,7 +1709,7 @@
     }
 
     Drone.prototype.deplete = function(power) {
-      var dur, fill, fill0, last;
+      var dur, fill, fill0, last, _ref;
       if (power == null) {
         power = 1;
       }
@@ -1679,8 +1721,10 @@
       if (last !== this.image) {
         last.remove();
       }
-      this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style("fill", fill0).style('opacity', 0).transition().duration(dur).ease('sqrt').style('opacity', 0.6).transition().duration(dur).ease('linear').style('fill', fill).transition().duration(dur).ease('linear').style('opacity', (1 - this.energy / this.config.energy) * .4);
-      return Game.sound.play('shot');
+      this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
+      if ((_ref = Game.sound) != null) {
+        _ref.play('shot');
+      }
     };
 
     Drone.prototype.depleted = function() {
@@ -1692,7 +1736,7 @@
     };
 
     Drone.prototype.destroy = function(effects) {
-      var dur,
+      var dur, _ref,
         _this = this;
       if (effects == null) {
         effects = true;
@@ -1705,11 +1749,12 @@
           _this.g.selectAll('circle').remove();
           return Drone.__super__.destroy.call(_this);
         });
-        if (Game.sound) {
-          return Game.sound.play('boom');
+        if ((_ref = Game.sound) != null) {
+          _ref.play('boom');
         }
       } else {
-        return Drone.__super__.destroy.call(this);
+        Drone.__super__.destroy.apply(this, arguments);
+        this.g.selectAll('circle').remove();
       }
     };
 
@@ -1740,13 +1785,14 @@
   })(Circle);
 
   this.Dronewar = (function(_super) {
+    var droneParam;
 
     __extends(Dronewar, _super);
 
     Dronewar.bg_img = GameAssetsUrl + 'space_background.jpg';
 
     function Dronewar() {
-      var img,
+      var audioSwitch, _ref,
         _this = this;
       this.reset = function() {
         return Dronewar.prototype.reset.apply(_this, arguments);
@@ -1760,7 +1806,7 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 1;
+      this.initialN = this.config.initialN || 2;
       this.N = this.initialN;
       this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
@@ -1770,29 +1816,56 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
-      img = new Image();
-      img.src = Ship.viper().url;
-      img.src = Ship.sidewinder().url;
-      img.src = Ship.fang().url;
-      img.src = Drone.url;
-      Game.sound = new Howl({
-        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
-        sprite: {
-          music: [0, 10782],
-          boom: [10782, 856],
-          shot: [11639, 234]
-        }
-      });
-      Game.sound.play('music');
+      audioSwitch = false;
+      if (audioSwitch) {
+        Game.sound = new Howl({
+          urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+          sprite: {
+            music: [0, 10782],
+            boom: [10782, 856],
+            shot: [11639, 234]
+          }
+        });
+      }
+      if ((_ref = Game.sound) != null) {
+        _ref.play('music');
+      }
     }
 
+    Dronewar.prototype.launch_drone = function(d) {
+      var d1, dx, dy;
+      dx = this.root.r.x - d.r.x;
+      dy = this.root.r.y - d.r.y;
+      d1 = Math.sqrt(dx * dx + dy * dy);
+      dx /= d1;
+      dy /= d1;
+      d.v.x = this.N * dx * this.speed;
+      d.v.y = this.N * dy * this.speed;
+      return d.start();
+    };
+
+    droneParam = {
+      type: null,
+      cx: null,
+      cy: null,
+      q: null
+    };
+
+    Dronewar.prototype.drone_param = function() {
+      droneParam.type = 'charge';
+      droneParam.cx = this.root.r.x;
+      droneParam.cy = this.root.r.y;
+      droneParam.q = this.root.charge * 500 * this.speed * this.speed;
+      return droneParam;
+    };
+
     Dronewar.prototype.level = function() {
-      var dur, i, multiplier, n, newAttacker, offset, _i, _ref,
-        _this = this;
+      var dur, i, multiplier, n, newAttacker, offset, _i, _ref;
       this.svg.style("cursor", "none");
       this.element = [];
       multiplier = 10;
       offset = 150;
+      this.speed = .04 + Gamescore.value / 1000000;
       for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = Factory.spawn(Drone, {
           energy: this.N * multiplier + offset
@@ -1800,24 +1873,10 @@
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
         this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
-        this.element[i].draw();
+        this.launch_drone(this.element[i]);
       }
       n = this.element.length * 2;
-      this.speed = .04 + Gamescore.value / 1000000;
       dur = 300 + 200 / (100 + Gamescore.value);
-      d3.selectAll(".drone").data(this.element).style("opacity", 0).transition().delay(function(d, i) {
-        return i * dur;
-      }).duration(dur * 4).style("opacity", 1).each('end', function(d) {
-        var d1, dx, dy;
-        dx = _this.root.r.x - d.r.x;
-        dy = _this.root.r.y - d.r.y;
-        d1 = Math.sqrt(dx * dx + dy * dy);
-        dx /= d1;
-        dy /= d1;
-        d.v.x = _this.N * dx * _this.speed;
-        d.v.y = _this.N * dy * _this.speed;
-        return d.start();
-      });
     };
 
     Dronewar.prototype.update_drone = function() {
@@ -1825,16 +1884,11 @@
       if (!(this.element.length > 0)) {
         return;
       }
-      this.param = {
-        type: 'charge',
-        cx: this.root.r.x,
-        cy: this.root.r.y,
-        q: this.root.charge * 500 * this.speed * this.speed
-      };
+      this.drone_param();
       _ref = this.element;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         drone = _ref[_i];
-        drone.force_param[0] = this.param;
+        drone.force_param[0] = droneParam;
       }
     };
 
@@ -1873,7 +1927,7 @@
     };
 
     Dronewar.prototype.start = function() {
-      var dur, fang, go, how, prompt, root, sidewinder, title, viper,
+      var dur, fang, go, how, prompt, root, sidewinder, title, viper, _ref,
         _this = this;
       this.root.draw();
       this.root.stop();
@@ -1936,12 +1990,14 @@
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
-      Game.sound.play('music');
+      if ((_ref = Game.sound) != null) {
+        _ref.play('music');
+      }
       Dronewar.__super__.start.apply(this, arguments);
     };
 
     Dronewar.prototype.progress = function() {
-      var all_is_destroyed, dur;
+      var all_is_destroyed, drone_increment, dur;
       this.update_drone();
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
@@ -1957,7 +2013,8 @@
         return element.is_destroyed;
       });
       if (all_is_destroyed) {
-        this.N++;
+        drone_increment = 4;
+        this.N += drone_increment;
         this.charge *= 20;
         this.level();
       }
@@ -2024,7 +2081,7 @@
       this.r.y = Game.height - 180;
       this.angle = 0;
       this.angleStep = 2 * Math.PI / 60;
-      this.lastfire = 0;
+      this.lastfire = void 0;
       this.charge = 5e4;
       this.stroke("none");
       this.fill("#000");
@@ -2043,7 +2100,7 @@
       if (!this.collision) {
         return;
       }
-      maxJump = 30;
+      maxJump = 70;
       xy = this.apply_limits(xy);
       if (Math.abs(this.r.x - xy[0]) > maxJump || Math.abs(this.r.y - xy[1]) > maxJump) {
         this.redraw_interp(xy);
@@ -2058,7 +2115,7 @@
     };
 
     Root.prototype.redraw_interp = function(xy) {
-      var Nstep, count, dr, r1, redraw_func, step,
+      var Nstep, count, redraw_func, step,
         _this = this;
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
@@ -2070,24 +2127,22 @@
         return;
       }
       this.drawing = true;
-      r1 = Factory.spawn(Vec, {
+      this.dr.init({
         x: xy[0],
         y: xy[1]
       });
       step = 20;
-      dr = Factory.spawn(Vec, r1).subtract(this.r);
-      Factory.sleep(r1);
-      Nstep = Math.floor(dr.length() / step);
+      this.dr.subtract(this.r);
+      Nstep = Math.floor(this.dr.length() / step);
       count = 1;
-      dr.normalize(step);
+      this.dr.normalize(step);
       redraw_func = function() {
         if (count > Nstep) {
           _this.drawing = false;
-          Factory.sleep(dr);
           return true;
         } else {
           if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
-            _this.r.add(dr);
+            _this.r.add(_this.dr);
           }
           count++;
           return false;
@@ -2122,7 +2177,10 @@
       if (this.is_destroyed) {
         return true;
       }
-      if (!(this.collision && (timestamp - this.lastfire) >= this.wait)) {
+      if (this.lastfire === void 0) {
+        this.lastfire = timestamp;
+      }
+      if (!((timestamp - this.lastfire) >= this.wait)) {
         return;
       }
       this.lastfire = timestamp;
@@ -2143,6 +2201,7 @@
       bullet.v.y = this.bullet_speed * y;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
+      bullet.start();
     };
 
     Root.prototype.ship = function(ship, dur) {
@@ -2192,11 +2251,10 @@
         return;
       }
       Gamescore.lives -= 1;
-      n.destroy();
       N = 240;
       fill = '#ff0';
       dur = 120;
-      return this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).ease('sqrt').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill()).transition().duration(dur / 5).attr('opacity', 0);
+      return this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).ease('poly(0.5)').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill()).transition().duration(dur / 5).attr('opacity', 0);
     };
 
     Root.prototype.game_over = function(dur) {

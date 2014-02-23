@@ -6,7 +6,6 @@ class @Collision
     return unless @list.length > 0
     data = @list.filter((d) -> d.collision).map((d) -> {x: d.r.x, y: d.r.y, d: d})
     @quadtree = d3.geom.quadtree(data)
-    @quadtree
 
   @quadtree = @update_quadtree() # initialize
 
@@ -14,7 +13,7 @@ class @Collision
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false
-    while Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+    while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.tick() # update position unless root or bullet 
       n.tick() # update position unless root or bullet 
       iter++ # increment the iteration counter
@@ -77,9 +76,7 @@ class @Collision
           )
       )
     Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
-    collision = d.collision
-    Factory.sleep(d)
-    collision
+    d
   
   @rectangle_rectangle: (m, n) ->
     m.BB() # update bounding box 
@@ -101,8 +98,8 @@ class @Collision
   @circle_polygon: (circle, polygon) ->
     if @use_bb # bounding box approximation switch
       if @rectangle_rectangle(circle, polygon)
-        i = nearest_node(polygon, circle) # polygon node closest to circle's center
-        d = circle_lineseg_dist(circle, polygon, i)
+        i   = nearest_node(polygon, circle) # polygon node closest to circle's center
+        d   = circle_lineseg_dist(circle, polygon, i)
         d.i = i
         d.collision = true
       else d = collision: false
@@ -119,7 +116,7 @@ class @Collision
   @polygon_polygon: (m, n) -> 
     if @use_bb 
       if @rectangle_rectangle(m, n)
-        d = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
+        d   = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
         d.i = nearest_node(m, n) # polygon node closest to the other polygon's center
         d.j = nearest_node(n, m) # node closest to the other polygon's center
         d.collision = true
@@ -140,56 +137,52 @@ class @Collision
     
   nearest_node = (m, n) -> 
     nn  = m.path[0] # initialize
-    vec = Factory.spawn(Vec, nn).add(m.r).subtract(n.r)
-    nnd = vec.length_squared()
-    Factory.sleep(vec)
+    nnd = (nn.x + m.r.x - n.r.x) * (nn.x + m.r.x - n.r.x) + (nn.y + m.r.y - n.r.y) * (nn.y + m.r.y - n.r.y)
     for i in [1..@path.length - 2]
       node = m.path[i]
-      vec  = Factory.spawn(Vec, node).add(m.r).subtract(n.r)
-      d    = vec.length_squared()
-      Factory.sleep(vec)
-      nn = m.path[i] if d < nnd
+      d    = (node.x + m.r.x - n.r.x) * (node.x + m.r.x - n.r.x) + (node.y + m.r.y - n.r.y) * (node.y + m.r.y - n.r.y)
+      nn   = m.path[i] if d < nnd
     m.path.indexOf(nn) # node of polygon m closest to the other element n's center
 
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
-    d      = Factory.spawn(Vec, m.r).subtract(n.r)
-    d.dist = d.length() # Euclidean distance i.e. Pythagorean theorem
+    d      = {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
+    d.dist = Math.sqrt(d.x * d.x + d.y * d.y) # Euclidean distance i.e. Pythagorean theorem
     d.dmin = m.size + n.size # minimum allowed distance
     d
 
   circle_lineseg_dist = (circle, polygon, i) -> # helper function for computing distance related quantities between circles and line segments/polygons
     ri = polygon.path[i]
     rj = z_check(polygon.path, i)
-    r  = Factory.spawn(Vec, rj).subtract(ri)
-    rr = r.length_squared() 
-    dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r)
-    t  = r.dot(dr) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
+    r  = {x: rj.x - ri.x, y: rj.y - ri.y}
+    rr = r.x * r.x + r.y * r.y
+    dr = {x: circle.r.x - ri.x - polygon.r.x, y: circle.r.y - ri.y - polygon.r.y}
+    t  = (r.x * dr.x + r.y * dr.y) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
     if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
     else if t > 1 # ditto with respect to other node j
-      Factory.sleep(dr)
-      dr   = Factory.spawn(Vec, circle.r).subtract(rj).subtract(polygon.r)
+      dr.x = circle.r.x - rj.x - polygon.r.x
+      dr.y = circle.r.y - rj.y - polygon.r.y
     else # compute the distance from the point to the polygon
-      tr   = Factory.spawn(Vec, r).scale(t).add(ri).add(polygon.r)
-      Factory.sleep(dr)
-      dr   = Factory.spawn(Vec, circle.r).subtract(tr)
-      Factory.sleep(tr)
-    d  = Factory.spawn(Vec, {
+      dr.x = r.x * t + ri.x + polygon.r.x
+      dr.y = r.y * t + ri.y + polygon.r.y
+      dr.x *= -1
+      dr.y *= -1
+      dr.x += circle.r.x
+      dr.y += circle.r.y
+    d  = # literal definiton of the output object
       t: t
       x: dr.x
       y: dr.y
       r: [r.x, r.y]
       rr: rr
-      dist: dr.length()
-    })
-    Factory.sleep(r)
-    Factory.sleep(dr)
-    return d
+      dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
       
   lineseg_intersect = (m, n, i, j) -> # see http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=geometry2 for details
-    ri = Factory.spawn(Vec, m.path[i])
-    rj = Factory.spawn(Vec, z_check(m.path, i))
-    si = Factory.spawn(Vec, n.path[j])
-    sj = Factory.spawn(Vec, z_check(n.path, j))
+    ri  = {x: m.path[i].x, y: m.path[i].y}
+    z   = z_check(m.path, i)
+    rj  = {x: z.x, y: z.y}
+    si  = {x: n.path[j].x, y: n.path[j].y}
+    z   = z_check(n.path, j)
+    sj  = {x: z.x, y: z.y} 
     A1  = rj.y - ri.y
     B1  = ri.x - rj.x
     C1  = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y)
@@ -197,22 +190,13 @@ class @Collision
     B2  = si.x - sj.x
     C2  = A2 * (si.x + n.r.x) + B2 * (si.y + n.r.y)
     det = A1 * B2 - A2 * B1
-    if det == 0 # lines are parallel
-      Factory.sleep(ri)
-      Factory.sleep(rj)
-      Factory.sleep(si)
-      Factory.sleep(sj)    
-      return false 
+    return false if det == 0 # lines are parallel
     x = (B2 * C1 - B1 * C2) / det
     y = (A1 * C2 - A2 * C1) / det
     check1 = Math.min(ri.x, rj.x) - m.tol <= x - m.r.x <= Math.max(ri.x, rj.x) + m.tol
     check2 = Math.min(si.x, sj.x) - n.tol <= x - n.r.x <= Math.max(si.x, sj.x) + n.tol
     check3 = Math.min(ri.y, rj.y) - m.tol <= y - m.r.y <= Math.max(ri.y, rj.y) + m.tol
     check4 = Math.min(si.y, sj.y) - n.tol <= y - n.r.y <= Math.max(si.y, sj.y) + n.tol
-    Factory.sleep(ri)
-    Factory.sleep(rj)
-    Factory.sleep(si)
-    Factory.sleep(sj)    
     if check1 and check2 and check3 and check4
       true # intersection occurs on both line segments
     else 
