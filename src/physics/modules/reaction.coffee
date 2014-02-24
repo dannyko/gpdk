@@ -4,7 +4,7 @@ class @Reaction # reaction module with no class variables only class and private
 
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
     return if m.destroy_check(n) || n.destroy_check(m)
-    line   = new Vec(d)
+    line   = Factory.spawn(Vec, d)
     line.x = line.x / d.dist # normalize to get a unit vector
     line.y = line.y / d.dist # normalize to get a unit vector
     overstep = Math.max(d.dmin - d.dist, 0) # account for overstep since simulated movement occurs in discrete jumps
@@ -30,10 +30,10 @@ class @Reaction # reaction module with no class variables only class and private
     dot_a   = mseg.n.dot(d)
     dot_b   = nseg.n.dot(d)
     if Math.abs(dot_a) > Math.abs(dot_b) 
-      normal = new Vec(mseg.n).scale(dot_a / Math.abs(dot_a)) 
+      normal = Factory.spawn(Vec, mseg.n).scale(dot_a / Math.abs(dot_a)) 
       segj     = nseg
     else 
-      normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
+      normal = Factory.spawn(Vec, nseg.n).scale(dot_b / Math.abs(dot_b)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
       segj   = mseg
     shift  = 0.5 * Math.max(m.tol, n.tol)
     Reaction.elastic_collision(m, n, normal, shift)
@@ -41,7 +41,7 @@ class @Reaction # reaction module with no class variables only class and private
     return
     
   @elastic_collision: (m, n, line, shift) ->
-    lshift   = new Vec(line).scale(shift) # the amount to shift the elements by for each iteration as a 2D Vector
+    lshift   = Factory.spawn(Vec, line).scale(shift) # the amount to shift the elements by for each iteration as a 2D Vector
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false # input for collision check to prevent reaction being called while the while loop executes
@@ -50,11 +50,23 @@ class @Reaction # reaction module with no class variables only class and private
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 
       iter++ # increment the iteration counter
     cPar    = m.v.dot(line) # projection of velocity onto the line (dot/inner-product of two vectors)
-    vPar    = new Vec(line).scale(cPar) # the parallel component of the velocity to the line
-    vPerp   = new Vec(m.v).subtract(vPar) # the perpendicular component of the velocity to the line 
+    vPar    = Factory.spawn(Vec, line).scale(cPar) # the parallel component of the velocity to the line
+    vPerp   = Factory.spawn(Vec, m.v).subtract(vPar) # the perpendicular component of the velocity to the line 
     dPar    = n.v.dot(line) # projection of neighbor-velocity onto the line
-    uPar    = new Vec(line).scale(dPar) # the parallel component of the neighbor-velocity to the line
-    uPerp   = new Vec(n.v).subtract(uPar) # the perpendicular component of the neighbor-velocity to the line 
-    m.v     = uPar.add(vPerp) # velocity vector for m satisfying the conditions for perfectly elastic collsions
-    n.v     = vPar.add(uPerp) # velocity vector for n satisfying the conditions for perfectly elastic collsions
+    uPar    = Factory.spawn(Vec, line).scale(dPar) # the parallel component of the neighbor-velocity to the line
+    uPerp   = Factory.spawn(Vec, n.v).subtract(uPar) # the perpendicular component of the neighbor-velocity to the line 
+    uPar.add(vPerp) # velocity vector for m satisfying the conditions for perfectly elastic collsions
+    vPar.add(uPerp) # velocity vector for n satisfying the conditions for perfectly elastic collsions
+    # update element velocities explicitly, without copying any object references, to avoid bugs/memory leaks/other issues
+    m.v.x = uPar.x
+    m.v.y = uPar.y
+    n.v.x = vPar.x
+    n.v.y = vPar.y
+    # cleanup to reduce garbage collection / memory leaks:
+    Factory.sleep(line)
+    Factory.sleep(lshift)
+    Factory.sleep(vPar)
+    Factory.sleep(vPerp)
+    Factory.sleep(uPar)
+    Factory.sleep(uPerp)
     return

@@ -771,7 +771,7 @@
   })();
 
   this.Collision = (function() {
-    var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, nearest_node, z_check;
+    var circle_circle_dist, circle_lineseg_dist, lineseg_intersect, name, nearest_node, sort, z_check;
 
     function Collision() {}
 
@@ -855,13 +855,20 @@
       return _results;
     };
 
+    name = [null, null];
+
+    sort = [null, null];
+
     Collision.check = function(ei, ej, reaction) {
-      var d, m, n, name, reaction_type, sort;
+      var d, m, n, reaction_type;
       if (reaction == null) {
         reaction = true;
       }
-      name = [ei.type, ej.type];
-      sort = [ei.type, ej.type].sort();
+      name[0] = ei.type;
+      name[1] = ej.type;
+      sort[0] = ei.type;
+      sort[1] = ej.type;
+      sort.sort();
       if (name[0] === sort[0] && name[1] === sort[1]) {
         m = ei;
         n = ej;
@@ -1049,25 +1056,11 @@
     };
 
     lineseg_intersect = function(m, n, i, j) {
-      var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, z, _ref, _ref1, _ref2, _ref3;
-      ri = {
-        x: m.path[i].x,
-        y: m.path[i].y
-      };
-      z = z_check(m.path, i);
-      rj = {
-        x: z.x,
-        y: z.y
-      };
-      si = {
-        x: n.path[j].x,
-        y: n.path[j].y
-      };
-      z = z_check(n.path, j);
-      sj = {
-        x: z.x,
-        y: z.y
-      };
+      var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, _ref, _ref1, _ref2, _ref3;
+      ri = Factory.spawn(Vec, m.path[i]);
+      rj = Factory.spawn(Vec, z_check(m.path, i));
+      si = Factory.spawn(Vec, n.path[j]);
+      sj = Factory.spawn(Vec, z_check(n.path, j));
       A1 = rj.y - ri.y;
       B1 = ri.x - rj.x;
       C1 = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y);
@@ -1084,6 +1077,10 @@
       check2 = (Math.min(si.x, sj.x) - n.tol <= (_ref1 = x - n.r.x) && _ref1 <= Math.max(si.x, sj.x) + n.tol);
       check3 = (Math.min(ri.y, rj.y) - m.tol <= (_ref2 = y - m.r.y) && _ref2 <= Math.max(ri.y, rj.y) + m.tol);
       check4 = (Math.min(si.y, sj.y) - n.tol <= (_ref3 = y - n.r.y) && _ref3 <= Math.max(si.y, sj.y) + n.tol);
+      Factory.sleep(ri);
+      Factory.sleep(rj);
+      Factory.sleep(si);
+      Factory.sleep(sj);
       if (check1 && check2 && check3 && check4) {
         return true;
       } else {
@@ -1346,7 +1343,7 @@
       if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
-      line = new Vec(d);
+      line = Factory.spawn(Vec, d);
       line.x = line.x / d.dist;
       line.y = line.y / d.dist;
       overstep = Math.max(d.dmin - d.dist, 0);
@@ -1377,10 +1374,10 @@
       dot_a = mseg.n.dot(d);
       dot_b = nseg.n.dot(d);
       if (Math.abs(dot_a) > Math.abs(dot_b)) {
-        normal = new Vec(mseg.n).scale(dot_a / Math.abs(dot_a));
+        normal = Factory.spawn(Vec, mseg.n).scale(dot_a / Math.abs(dot_a));
         segj = nseg;
       } else {
-        normal = new Vec(nseg.n).scale(dot_b / Math.abs(dot_b));
+        normal = Factory.spawn(Vec, nseg.n).scale(dot_b / Math.abs(dot_b));
         segj = mseg;
       }
       shift = 0.5 * Math.max(m.tol, n.tol);
@@ -1390,7 +1387,7 @@
 
     Reaction.elastic_collision = function(m, n, line, shift) {
       var cPar, dPar, iter, lshift, maxiter, reaction, uPar, uPerp, vPar, vPerp;
-      lshift = new Vec(line).scale(shift);
+      lshift = Factory.spawn(Vec, line).scale(shift);
       maxiter = 32;
       iter = 1;
       reaction = false;
@@ -1400,13 +1397,23 @@
         iter++;
       }
       cPar = m.v.dot(line);
-      vPar = new Vec(line).scale(cPar);
-      vPerp = new Vec(m.v).subtract(vPar);
+      vPar = Factory.spawn(Vec, line).scale(cPar);
+      vPerp = Factory.spawn(Vec, m.v).subtract(vPar);
       dPar = n.v.dot(line);
-      uPar = new Vec(line).scale(dPar);
-      uPerp = new Vec(n.v).subtract(uPar);
-      m.v = uPar.add(vPerp);
-      n.v = vPar.add(uPerp);
+      uPar = Factory.spawn(Vec, line).scale(dPar);
+      uPerp = Factory.spawn(Vec, n.v).subtract(uPar);
+      uPar.add(vPerp);
+      vPar.add(uPerp);
+      m.v.x = uPar.x;
+      m.v.y = uPar.y;
+      n.v.x = vPar.x;
+      n.v.y = vPar.y;
+      Factory.sleep(line);
+      Factory.sleep(lshift);
+      Factory.sleep(vPar);
+      Factory.sleep(vPerp);
+      Factory.sleep(uPar);
+      Factory.sleep(uPerp);
     };
 
     return Reaction;
@@ -1806,7 +1813,7 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 2;
+      this.initialN = this.config.initialN || 10;
       this.N = this.initialN;
       this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
@@ -1864,9 +1871,9 @@
       this.svg.style("cursor", "none");
       this.element = [];
       multiplier = 10;
-      offset = 150;
+      offset = 50;
       this.speed = .04 + Gamescore.value / 1000000;
-      for (i = _i = 0, _ref = this.N - 1; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+      for (i = _i = 0, _ref = this.N; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = Factory.spawn(Drone, {
           energy: this.N * multiplier + offset
         });
@@ -2013,7 +2020,7 @@
         return element.is_destroyed;
       });
       if (all_is_destroyed) {
-        drone_increment = 4;
+        drone_increment = 2;
         this.N += drone_increment;
         this.charge *= 20;
         this.level();
@@ -2080,7 +2087,7 @@
       this.r.x = Game.width / 2;
       this.r.y = Game.height - 180;
       this.angle = 0;
-      this.angleStep = 2 * Math.PI / 60;
+      this.angleStep = 2 * Math.PI / 30;
       this.lastfire = void 0;
       this.charge = 5e4;
       this.stroke("none");

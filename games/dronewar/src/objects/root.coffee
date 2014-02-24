@@ -12,7 +12,7 @@ class @Root extends Polygon
     @r.x           = Game.width / 2
     @r.y           = Game.height - 180
     @angle         = 0
-    @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
+    @angleStep     = 2 * Math.PI / 30 # initialize per-step angle change magnitude 
     @lastfire      = undefined # initialize timestamp
     @charge        = 5e4 # sets drone interaction strength
     @stroke("none")

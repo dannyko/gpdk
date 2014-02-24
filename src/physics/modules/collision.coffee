@@ -44,10 +44,16 @@ class @Collision
       length = @list.length
       i++
 
+  name = [null, null] # initialize static array instance
+  sort = [null, null] # initialize static array instance
+
   @check: (ei, ej, reaction = true) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
-    name = [ei.type, ej.type]
-    sort = [ei.type, ej.type].sort() # sort names in alphabetical order
+    name[0] = ei.type
+    name[1] = ej.type
+    sort[0] = ei.type
+    sort[1] = ej.type
+    sort.sort() # sort names in alphabetical order
     if name[0] == sort[0] and name[1] == sort[1] # m and n are neighboring elements that need to resolve a collision event
       m = ei 
       n = ej
@@ -177,12 +183,10 @@ class @Collision
       dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
       
   lineseg_intersect = (m, n, i, j) -> # see http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=geometry2 for details
-    ri  = {x: m.path[i].x, y: m.path[i].y}
-    z   = z_check(m.path, i)
-    rj  = {x: z.x, y: z.y}
-    si  = {x: n.path[j].x, y: n.path[j].y}
-    z   = z_check(n.path, j)
-    sj  = {x: z.x, y: z.y} 
+    ri  = Factory.spawn(Vec, m.path[i]) # {x: m.path[i].x, y: m.path[i].y}
+    rj  = Factory.spawn(Vec, z_check(m.path, i)) # {x: z.x, y: z.y}
+    si  = Factory.spawn(Vec, n.path[j]) # {x: n.path[j].x, y: n.path[j].y}
+    sj  = Factory.spawn(Vec, z_check(n.path, j)) # {x: z.x, y: z.y} 
     A1  = rj.y - ri.y
     B1  = ri.x - rj.x
     C1  = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y)
@@ -197,6 +201,10 @@ class @Collision
     check2 = Math.min(si.x, sj.x) - n.tol <= x - n.r.x <= Math.max(si.x, sj.x) + n.tol
     check3 = Math.min(ri.y, rj.y) - m.tol <= y - m.r.y <= Math.max(ri.y, rj.y) + m.tol
     check4 = Math.min(si.y, sj.y) - n.tol <= y - n.r.y <= Math.max(si.y, sj.y) + n.tol
+    Factory.sleep(ri)
+    Factory.sleep(rj)
+    Factory.sleep(si)
+    Factory.sleep(sj)
     if check1 and check2 and check3 and check4
       true # intersection occurs on both line segments
     else 
