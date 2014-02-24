@@ -38,15 +38,18 @@
     };
 
     Factory.sleep = function(instance) {
+      var _ref;
       if (instance === void 0) {
         console.log('Factory.sleep(): undefined input', instance);
         return;
       }
       if (instance.is_sleeping === true) {
-        console.log('Factory.sleep(): sleeping instance', this.inactive[instance.constructor].indexOf(instance));
+        console.log('Factory.sleep(): sleeping instance', instance, this.inactive[instance.constructor].indexOf(instance));
         return;
       }
-      this.inactive[instance.constructor].push(instance);
+      if ((_ref = this.inactive[instance.constructor]) != null) {
+        _ref.push(instance);
+      }
     };
 
     return Factory;
@@ -301,6 +304,7 @@
       } else {
         Collision.list.push(this);
         this.is_destroyed = false;
+        this.draw();
         this.g.style('opacity', 1);
       }
     };
@@ -320,6 +324,9 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
+      if (this.is_destroyed) {
+        return;
+      }
       if (this._cleanup && this.offscreen()) {
         this.destroy();
       }
@@ -807,7 +814,7 @@
       iter = 1;
       reaction = false;
       _results = [];
-      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
+      while (Collision.check(m, n, reaction) && iter <= maxiter) {
         m.tick();
         n.tick();
         _results.push(iter++);
@@ -860,7 +867,7 @@
     sort = [null, null];
 
     Collision.check = function(ei, ej, reaction) {
-      var d, m, n, reaction_type;
+      var collision, d, m, n, reaction_type;
       if (reaction == null) {
         reaction = true;
       }
@@ -898,7 +905,9 @@
       if (d.collision && reaction) {
         Reaction[reaction_type](m, n, d);
       }
-      return d;
+      collision = d.collision;
+      Factory.sleep(d);
+      return collision;
     };
 
     Collision.rectangle_rectangle = function(m, n) {
@@ -1009,10 +1018,7 @@
 
     circle_circle_dist = function(m, n) {
       var d;
-      d = {
-        x: m.r.x - n.r.x,
-        y: m.r.y - n.r.y
-      };
+      d = Factory.spawn(Vec, m.r).subtract(n.r);
       d.dist = Math.sqrt(d.x * d.x + d.y * d.y);
       d.dmin = m.size + n.size;
       return d;
@@ -1022,15 +1028,9 @@
       var d, dr, r, ri, rj, rr, t;
       ri = polygon.path[i];
       rj = z_check(polygon.path, i);
-      r = {
-        x: rj.x - ri.x,
-        y: rj.y - ri.y
-      };
+      r = Factory.spawn(Vec, rj);
       rr = r.x * r.x + r.y * r.y;
-      dr = {
-        x: circle.r.x - ri.x - polygon.r.x,
-        y: circle.r.y - ri.y - polygon.r.y
-      };
+      dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r);
       t = (r.x * dr.x + r.y * dr.y) / rr;
       if (t < 0) {
 
@@ -1045,7 +1045,7 @@
         dr.x += circle.r.x;
         dr.y += circle.r.y;
       }
-      return d = {
+      d = {
         t: t,
         x: dr.x,
         y: dr.y,
@@ -1053,6 +1053,9 @@
         rr: rr,
         dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
       };
+      Factory.sleep(r);
+      Factory.sleep(dr);
+      return d;
     };
 
     lineseg_intersect = function(m, n, i, j) {
@@ -1391,7 +1394,7 @@
       maxiter = 32;
       iter = 1;
       reaction = false;
-      while (Collision.check(m, n, reaction).collision && iter <= maxiter) {
+      while (Collision.check(m, n, reaction) && iter <= maxiter) {
         m.r = m.r.add(lshift);
         n.r = n.r.subtract(lshift);
         iter++;
@@ -1813,8 +1816,9 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 10;
+      this.initialN = this.config.initialN || 0;
       this.N = this.initialN;
+      this.maxN = 15;
       this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
@@ -1867,20 +1871,27 @@
     };
 
     Dronewar.prototype.level = function() {
-      var dur, i, multiplier, n, newAttacker, offset, _i, _ref;
+      var drone, drone_config, dur, i, multiplier, n, newAttacker, offset, _i, _j, _len, _ref, _ref1;
       this.svg.style("cursor", "none");
       this.element = [];
       multiplier = 10;
       offset = 50;
       this.speed = .04 + Gamescore.value / 1000000;
+      drone_config = {
+        energy: this.N * multiplier + offset,
+        hidden: true
+      };
       for (i = _i = 0, _ref = this.N; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        newAttacker = Factory.spawn(Drone, {
-          energy: this.N * multiplier + offset
-        });
+        newAttacker = Factory.spawn(Drone, drone_config);
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
         this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
-        this.launch_drone(this.element[i]);
+      }
+      this.update_drone();
+      _ref1 = this.element;
+      for (_j = 0, _len = _ref1.length; _j < _len; _j++) {
+        drone = _ref1[_j];
+        this.launch_drone(drone);
       }
       n = this.element.length * 2;
       dur = 300 + 200 / (100 + Gamescore.value);
@@ -2020,8 +2031,10 @@
         return element.is_destroyed;
       });
       if (all_is_destroyed) {
-        drone_increment = 2;
-        this.N += drone_increment;
+        drone_increment = 3;
+        if (!(this.N >= this.maxN)) {
+          this.N += drone_increment;
+        }
         this.charge *= 20;
         this.level();
       }
@@ -2044,6 +2057,7 @@
   })(Game);
 
   this.Root = (function(_super) {
+    var bullet_config;
 
     __extends(Root, _super);
 
@@ -2194,14 +2208,18 @@
       this.shoot();
     };
 
+    bullet_config = {
+      power: null,
+      size: null
+    };
+
     Root.prototype.shoot = function() {
       var bullet, x, y;
       x = Math.cos(this.angle - Math.PI * 0.5);
       y = Math.sin(this.angle - Math.PI * 0.5);
-      bullet = Factory.spawn(Bullet, {
-        power: this.bullet_size * this.bullet_size,
-        size: this.bullet_size
-      });
+      bullet_config.power = this.bullet_size * this.bullet_size;
+      bullet_config.size = this.bullet_size;
+      bullet = Factory.spawn(Bullet, bullet_config);
       bullet.r.x = this.r.x + x * (this.size / 3 + this.bullet_size);
       bullet.r.y = this.r.y + y * 20;
       bullet.v.x = this.bullet_speed * x;

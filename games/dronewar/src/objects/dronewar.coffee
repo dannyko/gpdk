@@ -6,8 +6,9 @@ class @Dronewar extends Game
     super
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 10
+    @initialN = @config.initialN || 0
     @N        = @initialN
+    @maxN     = 15
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
@@ -72,12 +73,15 @@ class @Dronewar extends Game
     multiplier = 10
     offset     = 50
     @speed     = .04 + Gamescore.value / 1000000
+    drone_config = {energy: @N * multiplier + offset, hidden: true}
     for i in [0...@N] # create element list
-      newAttacker = Factory.spawn(Drone, {energy: @N * multiplier + offset})
+      newAttacker = Factory.spawn(Drone, drone_config)
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
-      @launch_drone(@element[i])
+
+    @update_drone() # set all drone's parameters before starting their movement
+    @launch_drone(drone) for drone in @element
 
     n = @element.length * 2
     dur = 300 + 200 / (100 + Gamescore.value)
@@ -255,8 +259,8 @@ class @Dronewar extends Game
       return true
     all_is_destroyed = @element.every (element) -> element.is_destroyed
     if all_is_destroyed # i.e. went offscreen or hit by bullet
-      drone_increment = 2
-      @N += drone_increment
+      drone_increment = 3
+      @N += drone_increment unless @N >= @maxN
       @charge *= 20
       @level()
     return

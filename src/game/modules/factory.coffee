@@ -24,7 +24,7 @@ class @Factory # a module that keeps track of unused instances to reduce garbage
       console.log('Factory.sleep(): undefined input', instance)
       return
     if instance.is_sleeping is true
-      console.log('Factory.sleep(): sleeping instance', @inactive[instance.constructor].indexOf(instance))
+      console.log('Factory.sleep(): sleeping instance', instance, @inactive[instance.constructor].indexOf(instance))
       return
-    @inactive[instance.constructor].push(instance) # push the newly inactive instance onto the corresponding inactive list for this class
+    @inactive[instance.constructor]?.push(instance) # push the newly inactive instance onto the corresponding inactive list for this class
     return

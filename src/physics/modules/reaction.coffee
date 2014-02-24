@@ -45,7 +45,7 @@ class @Reaction # reaction module with no class variables only class and private
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false # input for collision check to prevent reaction being called while the while loop executes
-    while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+    while Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.r     = m.r.add(lshift) # update position to resolve conflict
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 
       iter++ # increment the iteration counter

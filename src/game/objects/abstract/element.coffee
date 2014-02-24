@@ -67,6 +67,7 @@ class @Element
     else
       Collision.list.push(@) # add element to collision list by default unless it's already there
       @is_destroyed = false  # mark the element as destroyed
+      @draw()
       @g.style('opacity', 1)
     return
 
@@ -81,6 +82,7 @@ class @Element
     return
 
   cleanup: (@_cleanup = @_cleanup) ->
+    return if @is_destroyed
     @destroy() if @_cleanup and @offscreen()
     @is_destroyed
 

@@ -13,7 +13,7 @@ class @Collision
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false
-    while Collision.check(m, n, reaction).collision and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+    while Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.tick() # update position unless root or bullet 
       n.tick() # update position unless root or bullet 
       iter++ # increment the iteration counter
@@ -82,7 +82,9 @@ class @Collision
           )
       )
     Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
-    d
+    collision = d.collision
+    Factory.sleep(d)
+    collision
   
   @rectangle_rectangle: (m, n) ->
     m.BB() # update bounding box 
@@ -92,8 +94,8 @@ class @Collision
 
   @circle_circle: (m, n) ->
     if @use_bb 
-      if @rectangle_rectangle(m, n)
-        d = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
+      if @rectangle_rectangle(m, n) # meant to save computation, but not implemented correctly yet (BUG)
+        d           = circle_circle_dist(m, n) # object containing dx, dy, dist, dmin
         d.collision = true
       else d = collision: false
     else
@@ -151,7 +153,7 @@ class @Collision
     m.path.indexOf(nn) # node of polygon m closest to the other element n's center
 
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
-    d      = {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
+    d      = Factory.spawn(Vec, m.r).subtract(n.r) # {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
     d.dist = Math.sqrt(d.x * d.x + d.y * d.y) # Euclidean distance i.e. Pythagorean theorem
     d.dmin = m.size + n.size # minimum allowed distance
     d
@@ -159,9 +161,9 @@ class @Collision
   circle_lineseg_dist = (circle, polygon, i) -> # helper function for computing distance related quantities between circles and line segments/polygons
     ri = polygon.path[i]
     rj = z_check(polygon.path, i)
-    r  = {x: rj.x - ri.x, y: rj.y - ri.y}
+    r  = Factory.spawn(Vec, rj) # {x: rj.x - ri.x, y: rj.y - ri.y}
     rr = r.x * r.x + r.y * r.y
-    dr = {x: circle.r.x - ri.x - polygon.r.x, y: circle.r.y - ri.y - polygon.r.y}
+    dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r) # {x: circle.r.x - ri.x - polygon.r.x, y: circle.r.y - ri.y - polygon.r.y}
     t  = (r.x * dr.x + r.y * dr.y) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
     if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
     else if t > 1 # ditto with respect to other node j
@@ -174,13 +176,18 @@ class @Collision
       dr.y *= -1
       dr.x += circle.r.x
       dr.y += circle.r.y
-    d  = # literal definiton of the output object
+    d  = # literal definiton of the output object - memory "leak" problem?
       t: t
       x: dr.x
       y: dr.y
       r: [r.x, r.y]
       rr: rr
       dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
+    # cleanup:
+    Factory.sleep(r)
+    Factory.sleep(dr)
+    d # return the d object
+
       
   lineseg_intersect = (m, n, i, j) -> # see http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=geometry2 for details
     ri  = Factory.spawn(Vec, m.path[i]) # {x: m.path[i].x, y: m.path[i].y}
@@ -201,10 +208,12 @@ class @Collision
     check2 = Math.min(si.x, sj.x) - n.tol <= x - n.r.x <= Math.max(si.x, sj.x) + n.tol
     check3 = Math.min(ri.y, rj.y) - m.tol <= y - m.r.y <= Math.max(ri.y, rj.y) + m.tol
     check4 = Math.min(si.y, sj.y) - n.tol <= y - n.r.y <= Math.max(si.y, sj.y) + n.tol
+    # cleanup:
     Factory.sleep(ri)
     Factory.sleep(rj)
     Factory.sleep(si)
     Factory.sleep(sj)
+    # return true or false:
     if check1 and check2 and check3 and check4
       true # intersection occurs on both line segments
     else 

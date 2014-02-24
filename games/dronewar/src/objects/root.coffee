@@ -82,13 +82,14 @@ class @Root extends Polygon
     @shoot()
     return
   
+  bullet_config = {power: null, size: null} 
+
   shoot: ->
     x = Math.cos(@angle - Math.PI * 0.5)
     y = Math.sin(@angle - Math.PI * 0.5)
-    bullet = Factory.spawn(Bullet, { # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
-      power: @bullet_size * @bullet_size
-      size:  @bullet_size
-    })
+    bullet_config.power = @bullet_size * @bullet_size
+    bullet_config.size  = @bullet_size
+    bullet = Factory.spawn(Bullet, bullet_config) # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
     bullet.r.x = @r.x + x * (@size / 3 + @bullet_size)
     bullet.r.y = @r.y + y * 20
     bullet.v.x = @bullet_speed * x
