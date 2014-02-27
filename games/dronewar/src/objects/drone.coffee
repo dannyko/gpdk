@@ -1,10 +1,15 @@
 class @Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
+  @max_speed = 12
 
   constructor: (@config = {}) ->
     @config.size = 25
     super(@config)
-    @max_speed = 12
+    @root   = @config.root
+    @param  = {type: 'charge', cx: null, cy: null, q: null}
+    @set_param()
+    @max_speed = Drone.max_speed
+    @invincible = false 
     @energy = @config.energy || 10
     @image.remove()
     @g.attr("class", "drone")
@@ -14,7 +19,37 @@ class @Drone extends Circle
       .attr("width", @size * 2)
       .attr("height", @size * 2)
 
+  set_param: ->
+    @param.cx       = @root.r.x
+    @param.cy       = @root.r.y
+    @param.q        = @root.charge * (1 + Gamescore.value / 1000) # charge 
+    @force_param[0] = @param
+
+  draw: ->
+    @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
+    @v.normalize(@max_speed) if @v.length() > @max_speed
+    @set_param()
+    super
+    
+  start: ->
+    v0           = 1 + Gamescore.value * 0.0001 * Drone.max_speed 
+    @max_speed   = 0
+    dur          = 1000
+    @invincible  = true
+    super(dur, (d) -> 
+      dx         = d.root.r.x - d.r.x
+      dy         = d.root.r.y - d.r.y
+      d1         = Math.sqrt(dx * dx + dy * dy)
+      dx        /= d1
+      dy        /= d1
+      d.v.x = v0 * dx
+      d.v.y = v0 * dy
+      d.max_speed = Drone.max_speed
+      d.invincible = false
+    )
+
   deplete: (power = 1) ->
+    return if @invincible
     @energy = @energy - power
     dur = 50
     fill0 = '#300'
@@ -27,7 +62,7 @@ class @Drone extends Circle
       .attr("y", 0)
       .style('fill', fill)
       .style('opacity', (1 - @energy / @config.energy) * .4)
-    Game.sound?.play('shot')
+    Game.sound?.play('shot') if Game.audioSwitch
     return
 
   depleted: ->
@@ -54,7 +89,7 @@ class @Drone extends Circle
           @g.selectAll('circle').remove()
           super()
         )
-      Game.sound?.play('boom')
+      Game.sound?.play('boom') if Game.audioSwitch
     else
       super
       @g.selectAll('circle').remove()
@@ -71,20 +106,6 @@ class @Drone extends Circle
     #  .style("opacity", "0")
     #  .remove() 
     
-  draw: ->
-    @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
-    @v.normalize(@max_speed) if @v.length() > @max_speed
-    super
-
-  start: ->
-    max_speed  = @max_speed
-    @max_speed = 0
-    dur        = 400
-    super(dur, (d) -> 
-      d.max_speed = max_speed
-      d.tick = Physics.verlet
-    )
-
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 

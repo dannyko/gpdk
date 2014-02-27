@@ -4,17 +4,13 @@ class @Root extends Polygon
     @is_root       = true
     @init()
 
-  wake: ->
-    super
-    @init()
-
   init: ->
     @r.x           = Game.width / 2
     @r.y           = Game.height - 180
     @angle         = 0
     @angleStep     = 2 * Math.PI / 30 # initialize per-step angle change magnitude 
     @lastfire      = undefined # initialize timestamp
-    @charge        = 5e4 # sets drone interaction strength
+    @charge        = 2e4 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
     @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
@@ -74,11 +70,13 @@ class @Root extends Polygon
     @rotate_path()
     return
 
-  fire: (timestamp) =>
+  fire: () =>
     return true if @is_destroyed
-    @lastfire = timestamp if @lastfire is undefined
-    return unless (timestamp - @lastfire) >= @wait
-    @lastfire = timestamp
+    if @lastfire is undefined
+      @lastfire = Physics.timestamp
+      return
+    return unless (Physics.timestamp - @lastfire) >= @wait
+    @lastfire = Physics.timestamp
     @shoot()
     return
   
@@ -181,6 +179,6 @@ class @Root extends Polygon
       .attr("fill", "#900")
       .transition()
       .duration(dur * 0.25 )
-      .ease('sqrt')
+      .ease('linear')
       .style("opacity", 0)
     @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @destroy())

@@ -8,7 +8,7 @@ class @Dronewar extends Game
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 0
     @N        = @initialN
-    @maxN     = 15
+    @maxN     = 36 # limit the max number of ships
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
@@ -36,8 +36,8 @@ class @Dronewar extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
     # load audio:
-    audioSwitch = false
-    if audioSwitch
+    Game.audioSwitch = true
+    if Game.audioSwitch
       Game.sound = new Howl({
         urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
         sprite: {
@@ -46,42 +46,20 @@ class @Dronewar extends Game
           shot: [11639, 234]
         }
       })
-    Game.sound?.play('music')
-
-  launch_drone: (d) -> 
-      dx    = @root.r.x - d.r.x
-      dy    = @root.r.y - d.r.y
-      d1    = Math.sqrt(dx * dx + dy * dy)
-      dx   /= d1
-      dy   /= d1
-      d.v.x = @N * dx * @speed
-      d.v.y = @N * dy * @speed        
-      d.start() # couple the drone instance to the physics engine
-
-  droneParam = {type: null, cx: null, cy: null, q: null}
-
-  drone_param: ->
-    droneParam.type = 'charge'
-    droneParam.cx   = @root.r.x
-    droneParam.cy   = @root.r.y
-    droneParam.q    = @root.charge * 500 * @speed * @speed # charge 
-    droneParam
+    Game.sound?.play('music') if Game.musicSwitch
 
   level: ->
     @svg.style("cursor", "none")
     @element   = [] # reinitialize element list
     multiplier = 10
     offset     = 50
-    @speed     = .04 + Gamescore.value / 1000000
-    drone_config = {energy: @N * multiplier + offset, hidden: true}
+    drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
       newAttacker = Factory.spawn(Drone, drone_config)
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
-
-    @update_drone() # set all drone's parameters before starting their movement
-    @launch_drone(drone) for drone in @element
+      @element[i].start()
 
     n = @element.length * 2
     dur = 300 + 200 / (100 + Gamescore.value)
@@ -96,13 +74,6 @@ class @Dronewar extends Game
       # .each('end', (d) => 
       #   @launch_drone(d)
      #  )
-    return
-
-  update_drone: ->
-    return unless @element.length > 0
-    @drone_param() # update droneParam object
-    for drone in @element
-      drone.force_param[0] = droneParam # copy object reference into this instance of the drone element's force array 
     return
 
   keydown: () =>
@@ -123,7 +94,7 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; return true
+    callback = => @lives.text("GAME OVER") ; return true
     @end(callback)
     return
 
@@ -242,12 +213,11 @@ class @Dronewar extends Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation")
-    Game.sound?.play('music')
+    Game.sound?.play('music') if Game.musicSwitch
     super
     return
     
   progress: =>  # timer callback to monitor game progress
-    @update_drone()
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN))
     if Gamescore.lives >= 0
@@ -259,20 +229,8 @@ class @Dronewar extends Game
       return true
     all_is_destroyed = @element.every (element) -> element.is_destroyed
     if all_is_destroyed # i.e. went offscreen or hit by bullet
-      drone_increment = 3
+      drone_increment = 1
       @N += drone_increment unless @N >= @maxN
       @charge *= 20
       @level()
-    return
-            
-  reset: =>
-    @cleanup()
-    @lives.text("")
-    @scoretxt.text("")
-    @leveltxt.text("")
-    @svg.style("cursor", "auto")
-    @N = @initialN
-    @root.wake() # reset the root element
-    Gamescore.lives = Gamescore.initialLives
-    @start()
     return

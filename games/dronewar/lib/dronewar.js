@@ -303,10 +303,10 @@
       });
     };
 
-    Element.prototype.start = function(dur, callback) {
+    Element.prototype.start = function(duration, callback) {
       var index;
-      if (dur == null) {
-        dur = void 0;
+      if (duration == null) {
+        duration = void 0;
       }
       if (callback == null) {
         callback = void 0;
@@ -321,7 +321,7 @@
         Collision.list.push(this);
         this.is_destroyed = false;
         this.draw();
-        this.fadeIn(dur, callback);
+        this.fadeIn(duration, callback);
       }
     };
 
@@ -403,6 +403,10 @@
     Game.height = null;
 
     Game.scale = 1;
+
+    Game.audioSwitch = true;
+
+    Game.musicSwitch = true;
 
     current_width = function(padding) {
       var element, x;
@@ -1729,21 +1733,71 @@
 
     Drone.url = GameAssetsUrl + "drone_1.png";
 
+    Drone.max_speed = 12;
+
     function Drone(config) {
       this.config = config != null ? config : {};
       this.config.size = 25;
       Drone.__super__.constructor.call(this, this.config);
-      this.max_speed = 12;
+      this.root = this.config.root;
+      this.param = {
+        type: 'charge',
+        cx: null,
+        cy: null,
+        q: null
+      };
+      this.set_param();
+      this.max_speed = Drone.max_speed;
+      this.invincible = false;
       this.energy = this.config.energy || 10;
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
     }
 
+    Drone.prototype.set_param = function() {
+      this.param.cx = this.root.r.x;
+      this.param.cy = this.root.r.y;
+      this.param.q = this.root.charge * (1 + Gamescore.value / 1000);
+      return this.force_param[0] = this.param;
+    };
+
+    Drone.prototype.draw = function() {
+      this.angle = -Math.atan2(this.f.x, this.f.y);
+      if (this.v.length() > this.max_speed) {
+        this.v.normalize(this.max_speed);
+      }
+      this.set_param();
+      return Drone.__super__.draw.apply(this, arguments);
+    };
+
+    Drone.prototype.start = function() {
+      var dur, v0;
+      v0 = 1 + Gamescore.value * 0.0001 * Drone.max_speed;
+      dur = 1000;
+      this.invincible = true;
+      this.tick = void 0;
+      return Drone.__super__.start.call(this, dur, function(d) {
+        var d1, dx, dy;
+        dx = d.root.r.x - d.r.x;
+        dy = d.root.r.y - d.r.y;
+        d1 = Math.sqrt(dx * dx + dy * dy);
+        dx /= d1;
+        dy /= d1;
+        d.v.x = v0 * dx;
+        d.v.y = v0 * dy;
+        d.invincible = false;
+        return d.tick = Physics.verlet;
+      });
+    };
+
     Drone.prototype.deplete = function(power) {
       var dur, fill, fill0, last, _ref;
       if (power == null) {
         power = 1;
+      }
+      if (this.invincible) {
+        return;
       }
       this.energy = this.energy - power;
       dur = 50;
@@ -1754,8 +1808,10 @@
         last.remove();
       }
       this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
-      if ((_ref = Game.sound) != null) {
-        _ref.play('shot');
+      if (Game.audioSwitch) {
+        if ((_ref = Game.sound) != null) {
+          _ref.play('shot');
+        }
       }
     };
 
@@ -1781,32 +1837,15 @@
           _this.g.selectAll('circle').remove();
           return Drone.__super__.destroy.call(_this);
         });
-        if ((_ref = Game.sound) != null) {
-          _ref.play('boom');
+        if (Game.audioSwitch) {
+          if ((_ref = Game.sound) != null) {
+            _ref.play('boom');
+          }
         }
       } else {
         Drone.__super__.destroy.apply(this, arguments);
         this.g.selectAll('circle').remove();
       }
-    };
-
-    Drone.prototype.draw = function() {
-      this.angle = -Math.atan2(this.f.x, this.f.y);
-      if (this.v.length() > this.max_speed) {
-        this.v.normalize(this.max_speed);
-      }
-      return Drone.__super__.draw.apply(this, arguments);
-    };
-
-    Drone.prototype.start = function() {
-      var dur, max_speed;
-      max_speed = this.max_speed;
-      this.max_speed = 0;
-      dur = 400;
-      return Drone.__super__.start.call(this, dur, function(d) {
-        d.max_speed = max_speed;
-        return d.tick = Physics.verlet;
-      });
     };
 
     Drone.prototype.offscreen = function() {
@@ -1828,18 +1867,14 @@
   })(Circle);
 
   this.Dronewar = (function(_super) {
-    var droneParam;
 
     __extends(Dronewar, _super);
 
     Dronewar.bg_img = GameAssetsUrl + 'space_background.jpg';
 
     function Dronewar() {
-      var audioSwitch, _ref,
+      var _ref,
         _this = this;
-      this.reset = function() {
-        return Dronewar.prototype.reset.apply(_this, arguments);
-      };
       this.progress = function() {
         return Dronewar.prototype.progress.apply(_this, arguments);
       };
@@ -1851,7 +1886,7 @@
       this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 0;
       this.N = this.initialN;
-      this.maxN = 15;
+      this.maxN = 36;
       this.root = Factory.spawn(Root);
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
@@ -1860,8 +1895,8 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
-      audioSwitch = false;
-      if (audioSwitch) {
+      Game.audioSwitch = true;
+      if (Game.audioSwitch) {
         Game.sound = new Howl({
           urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
           sprite: {
@@ -1871,76 +1906,32 @@
           }
         });
       }
-      if ((_ref = Game.sound) != null) {
-        _ref.play('music');
+      if (Game.musicSwitch) {
+        if ((_ref = Game.sound) != null) {
+          _ref.play('music');
+        }
       }
     }
 
-    Dronewar.prototype.launch_drone = function(d) {
-      var d1, dx, dy;
-      dx = this.root.r.x - d.r.x;
-      dy = this.root.r.y - d.r.y;
-      d1 = Math.sqrt(dx * dx + dy * dy);
-      dx /= d1;
-      dy /= d1;
-      d.v.x = this.N * dx * this.speed;
-      d.v.y = this.N * dy * this.speed;
-      return d.start();
-    };
-
-    droneParam = {
-      type: null,
-      cx: null,
-      cy: null,
-      q: null
-    };
-
-    Dronewar.prototype.drone_param = function() {
-      droneParam.type = 'charge';
-      droneParam.cx = this.root.r.x;
-      droneParam.cy = this.root.r.y;
-      droneParam.q = this.root.charge * 500 * this.speed * this.speed;
-      return droneParam;
-    };
-
     Dronewar.prototype.level = function() {
-      var drone, drone_config, dur, i, multiplier, n, newAttacker, offset, _i, _j, _len, _ref, _ref1;
+      var drone_config, dur, i, multiplier, n, newAttacker, offset, _i, _ref;
       this.svg.style("cursor", "none");
       this.element = [];
       multiplier = 10;
       offset = 50;
-      this.speed = .04 + Gamescore.value / 1000000;
       drone_config = {
         energy: this.N * multiplier + offset,
-        hidden: true
+        root: this.root
       };
       for (i = _i = 0, _ref = this.N; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
         newAttacker = Factory.spawn(Drone, drone_config);
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
         this.element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height;
-      }
-      this.update_drone();
-      _ref1 = this.element;
-      for (_j = 0, _len = _ref1.length; _j < _len; _j++) {
-        drone = _ref1[_j];
-        this.launch_drone(drone);
+        this.element[i].start();
       }
       n = this.element.length * 2;
       dur = 300 + 200 / (100 + Gamescore.value);
-    };
-
-    Dronewar.prototype.update_drone = function() {
-      var drone, _i, _len, _ref;
-      if (!(this.element.length > 0)) {
-        return;
-      }
-      this.drone_param();
-      _ref = this.element;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        drone = _ref[_i];
-        drone.force_param[0] = droneParam;
-      }
     };
 
     Dronewar.prototype.keydown = function() {
@@ -1971,7 +1962,7 @@
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
       callback = function() {
-        _this.lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', _this.reset);
+        _this.lives.text("GAME OVER");
         return true;
       };
       this.end(callback);
@@ -2041,15 +2032,16 @@
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
-      if ((_ref = Game.sound) != null) {
-        _ref.play('music');
+      if (Game.musicSwitch) {
+        if ((_ref = Game.sound) != null) {
+          _ref.play('music');
+        }
       }
       Dronewar.__super__.start.apply(this, arguments);
     };
 
     Dronewar.prototype.progress = function() {
       var all_is_destroyed, drone_increment, dur;
-      this.update_drone();
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
       if (Gamescore.lives >= 0) {
@@ -2064,25 +2056,13 @@
         return element.is_destroyed;
       });
       if (all_is_destroyed) {
-        drone_increment = 3;
+        drone_increment = 1;
         if (!(this.N >= this.maxN)) {
           this.N += drone_increment;
         }
         this.charge *= 20;
         this.level();
       }
-    };
-
-    Dronewar.prototype.reset = function() {
-      this.cleanup();
-      this.lives.text("");
-      this.scoretxt.text("");
-      this.leveltxt.text("");
-      this.svg.style("cursor", "auto");
-      this.N = this.initialN;
-      this.root.wake();
-      Gamescore.lives = Gamescore.initialLives;
-      this.start();
     };
 
     return Dronewar;
@@ -2099,7 +2079,7 @@
       this.config = config != null ? config : {
         size: 0
       };
-      this.fire = function(timestamp) {
+      this.fire = function() {
         return Root.prototype.fire.apply(_this, arguments);
       };
       this.dragspin = function() {
@@ -2125,18 +2105,13 @@
       this.init();
     }
 
-    Root.prototype.wake = function() {
-      Root.__super__.wake.apply(this, arguments);
-      return this.init();
-    };
-
     Root.prototype.init = function() {
       this.r.x = Game.width / 2;
       this.r.y = Game.height - 180;
       this.angle = 0;
       this.angleStep = 2 * Math.PI / 30;
       this.lastfire = void 0;
-      this.charge = 5e4;
+      this.charge = 2e4;
       this.stroke("none");
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
@@ -2227,17 +2202,18 @@
       this.rotate_path();
     };
 
-    Root.prototype.fire = function(timestamp) {
+    Root.prototype.fire = function() {
       if (this.is_destroyed) {
         return true;
       }
       if (this.lastfire === void 0) {
-        this.lastfire = timestamp;
-      }
-      if (!((timestamp - this.lastfire) >= this.wait)) {
+        this.lastfire = Physics.timestamp;
         return;
       }
-      this.lastfire = timestamp;
+      if (!((Physics.timestamp - this.lastfire) >= this.wait)) {
+        return;
+      }
+      this.lastfire = Physics.timestamp;
       this.shoot();
     };
 
@@ -2320,7 +2296,7 @@
       if (dur == null) {
         dur = 500;
       }
-      this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('sqrt').style("opacity", 0);
+      this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
       return this.bitmap.transition().duration(dur).attr('opacity', 0).each('end', function() {
         return _this.destroy();
       });
