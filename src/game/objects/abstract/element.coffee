@@ -58,7 +58,16 @@ class @Element
 
   offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > Game.width + @size or @r.y > Game.height + @size
 
-  start: ->
+  fadeIn: (dur = 30, callback) ->
+    @g.style("opacity", 0)
+    .transition()
+    .duration(dur)
+    .ease('linear')
+    .style("opacity", 1)
+    .each('end', => callback?(@))
+
+
+  start: (duration = undefined, callback = undefined) ->
     if @is_sleeping
       console.log('element.start: is_destroyed or is_sleeping', @)
     index = Collision.list.indexOf(@)
@@ -68,7 +77,7 @@ class @Element
       Collision.list.push(@) # add element to collision list by default unless it's already there
       @is_destroyed = false  # mark the element as destroyed
       @draw()
-      @g.style('opacity', 1)
+      @fadeIn(duration, callback)
     return
 
   stop: -> 
@@ -98,9 +107,7 @@ class @Element
     @is_destroyed = true # mark the element instance as destroyed
     return
   
-  wake: (config) ->
-    @is_sleeping  = false  # mark the eleemnt as awake
-    # restore default position, velocity, and force values:
+  init: ->
     @r.x  = 0
     @r.y  = 0
     @dr.x = 0
@@ -108,10 +115,15 @@ class @Element
     @v.x  = 0
     @v.y  = 0
     @f.x  = 0
-    @f.y  = 0
+    @f.y  = 0  
+
+  wake: (config) ->
+    @is_sleeping  = false  # mark the eleemnt as awake
+    # restore default position, velocity, and force values:
+    @init()
     Utils.set(@, config) if config?
     @ # return this element instance
     
   update: (fps) -> # helper to combine these three operations into one loop for efficiency    
-    @tick(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
+    @tick?(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
     @draw()

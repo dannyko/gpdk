@@ -76,6 +76,15 @@ class @Drone extends Circle
     @v.normalize(@max_speed) if @v.length() > @max_speed
     super
 
+  start: ->
+    max_speed  = @max_speed
+    @max_speed = 0
+    dur        = 400
+    super(dur, (d) -> 
+      d.max_speed = max_speed
+      d.tick = Physics.verlet
+    )
+
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 

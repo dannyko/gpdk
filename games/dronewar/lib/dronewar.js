@@ -293,8 +293,24 @@
       return this.r.x < -this.size || this.r.y < -this.size || this.r.x > Game.width + this.size || this.r.y > Game.height + this.size;
     };
 
-    Element.prototype.start = function() {
+    Element.prototype.fadeIn = function(dur, callback) {
+      var _this = this;
+      if (dur == null) {
+        dur = 30;
+      }
+      return this.g.style("opacity", 0).transition().duration(dur).ease('linear').style("opacity", 1).each('end', function() {
+        return typeof callback === "function" ? callback(_this) : void 0;
+      });
+    };
+
+    Element.prototype.start = function(dur, callback) {
       var index;
+      if (dur == null) {
+        dur = void 0;
+      }
+      if (callback == null) {
+        callback = void 0;
+      }
       if (this.is_sleeping) {
         console.log('element.start: is_destroyed or is_sleeping', this);
       }
@@ -305,7 +321,7 @@
         Collision.list.push(this);
         this.is_destroyed = false;
         this.draw();
-        this.g.style('opacity', 1);
+        this.fadeIn(dur, callback);
       }
     };
 
@@ -348,8 +364,7 @@
       this.is_destroyed = true;
     };
 
-    Element.prototype.wake = function(config) {
-      this.is_sleeping = false;
+    Element.prototype.init = function() {
       this.r.x = 0;
       this.r.y = 0;
       this.dr.x = 0;
@@ -357,7 +372,12 @@
       this.v.x = 0;
       this.v.y = 0;
       this.f.x = 0;
-      this.f.y = 0;
+      return this.f.y = 0;
+    };
+
+    Element.prototype.wake = function(config) {
+      this.is_sleeping = false;
+      this.init();
       if (config != null) {
         Utils.set(this, config);
       }
@@ -365,7 +385,9 @@
     };
 
     Element.prototype.update = function(fps) {
-      this.tick(this, fps);
+      if (typeof this.tick === "function") {
+        this.tick(this, fps);
+      }
       return this.draw();
     };
 
@@ -1774,6 +1796,17 @@
         this.v.normalize(this.max_speed);
       }
       return Drone.__super__.draw.apply(this, arguments);
+    };
+
+    Drone.prototype.start = function() {
+      var dur, max_speed;
+      max_speed = this.max_speed;
+      this.max_speed = 0;
+      dur = 400;
+      return Drone.__super__.start.call(this, dur, function(d) {
+        d.max_speed = max_speed;
+        return d.tick = Physics.verlet;
+      });
     };
 
     Drone.prototype.offscreen = function() {
