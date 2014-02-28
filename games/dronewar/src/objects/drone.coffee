@@ -69,6 +69,7 @@ class @Drone extends Circle
     if @energy <= 0 then true else false
 
   destroy: (effects = true) ->
+    Game.sound.play('boom') if Game.audioSwitch
     if effects
       @stop()
       dur = 500
@@ -89,23 +90,22 @@ class @Drone extends Circle
           @g.selectAll('circle').remove()
           super()
         )
-      Game.sound?.play('boom') if Game.audioSwitch
+      scaleSwitch = false
+      if scaleSwitch
+        @image
+         .attr('transform', 'scale(1)')
+         .transition()
+         .duration(dur)
+         .attr('transform', 'scale(5)')
     else
       super
       @g.selectAll('circle').remove()
     return
-
-
-    # @g.attr("class", "")
-    #  .style('opacity', '0.3')
-    #  .transition()
-    #  .duration(dur / 2)
-    #  .attr('transform', @g.attr('transform') + 'scale(5)')
-    #  .transition()
-    #  .duration(dur)
-    #  .style("opacity", "0")
-    #  .remove() 
     
+  init: ->
+     super
+     @image.attr('transform', 'scale(1)')
+
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 

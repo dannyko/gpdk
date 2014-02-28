@@ -28,7 +28,7 @@ class @Game
     min_scale = 0.39
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
-  update_window: (force = false) ->
+  update_window: (force = false) =>
     return Game.scale if Game.width is null or Game.height is null
     scale = get_scale()
     tol   = .001
@@ -59,6 +59,7 @@ class @Game
 	    .style('width', '')
 	    .style('height', '')
     @update_window(force = true)
+    $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
 
   start: -> 
     Physics.start(@) # start all elements and associate physics engine with this game instance

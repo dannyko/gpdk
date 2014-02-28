@@ -83,7 +83,6 @@ class @Collision
       )
     Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
     collision = d.collision
-    Factory.sleep(d)
     collision
   
   @rectangle_rectangle: (m, n) ->
@@ -153,7 +152,7 @@ class @Collision
     m.path.indexOf(nn) # node of polygon m closest to the other element n's center
 
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
-    d      = Factory.spawn(Vec, m.r).subtract(n.r) # {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
+    d      = m.vec.init(m.r).subtract(n.r) # {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
     d.dist = Math.sqrt(d.x * d.x + d.y * d.y) # Euclidean distance i.e. Pythagorean theorem
     d.dmin = m.size + n.size # minimum allowed distance
     d

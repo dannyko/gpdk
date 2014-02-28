@@ -5,7 +5,7 @@ class @Physics # numerical integration module for solving differential equations
   @timestamp: 0 # to keep track of integration frequency
   @game = null # initialize reference to game instance associated with the physics engine
   @callbacks = []
-  @debug = true
+  @debug = false
 
 #  window.requestAnimFrame =
 #    window.requestAnimationFrame       || 
@@ -23,14 +23,13 @@ class @Physics # numerical integration module for solving differential equations
     element.dr.scale(dt).add(element.f) # store displacement vector
     element.r.add(element.dr) # update position
     return if element.cleanup() # don't setup for the next update if element is destroyed
-    f = Factory.spawn(Vec, element.f) # copy this object for temporary storage
+    element.fcopy.init(element.f) # copy this object for temporary storage
     element.f.x = 0 # initialize current force
     element.f.y = 0 # initialize current force
     accumulateSwitch = true # parameter for Force module
     element.force_param.forEach (param) -> # loop over force parameter array elements
       Force.eval(element, param, element.f, accumulateSwitch) # accumulate the forces acting on this element one at a time
-    element.v.add(f.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
-    Factory.sleep(f)
+    element.v.add(element.fcopy.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
 
   @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
     if Physics.fps > fps # check if game is running slow and handle the remainder
@@ -68,7 +67,6 @@ class @Physics # numerical integration module for solving differential equations
           Physics.callbacks[len] = swap
         Physics.callbacks.pop()
     return
-    # Physics.game?.update_window() # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
   
   @start: (game = undefined, delay = 0) -> 
     @game = game

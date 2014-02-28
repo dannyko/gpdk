@@ -15,5 +15,5 @@ class @Bullet extends Circle
       Gamescore.increment_value()  # increment score for hitting the drone
       Gameprez?.score(Gamescore.value) # send score update to Gameprez if available
       n.destroy()
-    @destroy() # remove the bullet that hit the drone 
+    @destroy() unless n.invincible # remove the bullet that hit the drone 
     true

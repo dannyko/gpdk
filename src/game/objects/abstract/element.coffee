@@ -5,6 +5,8 @@ class @Element
     @dr           = @config.dr          || Factory.spawn(Vec) # displacement vector (dx, dy)
     @v            = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
     @f            = @config.f           || Factory.spawn(Vec) # force vector (fx, fy)
+    @fcopy        = @config.f           || Factory.spawn(Vec) # copy of force vector (fx, fy) to speed up physics computations
+    @vec          = @config.f           || Factory.spawn(Vec) # temporary vector for convenience
     @n            = @config.n           || [] # array of references to neighbor elements that this element interacts with
     @force_param  = @config.force_param || [] # array of objects for computing net force vectors 
     @size         = @config.size        || 0 # zero default size in units of pixels for abstract class

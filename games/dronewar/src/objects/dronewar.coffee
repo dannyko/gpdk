@@ -4,9 +4,10 @@ class @Dronewar extends Game
 
   constructor: ->
     super
+    Gamescore.lives = 100
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 2
+    @initialN = @config.initialN || 5
     @N        = @initialN
     @maxN     = 36 # limit the max number of ships
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
@@ -46,19 +47,19 @@ class @Dronewar extends Game
           shot: [11639, 234]
         }
       })
-    Game.sound?.play('music') if Game.musicSwitch
 
   level: ->
     @svg.style("cursor", "none")
     @element   = [] # reinitialize element list
-    multiplier = 10
-    offset     = 50
+    multiplier = 2
+    offset     = 10
+    Drone.max_speed += 0.1
     drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
       newAttacker = Factory.spawn(Drone, drone_config)
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-      @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].r.y = Game.height * 0.1 + Math.random() * 0.1 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].start()
 
     n = @element.length * 2
@@ -221,7 +222,7 @@ class @Dronewar extends Game
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN))
     if Gamescore.lives >= 0
-      @lives.text('LIVES: ' + Gamescore.lives) 
+      @lives.text('ENERGY: ' + Gamescore.lives) 
     else 
       dur = 420
       @root.game_over(dur)
