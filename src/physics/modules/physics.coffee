@@ -1,5 +1,5 @@
 class @Physics # numerical integration module for solving differential equations e.g. physical simulations
-  @fps = 60 # ideal framerate
+  @fps = 60 # ideal framerate according to the requestAnimFrame spec
 #  @tick: 1000 / @fps # maximum frames per second to prevent the simulation from running too fast on faster machines for predictable realtime performance
   @off: false # a boolean switch determining whether or not to run the physics engine
   @timestamp: 0 # to keep track of integration frequency
@@ -45,26 +45,12 @@ class @Physics # numerical integration module for solving differential equations
       dt = element.dt / (1 + scale) # (make timestep smaller since we're running fast)
       Physics.verlet_step(element, dt) 
       return
-#    if Physics.fps > fps # check if game is running slow and handle the remainder
-#      Nstep = Math.round(Physics.fps / fps)
-#      step  = 0
-#      while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
-#        Physics.verlet_step(element)
-#        ++step
-#      tol = .01
-#      diff = Physics.fps - fps # compute residual
-#      scale = diff / Physics.fps # relative error
-#      dt = element.dt * scale
-#      if dt > tol # ignore very small adjustments
-#        Physics.verlet_step(element, dt) 
-#    else # game is running fast so we can reduce the timestep slightly to compensate
 
   @integrate: (t) ->
     # console.log(Factory.active[Vec]?.length, Factory.active[Bullet]?.length) # leaktest
     return true if Physics.off
     # requestAnimFrame(Physics.integrate) # keep running the loop
     dt = if Physics.timestamp > 0 then (t - Physics.timestamp) else Physics.tick
-#    return if 1.75 * dt < Physics.tick # prevent the animation from running too fast, and then messing up/getting janky
     Physics.timestamp = t
     fps = 1000 / dt # instantaneous frames per second (noisy)
     console.log('fps: ' + fps) if Physics.debug

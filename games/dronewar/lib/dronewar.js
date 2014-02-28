@@ -1246,7 +1246,7 @@
 
     function Physics() {}
 
-    Physics.fps = 120;
+    Physics.fps = 60;
 
     Physics.off = false;
 
