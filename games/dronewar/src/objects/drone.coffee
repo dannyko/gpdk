@@ -32,7 +32,7 @@ class @Drone extends Circle
     super
     
   start: ->
-    v0           = 1 + Gamescore.value * 0.0001 * Drone.max_speed 
+    v0           = 5 + Gamescore.value * 0.0001 * Drone.max_speed 
     @max_speed   = 0
     dur          = 1000
     @invincible  = true

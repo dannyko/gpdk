@@ -1246,9 +1246,7 @@
 
     function Physics() {}
 
-    Physics.fps = 60;
-
-    Physics.tick = 1000 / Physics.fps;
+    Physics.fps = 120;
 
     Physics.off = false;
 
@@ -1258,51 +1256,48 @@
 
     Physics.callbacks = [];
 
-    Physics.debug = false;
+    Physics.debug = true;
 
-    window.requestAnimFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(callback, element) {
-      return window.setTimeout(callback, this.tick);
+    Physics.verlet_step = function(element, dt) {
+      var accumulateSwitch, f;
+      if (dt == null) {
+        dt = element.dt;
+      }
+      element.f.scale(0.5 * dt * dt);
+      element.dr.x = element.v.x;
+      element.dr.y = element.v.y;
+      element.dr.scale(dt).add(element.f);
+      element.r.add(element.dr);
+      if (element.cleanup()) {
+        return;
+      }
+      f = Factory.spawn(Vec, element.f);
+      element.f.x = 0;
+      element.f.y = 0;
+      accumulateSwitch = true;
+      element.force_param.forEach(function(param) {
+        return Force["eval"](element, param, element.f, accumulateSwitch);
+      });
+      element.v.add(f.add(element.f).scale(0.5 * dt));
+      return Factory.sleep(f);
     };
 
     Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step, tol, verlet_step;
-      verlet_step = function(dt) {
-        var accumulateSwitch, f;
-        if (dt == null) {
-          dt = element.dt;
-        }
-        element.f.scale(0.5 * dt * dt);
-        element.dr.x = element.v.x;
-        element.dr.y = element.v.y;
-        element.dr.scale(dt).add(element.f);
-        element.r.add(element.dr);
-        if (element.cleanup()) {
-          return;
-        }
-        f = Factory.spawn(Vec, element.f);
-        element.f.x = 0;
-        element.f.y = 0;
-        accumulateSwitch = true;
-        element.force_param.forEach(function(param) {
-          return Force["eval"](element, param, element.f, accumulateSwitch);
-        });
-        element.v.add(f.add(element.f).scale(0.5 * dt));
-        return Factory.sleep(f);
-      };
-      Nstep = Math.round(Physics.fps / fps);
-      step = 0;
-      while (step < Nstep) {
-        verlet_step();
-        ++step;
-      }
-      tol = .01;
+      var Nstep, diff, dt, scale, step, _results;
       if (Physics.fps > fps) {
-        diff = Physics.fps - fps;
-        scale = diff / Physics.fps;
-        dt = element.dt * scale;
-        if (dt > tol) {
-          verlet_step(dt);
+        Nstep = Math.round(Physics.fps / fps);
+        step = 0;
+        _results = [];
+        while (step < Nstep) {
+          Physics.verlet_step(element);
+          _results.push(++step);
         }
+        return _results;
+      } else {
+        diff = fps - Physics.fps;
+        scale = diff / Physics.fps;
+        dt = element.dt / (1 + scale);
+        Physics.verlet_step(element, dt);
       }
     };
 
@@ -1312,9 +1307,6 @@
         return true;
       }
       dt = Physics.timestamp > 0 ? t - Physics.timestamp : Physics.tick;
-      if (1.75 * dt < Physics.tick) {
-        return;
-      }
       Physics.timestamp = t;
       fps = 1000 / dt;
       if (Physics.debug) {
@@ -1773,10 +1765,10 @@
 
     Drone.prototype.start = function() {
       var dur, v0;
-      v0 = 1 + Gamescore.value * 0.0001 * Drone.max_speed;
+      v0 = 5 + Gamescore.value * 0.0001 * Drone.max_speed;
+      this.max_speed = 0;
       dur = 1000;
       this.invincible = true;
-      this.tick = void 0;
       return Drone.__super__.start.call(this, dur, function(d) {
         var d1, dx, dy;
         dx = d.root.r.x - d.r.x;
@@ -1786,8 +1778,8 @@
         dy /= d1;
         d.v.x = v0 * dx;
         d.v.y = v0 * dy;
-        d.invincible = false;
-        return d.tick = Physics.verlet;
+        d.max_speed = Drone.max_speed;
+        return d.invincible = false;
       });
     };
 
@@ -1884,7 +1876,7 @@
       Dronewar.__super__.constructor.apply(this, arguments);
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 0;
+      this.initialN = this.config.initialN || 2;
       this.N = this.initialN;
       this.maxN = 36;
       this.root = Factory.spawn(Root);
@@ -2109,7 +2101,7 @@
       this.r.x = Game.width / 2;
       this.r.y = Game.height - 180;
       this.angle = 0;
-      this.angleStep = 2 * Math.PI / 30;
+      this.angleStep = 2 * Math.PI / 40;
       this.lastfire = void 0;
       this.charge = 2e4;
       this.stroke("none");

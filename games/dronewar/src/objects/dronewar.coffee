@@ -6,7 +6,7 @@ class @Dronewar extends Game
     super
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 0
+    @initialN = @config.initialN || 2
     @N        = @initialN
     @maxN     = 36 # limit the max number of ships
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
