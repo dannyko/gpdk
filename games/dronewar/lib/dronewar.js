@@ -234,8 +234,18 @@
       this.v = this.config.v || Factory.spawn(Vec);
       this.f = this.config.f || Factory.spawn(Vec);
       this.fcopy = this.config.f || Factory.spawn(Vec);
-      this.vec = this.config.f || Factory.spawn(Vec);
-      this.n = this.config.n || [];
+      this.d = Factory.spawn(Vec);
+      this.ri = Factory.spawn(Vec);
+      this.rj = Factory.spawn(Vec);
+      this.r_temp = Factory.spawn(Vec);
+      this.dr_temp = Factory.spawn(Vec);
+      this.line = Factory.spawn(Vec);
+      this.normal = Factory.spawn(Vec);
+      this.lshift = Factory.spawn(Vec);
+      this.vPar = Factory.spawn(Vec);
+      this.vPerp = Factory.spawn(Vec);
+      this.uPar = Factory.spawn(Vec);
+      this.uPerp = Factory.spawn(Vec);
       this.force_param = this.config.force_param || [];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
@@ -605,7 +615,7 @@
       ];
     };
 
-    Polygon.prototype.d = function() {
+    Polygon.prototype.d_attr = function() {
       return Utils.d(this.path);
     };
 
@@ -640,7 +650,7 @@
       }
       this.maxnode = Factory.spawn(Vec, maxnode);
       this.size = this.maxnode.length();
-      return this.image.attr("d", this.d());
+      return this.image.attr("d", this.d_attr());
     };
 
     Polygon.prototype.BB = function() {
@@ -1053,7 +1063,7 @@
 
     circle_circle_dist = function(m, n) {
       var d;
-      d = m.vec.init(m.r).subtract(n.r);
+      d = m.d.init(m.r).subtract(n.r);
       d.dist = Math.sqrt(d.x * d.x + d.y * d.y);
       d.dmin = m.size + n.size;
       return d;
@@ -1062,10 +1072,10 @@
     circle_lineseg_dist = function(circle, polygon, i) {
       var d, dr, r, ri, rj, rr, t;
       ri = polygon.path[i];
-      rj = z_check(polygon.path, i);
-      r = Factory.spawn(Vec, rj);
+      rj = circle.rj.init(z_check(polygon.path, i));
+      r = circle.r_temp.init(circle.rj).subtract(ri);
       rr = r.x * r.x + r.y * r.y;
-      dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r);
+      dr = circle.dr_temp.init(circle.r).subtract(ri).subtract(polygon.r);
       t = (r.x * dr.x + r.y * dr.y) / rr;
       if (t < 0) {
 
@@ -1080,25 +1090,20 @@
         dr.x += circle.r.x;
         dr.y += circle.r.y;
       }
-      d = {
-        t: t,
-        x: dr.x,
-        y: dr.y,
-        r: [r.x, r.y],
-        rr: rr,
-        dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
-      };
-      Factory.sleep(r);
-      Factory.sleep(dr);
+      d = circle.d.init(dr);
+      d.t = t;
+      d.r = [r.x, r.y];
+      d.rr = rr;
+      d.dist = Math.sqrt(dr.x * dr.x + dr.y * dr.y);
       return d;
     };
 
     lineseg_intersect = function(m, n, i, j) {
       var A1, A2, B1, B2, C1, C2, check1, check2, check3, check4, det, ri, rj, si, sj, x, y, _ref, _ref1, _ref2, _ref3;
-      ri = Factory.spawn(Vec, m.path[i]);
-      rj = Factory.spawn(Vec, z_check(m.path, i));
-      si = Factory.spawn(Vec, n.path[j]);
-      sj = Factory.spawn(Vec, z_check(n.path, j));
+      ri = m.ri.init(m.path[i]);
+      rj = m.rj.init(z_check(m.path, i));
+      si = n.ri.init(n.path[j]);
+      sj = n.rj.init(z_check(n.path, j));
       A1 = rj.y - ri.y;
       B1 = ri.x - rj.x;
       C1 = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y);
@@ -1115,10 +1120,6 @@
       check2 = (Math.min(si.x, sj.x) - n.tol <= (_ref1 = x - n.r.x) && _ref1 <= Math.max(si.x, sj.x) + n.tol);
       check3 = (Math.min(ri.y, rj.y) - m.tol <= (_ref2 = y - m.r.y) && _ref2 <= Math.max(ri.y, rj.y) + m.tol);
       check4 = (Math.min(si.y, sj.y) - n.tol <= (_ref3 = y - n.r.y) && _ref3 <= Math.max(si.y, sj.y) + n.tol);
-      Factory.sleep(ri);
-      Factory.sleep(rj);
-      Factory.sleep(si);
-      Factory.sleep(sj);
       if (check1 && check2 && check3 && check4) {
         return true;
       } else {
@@ -1293,7 +1294,7 @@
     Physics.verlet = function(element, fps) {
       var Nstep, diff, dt, scale, step, _results;
       if (Physics.fps > fps) {
-        Nstep = Math.round(Physics.fps / fps);
+        Nstep = Math.floor(Physics.fps / fps);
         step = 0;
         _results = [];
         while (step < Nstep) {
@@ -1372,9 +1373,7 @@
       if (m.destroy_check(n) || n.destroy_check(m)) {
         return;
       }
-      line = Factory.spawn(Vec, d);
-      line.x = line.x / d.dist;
-      line.y = line.y / d.dist;
+      line = m.line.init(d).normalize();
       overstep = Math.max(d.dmin - d.dist, 0);
       shift = 0.5 * (Math.max(m.tol, n.tol) + overstep);
       Reaction.elastic_collision(m, n, line, shift);
@@ -1403,10 +1402,10 @@
       dot_a = mseg.n.dot(d);
       dot_b = nseg.n.dot(d);
       if (Math.abs(dot_a) > Math.abs(dot_b)) {
-        normal = Factory.spawn(Vec, mseg.n).scale(dot_a / Math.abs(dot_a));
+        normal = m.normal.init(mseg.n).scale(dot_a / Math.abs(dot_a));
         segj = nseg;
       } else {
-        normal = Factory.spawn(Vec, nseg.n).scale(dot_b / Math.abs(dot_b));
+        normal = m.normal.init(nseg.n).scale(dot_b / Math.abs(dot_b));
         segj = mseg;
       }
       shift = 0.5 * Math.max(m.tol, n.tol);
@@ -1416,7 +1415,7 @@
 
     Reaction.elastic_collision = function(m, n, line, shift) {
       var cPar, dPar, iter, lshift, maxiter, reaction, uPar, uPerp, vPar, vPerp;
-      lshift = Factory.spawn(Vec, line).scale(shift);
+      lshift = m.lshift.init(line).scale(shift);
       maxiter = 32;
       iter = 1;
       reaction = false;
@@ -1426,23 +1425,17 @@
         iter++;
       }
       cPar = m.v.dot(line);
-      vPar = Factory.spawn(Vec, line).scale(cPar);
-      vPerp = Factory.spawn(Vec, m.v).subtract(vPar);
+      vPar = m.vPar.init(line).scale(cPar);
+      vPerp = m.vPerp.init(m.v).subtract(vPar);
       dPar = n.v.dot(line);
-      uPar = Factory.spawn(Vec, line).scale(dPar);
-      uPerp = Factory.spawn(Vec, n.v).subtract(uPar);
+      uPar = m.uPar.init(line).scale(dPar);
+      uPerp = m.uPerp.init(n.v).subtract(uPar);
       uPar.add(vPerp);
       vPar.add(uPerp);
       m.v.x = uPar.x;
       m.v.y = uPar.y;
       n.v.x = vPar.x;
       n.v.y = vPar.y;
-      Factory.sleep(line);
-      Factory.sleep(lshift);
-      Factory.sleep(vPar);
-      Factory.sleep(vPerp);
-      Factory.sleep(uPar);
-      Factory.sleep(uPerp);
     };
 
     return Reaction;
@@ -2260,7 +2253,7 @@
       this.wait = ship.bullet_tick;
       this.path = ship.path;
       this.BB();
-      endPath = this.d();
+      endPath = this.d_attr();
       this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();
       this.image.attr("opacity", 1).data([endPath]).transition().duration(dur).attrTween("d", Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
       return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', function() {

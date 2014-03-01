@@ -106,7 +106,7 @@ class @Root extends Polygon
     @wait          = ship.bullet_tick # ms between bullets
     @path          = ship.path
     @BB() # set the rectangular bounding box for this path
-    endPath  = @d() # new end-path to morph to
+    endPath  = @d_attr() # new end-path to morph to
     @bitmap.attr('opacity', 1)
       .transition()
       .duration(dur * 0.5)

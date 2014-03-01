@@ -44,8 +44,8 @@ class @Collision
       length = @list.length
       i++
 
-  name = [null, null] # initialize static array instance
-  sort = [null, null] # initialize static array instance
+  name = [null, null] # initialize static array instance outside of class function definition to reduce memory churn
+  sort = [null, null] # initialize static array instance outsider of class function definition to reduce memory churn
 
   @check: (ei, ej, reaction = true) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
@@ -152,18 +152,18 @@ class @Collision
     m.path.indexOf(nn) # node of polygon m closest to the other element n's center
 
   circle_circle_dist = (m, n) -> # helper function for computing distance related quantities between two circles
-    d      = m.vec.init(m.r).subtract(n.r) # {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
+    d      = m.d.init(m.r).subtract(n.r) # {x: m.r.x - n.r.x, y: m.r.y - n.r.y}
     d.dist = Math.sqrt(d.x * d.x + d.y * d.y) # Euclidean distance i.e. Pythagorean theorem
     d.dmin = m.size + n.size # minimum allowed distance
     d
 
   circle_lineseg_dist = (circle, polygon, i) -> # helper function for computing distance related quantities between circles and line segments/polygons
-    ri = polygon.path[i]
-    rj = z_check(polygon.path, i)
-    r  = Factory.spawn(Vec, rj) # {x: rj.x - ri.x, y: rj.y - ri.y}
-    rr = r.x * r.x + r.y * r.y
-    dr = Factory.spawn(Vec, circle.r).subtract(ri).subtract(polygon.r) # {x: circle.r.x - ri.x - polygon.r.x, y: circle.r.y - ri.y - polygon.r.y}
-    t  = (r.x * dr.x + r.y * dr.y) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
+    ri  = polygon.path[i]
+    rj  = circle.rj.init(z_check(polygon.path, i))
+    r   = circle.r_temp.init(circle.rj).subtract(ri) # {x: rj.x - ri.x, y: rj.y - ri.y}
+    rr  = r.x * r.x + r.y * r.y
+    dr  = circle.dr_temp.init(circle.r).subtract(ri).subtract(polygon.r) # {x: circle.r.x - ri.x - polygon.r.x, y: circle.r.y - ri.y - polygon.r.y}
+    t   = (r.x * dr.x + r.y * dr.y) / rr # length of intersection along vector point from node i to node j relative to the node separation distance
     if t < 0 # distance to polygon was measured relative to a point outside of the polygon segment so compute distance to node i instead
     else if t > 1 # ditto with respect to other node j
       dr.x = circle.r.x - rj.x - polygon.r.x
@@ -175,24 +175,19 @@ class @Collision
       dr.y *= -1
       dr.x += circle.r.x
       dr.y += circle.r.y
-    d  = # literal definiton of the output object - memory "leak" problem?
-      t: t
-      x: dr.x
-      y: dr.y
-      r: [r.x, r.y]
-      rr: rr
-      dist: Math.sqrt(dr.x * dr.x + dr.y * dr.y)
-    # cleanup:
-    Factory.sleep(r)
-    Factory.sleep(dr)
+    d      = circle.d.init(dr)
+    d.t    = t
+    d.r    = [r.x, r.y]
+    d.rr   = rr
+    d.dist = Math.sqrt(dr.x * dr.x + dr.y * dr.y)
     d # return the d object
 
       
   lineseg_intersect = (m, n, i, j) -> # see http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=geometry2 for details
-    ri  = Factory.spawn(Vec, m.path[i]) # {x: m.path[i].x, y: m.path[i].y}
-    rj  = Factory.spawn(Vec, z_check(m.path, i)) # {x: z.x, y: z.y}
-    si  = Factory.spawn(Vec, n.path[j]) # {x: n.path[j].x, y: n.path[j].y}
-    sj  = Factory.spawn(Vec, z_check(n.path, j)) # {x: z.x, y: z.y} 
+    ri  = m.ri.init(m.path[i]) # {x: m.path[i].x, y: m.path[i].y}
+    rj  = m.rj.init(z_check(m.path, i)) # {x: z.x, y: z.y}
+    si  = n.ri.init(n.path[j]) # {x: n.path[j].x, y: n.path[j].y}
+    sj  = n.rj.init(z_check(n.path, j)) # {x: z.x, y: z.y} 
     A1  = rj.y - ri.y
     B1  = ri.x - rj.x
     C1  = A1 * (ri.x + m.r.x) + B1 * (ri.y + m.r.y)
@@ -208,10 +203,6 @@ class @Collision
     check3 = Math.min(ri.y, rj.y) - m.tol <= y - m.r.y <= Math.max(ri.y, rj.y) + m.tol
     check4 = Math.min(si.y, sj.y) - n.tol <= y - n.r.y <= Math.max(si.y, sj.y) + n.tol
     # cleanup:
-    Factory.sleep(ri)
-    Factory.sleep(rj)
-    Factory.sleep(si)
-    Factory.sleep(sj)
     # return true or false:
     if check1 and check2 and check3 and check4
       true # intersection occurs on both line segments

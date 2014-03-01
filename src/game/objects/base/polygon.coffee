@@ -17,7 +17,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
       {pathSegTypeAsLetter: 'Z'} # close the path by default
     ]
 
-  d: -> # generate path "d" attribute
+  d_attr: -> # generate path "d" attribute
     Utils.d(@path)
     
   polygon_path: -> # assign path metadata
@@ -39,7 +39,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
       maxnode = @path[i] if node.d > maxd
     @maxnode  = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size     = @maxnode.length()
-    @image.attr("d", @d())
+    @image.attr("d", @d_attr())
   
   BB: ->
     xmax = @path[0].x # initialize

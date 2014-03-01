@@ -33,7 +33,7 @@ class @Physics # numerical integration module for solving differential equations
 
   @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
     if Physics.fps > fps # check if game is running slow and handle the remainder
-      Nstep = Math.round(Physics.fps / fps)
+      Nstep = Math.floor(Physics.fps / fps)
       step  = 0
       while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
         Physics.verlet_step(element)
