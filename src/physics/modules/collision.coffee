@@ -60,6 +60,8 @@ class @Collision
     else 
       m = ej
       n = ei
+    m.d.collision = false
+    n.d.collision = false
     switch m.type # check for combinations of the two basic collison types: circle and polygon (add rectangle later)
       # follow alphabetical order within each case to avoid repeating code i.e. collision(a, b) = collision(b, a) (unordered)
       # the last alphabetical element type gets taken care of by previous types 

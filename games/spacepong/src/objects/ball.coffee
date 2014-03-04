@@ -2,16 +2,12 @@ class @Ball extends Circle
   @image_url = GameAssetsUrl + "ball.png"
 
   constructor: (@config = {}) ->
-    @config.size   ||= 12
-    @config.fill   ||= '#FFF'
-    @config.r      ||= new Vec({x: Game.paddle.r.x + 2 * Math.random() - 1, y: Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size})
-    super(@config)
-    @name = 'Ball'
+    super
+    @size          = 12
+    @name          = 'Ball'
     @initial_speed = 25
-    @speed = @initial_speed
-    @max_speed = @size * 10
-    @v.x   = 0 
-    @v.y   = -@speed
+    @speed         = @initial_speed
+    @max_speed     = @size * 10
     @image.remove()
     @g.attr("class", "ball")
     @image = @g.append("image")
@@ -19,9 +15,17 @@ class @Ball extends Circle
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
+    @init()
+    @start()
+
+  init: ->
+    @v.x = 0 
+    @v.y = -@speed
+    @r.x = Game.paddle.r.x + 2 * Math.random() - 1
+    @r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size - @tol
 
   draw: ->
-    if @r.y < @tol + @size # don't allow it to go beyond left sidewall
+    if @r.y < @tol + @size # don't allow it to go beyond top sidewall
       @r.y = @tol + @size 
       @v.y = Math.abs(@v.y)
       @reaction()
@@ -60,7 +64,7 @@ class @Ball extends Circle
       .attr('fill', fill)
       .transition()
       .duration(dur)
-      .ease('sqrt')
+      .ease('linear')
       .attr("opacity", 0.5)
       .transition()
       .duration(dur)

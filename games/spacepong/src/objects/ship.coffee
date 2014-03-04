@@ -20,7 +20,9 @@ class @Ship extends Polygon
     w = @config.size
     h = @config.size
     @config.path ||= set_ship(w, h)
-    @config.r = new Vec({x: Game.width * 0.8 * Math.random(), y: 0.05 * Game.height * Math.random()})
+    @config.r   = Factory.spawn(Vec)
+    @config.r.x = Game.width * 0.8 * Math.random()
+    @config.r.y = 0.05 * Game.height * Math.random()
     @config.r.x = 2 * @config.size if @config.r.x < 2 * @config.size
     @config.r.x = Game.width - 2 * @config.size if @config.r.x > (Game.width - 2 * @config.size)
     super(@config)
@@ -28,7 +30,7 @@ class @Ship extends Polygon
     @image.remove() # don't display default SVG image, instead replace by custom bitmap defined below via an SVG <image> tag
     @g.attr("class", "ship")
     @speed = Ship.speed[@difficulty] # initial ship speed
-    @v.y = @speed # initial ship velocity
+    @v.y   = @speed # initial ship velocity
     @image = @g.append("image")
      .attr("xlink:href", Ship.image_url[@difficulty])
      .attr("x", -w).attr("y", -h)

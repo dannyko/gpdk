@@ -11,14 +11,14 @@ class @Paddle extends Polygon
              {pathSegTypeAsLetter: 'L', x:  @config.size,  y: -@height, react: true},
              {pathSegTypeAsLetter: 'Z'}
              ]    
+    @padding   = 50
     @config.fill  = 'red'
     @config.stroke = 'none'
+    @config.r   = Factory.spawn(Vec)
+    @config.r.x = Game.width / 2
+    @config.r.y = Game.height - @height - @padding
     super(@config)
     @is_root   = true # Make this the player controlled element
-    @fixed     = true    
-    @padding   = 50
-    @r.x       = Game.width / 2
-    @r.y       = Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
     @max_x     = Game.width - @config.size - @tol - @padding * 0.5
     @min_x     = @config.size + @tol + @padding * 0.5
@@ -30,6 +30,7 @@ class @Paddle extends Polygon
      .attr("x", -@size - @overshoot).attr("y", -@height)
      .attr("width", @size * 2 + @overshoot * 2)
      .attr("height", @height * 2)
+    @start()
 
   nudge: (sign) ->
     dist = 2 * @size
@@ -47,7 +48,6 @@ class @Paddle extends Polygon
     d3.timer(func)
 
   redraw: (e = d3.event) =>
-    return unless @collision # don't draw if not active
     @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
@@ -55,8 +55,9 @@ class @Paddle extends Polygon
 
   start: ->
     super
+    @tick = -> 
     d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    d3.select(window).on("mousemove", @redraw) if window isnt window.top # default mouse behavior is to control the root element position
+    d3.select(window).on("mousemove", @redraw) unless window is window.top # default mouse behavior is to control the root element position
     @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
     
   stop: ->

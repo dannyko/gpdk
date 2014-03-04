@@ -75,6 +75,5 @@ class @Physics # numerical integration module for solving differential equations
     return
 
   @stop: -> 
-    @callbacks = []
     @off = true
     return
