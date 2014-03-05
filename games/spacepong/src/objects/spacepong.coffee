@@ -3,8 +3,8 @@ class @Spacepong extends Game
   @bg_img = GameAssetsUrl + 'earth_background.jpg'
   
   @ball_count: ->
-    count = 1 if Gamescore.value < 500
-    count = 2 if 500 <= Gamescore.value < 5000
+    count = 1 if Gamescore.value < 1000
+    count = 2 if 1000 <= Gamescore.value < 5000
     count = 3 if 5000 <= Gamescore.value < 10000
     count = 4 if 10000 <= Gamescore.value < 20000
     count = 5 if Gamescore >= 20000
@@ -56,6 +56,7 @@ class @Spacepong extends Game
     @spawn_check_needed = true
     @ball = []
     @ship = []
+    Gamescore.lives = 3
 
   keydown: =>
     switch d3.event.keyCode 
@@ -63,51 +64,46 @@ class @Spacepong extends Game
       when 37 then @paddle.nudge(-1) # left arrow
       when 82 then @reset() if @game_over
     return
+  
+  message: (txt, callback = ->) ->
+    ready = @g.append("text")
+      .text(txt)
+      .attr("stroke", "none")
+      .attr("fill", "#FFF")
+      .attr("font-size", "36")
+      .attr("x", Game.width  / 2 - 105)
+      .attr("y", Game.height / 2 + 20)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+    dur = 1000
+    ready.transition()
+      .duration(dur)
+      .style("opacity", 1)
+      .transition()
+      .duration(dur)
+      .style('opacity', 0)
+      .remove()
+      .each('end', callback)
 
-  spawn_check: ->
-    @spawn_check_needed = false # to prevent it from being called twice by @progress()
-    length = @ball.length
-    unless length > 0 and @ball.every((ball) -> !ball.is_destroyed) # check if any balls have been destroyed
-      @ball = @ball.filter((ball) -> !ball.is_destroyed)
-      txt = if length > 0 and @ball.length is length then ( Game.sound.play('whoosh') ; 'MULTIBALL UP' ) else ( 'GET READY' )
-      Physics.stop() # pause the physics engine
-      ready = @g.append("text")
-        .text(txt)
-        .attr("stroke", "none")
-        .attr("fill", "#FFF")
-        .attr("font-size", "36")
-        .attr("x", Game.width  / 2 - 105)
-        .attr("y", Game.height / 2 + 20)
-        .attr('font-family', 'arial')
-        .attr('font-weight', 'bold')
-        .attr('opacity', 0)
-      dur = 1000
-      ready.transition()
-        .duration(dur)
-        .style("opacity", 1)
-        .transition()
-        .duration(dur)
-        .style('opacity', 0)
-        .remove()
-        .each('end', => 
-          @ball.push(Factory.spawn(Ball)) while @ball.length < Spacepong.ball_count()
-          Physics.start(@) # unpause the physics engine
-          @spawn_ships()
-        )
-    else
-      @spawn_ships()    
+  spawn_ball: (txt) ->
+    Physics.stop() # pause the movement of balls and ships
+    @message(txt, @spawn_ball_callback)
     return    
+
+  spawn_ball_callback: =>
+    ball = Factory.spawn(Ball)
+    @ball.push(ball)
+    ball.start()
+    Physics.start() # unpause the physics engine
 
   spawn_ships: ->
     @new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
-    console.log(@ship)
-    if @ship.every((ship) -> ship.is_destroyed)
-      @ship = [] # initialize
-      while @ship.length < @new_ship_count
-        ship = Factory.spawn(Ship)
-        @ship.push(ship) 
-        ship.start()
-    @spawn_check_needed = true # tells @progress() to do another check
+    @ship = [] # initialize
+    while @ship.length < @new_ship_count
+      ship = Factory.spawn(Ship)
+      @ship.push(ship) 
+      ship.start()
     return
 
   start: -> # start new game
@@ -158,24 +154,22 @@ class @Spacepong extends Game
       Gameprez?.start()
       Game.sound.play('whoosh')
       Physics.callbacks.push(@progress)
+      @spawn_ball('GET READY')
+      @spawn_ships()
     )
       
   progress: =>
-    console.log('spacepong.progress: ', @spawn_check_needed)
     @scoretxt.text('SCORE: ' + Gamescore.value)
-    #@leveltxt.text('LEVEL: ' + (@N - @initialN + 1))
     if Gamescore.lives >= 0
       @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
     else 
       dur = 420
       @paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0)
       ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0) for ship in @ship
-      @stop()
-      callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; @game_over = true ; return true
-      # return @end(callback)
-    @spawn_check() if @spawn_check_needed # (@ball.length < Spacepong.ball_count() or (@ball.some (d) -> d.is_destroyed)) and @ball_check_needed
+      @stop() # stop this game instance
+      @message('GAME OVER')
+      @game_over = true ; 
     return
-    # @spawn_ships() if (@ship.every (d) -> d.is_destroyed) and @ship_check_needed and @ball_check_needed # only spawn ships after balls have been spawned
 
   reset: =>
     @cleanup()

@@ -16,7 +16,6 @@ class @Ball extends Circle
       .attr("width", @size * 2)
       .attr("height", @size * 2)
     @init()
-    @start()
 
   init: ->
     @v.x = 0 
@@ -38,24 +37,32 @@ class @Ball extends Circle
       @v.x = -Math.abs(@v.x)
       @reaction()
     if @r.y >= Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
-      if Math.abs(@r.x - Game.paddle.r.x) <= Game.paddle.size # physics engine missed the collision with the paddle
-        Game.paddle.destroy_check(@) 
-      else 
-        Gamescore.lives -= 1
-        Game.sound.play('miss')
-        @destroy()
-        return
+      Gamescore.lives -= 1
+      Game.sound.play('miss')
+      @destroy()
+      return
     super
+
+  destroy: ->
+    super
+    index = Physics.game.ball.indexOf(@)
+    if index = Physics.game.ball.length - 1
+      Physics.game.ball.pop()
+    else
+      Physics.game.ball[index] = Physics.game.ball[Physics.game.ball.length - 1]
+      Physics.game.ball.pop()
+    Physics.game.spawn_ball('GET READY') unless Gamescore.lives < 0
 
   reaction: (n) ->  
     @v.normalize(@speed)
     @flash()
+    Game.sound.play('bong')
     super
     
   flash: ->
     # N    = 240 # random color parameter
-    dur  = 210 # color effect transition duration parameter
-    fill = "#00F" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    dur  = 200 # color effect transition duration parameter
+    fill = "#FFF" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)
@@ -64,8 +71,8 @@ class @Ball extends Circle
       .attr('fill', fill)
       .transition()
       .duration(dur)
-      .ease('linear')
-      .attr("opacity", 0.5)
+      .ease('poly(0.5)')
+      .attr("opacity", .8)
       .transition()
       .duration(dur)
       .ease('linear')

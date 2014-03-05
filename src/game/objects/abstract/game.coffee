@@ -58,11 +58,12 @@ class @Game
 	    .attr('height', @svg.attr('height'))
 	    .style('width', '')
 	    .style('height', '')
+    Physics.game = @
     @update_window(force = true)
     $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
 
   start: -> 
-    Physics.start(@) # start all elements and associate physics engine with this game instance
+    Physics.start() # start all elements and associate physics engine with this game instance
     return
     
   stop: -> 

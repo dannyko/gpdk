@@ -38,6 +38,7 @@ class @Element
     @g            = d3.select("#game_g")
                     .append("g")
                     .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
+                    .style('opacity', 0)
     @g            = @config.g           || @g
     @svg          = @config.svg         || d3.select("#game_svg") # the container
     @game_g       = @config.game_g      || d3.select("#game_g") # the container's main group
@@ -78,6 +79,13 @@ class @Element
     .style("opacity", 1)
     .each('end', => callback?(@))
 
+  fadeOut: (dur = 30, callback) ->
+    @g.style("opacity", 1)
+    .transition()
+    .duration(dur)
+    .ease('linear')
+    .style("opacity", 0)
+    .each('end', => callback?(@))
 
   start: (duration = undefined, callback = undefined) ->
     if @is_sleeping
@@ -113,11 +121,15 @@ class @Element
     return
 
   destroy: (remove = false) -> # destroying with remove = false is the same as sleeping plus setting is_destroyed = true.
-    @g.style('opacity', 0)
+    @fadeOut()
     @stop() # decouple the element from the physics engine
     @sleep() # put it back in the object pool for potential reuse later
     @is_destroyed = true # mark the element instance as destroyed
     return
+
+  spawn: ->
+    @wake()
+    @start()
   
   init: ->
     @r.x  = 0
@@ -133,6 +145,7 @@ class @Element
     @is_sleeping  = false  # mark the eleemnt as awake
     # restore default position, velocity, and force values:
     @init()
+    console.log(@.constructor.name, @r.x, @r.y, config)
     Utils.set(@, config) if config?
     @ # return this element instance
     

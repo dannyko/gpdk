@@ -69,7 +69,6 @@ class @Physics # numerical integration module for solving differential equations
     return
   
   @start: (game = undefined, delay = 0) -> 
-    @game = game
     @off = false 
     d3.timer(Physics.integrate)
     return

@@ -263,7 +263,7 @@
       this.is_bullet = this.config.is_bullet || false;
       this.type = this.config.type || null;
       this.image = this.config.image || null;
-      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
+      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
       this.game_g = this.config.game_g || d3.select("#game_g");
@@ -311,6 +311,16 @@
         dur = 30;
       }
       return this.g.style("opacity", 0).transition().duration(dur).ease('linear').style("opacity", 1).each('end', function() {
+        return typeof callback === "function" ? callback(_this) : void 0;
+      });
+    };
+
+    Element.prototype.fadeOut = function(dur, callback) {
+      var _this = this;
+      if (dur == null) {
+        dur = 30;
+      }
+      return this.g.style("opacity", 1).transition().duration(dur).ease('linear').style("opacity", 0).each('end', function() {
         return typeof callback === "function" ? callback(_this) : void 0;
       });
     };
@@ -370,10 +380,15 @@
       if (remove == null) {
         remove = false;
       }
-      this.g.style('opacity', 0);
+      this.fadeOut();
       this.stop();
       this.sleep();
       this.is_destroyed = true;
+    };
+
+    Element.prototype.spawn = function() {
+      this.wake();
+      return this.start();
     };
 
     Element.prototype.init = function() {
@@ -390,6 +405,7 @@
     Element.prototype.wake = function(config) {
       this.is_sleeping = false;
       this.init();
+      console.log(this.constructor.name, this.r.x, this.r.y, config);
       if (config != null) {
         Utils.set(this, config);
       }
@@ -506,12 +522,13 @@
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      Physics.game = this;
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
     }
 
     Game.prototype.start = function() {
-      Physics.start(this);
+      Physics.start();
     };
 
     Game.prototype.stop = function() {
@@ -1226,7 +1243,6 @@
       if (delay == null) {
         delay = 0;
       }
-      this.game = game;
       this.off = false;
       d3.timer(Physics.integrate);
     };
@@ -1461,7 +1477,6 @@
       this.g.attr("class", "ball");
       this.image = this.g.append("image").attr("xlink:href", Ball.image_url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
       this.init();
-      this.start();
     }
 
     Ball.prototype.init = function() {
@@ -1488,29 +1503,41 @@
         this.reaction();
       }
       if (this.r.y >= Game.height - this.size - this.tol) {
-        if (Math.abs(this.r.x - Game.paddle.r.x) <= Game.paddle.size) {
-          Game.paddle.destroy_check(this);
-        } else {
-          Gamescore.lives -= 1;
-          Game.sound.play('miss');
-          this.destroy();
-          return;
-        }
+        Gamescore.lives -= 1;
+        Game.sound.play('miss');
+        this.destroy();
+        return;
       }
       return Ball.__super__.draw.apply(this, arguments);
+    };
+
+    Ball.prototype.destroy = function() {
+      var index;
+      Ball.__super__.destroy.apply(this, arguments);
+      index = Physics.game.ball.indexOf(this);
+      if (index = Physics.game.ball.length - 1) {
+        Physics.game.ball.pop();
+      } else {
+        Physics.game.ball[index] = Physics.game.ball[Physics.game.ball.length - 1];
+        Physics.game.ball.pop();
+      }
+      if (!(Gamescore.lives < 0)) {
+        return Physics.game.spawn_ball('GET READY');
+      }
     };
 
     Ball.prototype.reaction = function(n) {
       this.v.normalize(this.speed);
       this.flash();
+      Game.sound.play('bong');
       return Ball.__super__.reaction.apply(this, arguments);
     };
 
     Ball.prototype.flash = function() {
       var dur, fill;
-      dur = 210;
-      fill = "#00F";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('linear').attr("opacity", 0.5).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      dur = 200;
+      fill = "#FFF";
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .8).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
     };
 
     return Ball;
@@ -1660,8 +1687,7 @@
         }
         n.v.x = relative_intersect * n.speed;
         n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x);
-        this.reaction(n);
-        return Game.sound.play('bong');
+        return this.reaction(n);
       } else {
         return n.destroy();
       }
@@ -1763,16 +1789,29 @@
       if (this.v.y > Ship.speed[this.difficulty] + 0.1) {
         this.v.y *= 0.9;
       }
+      if (this.r.x < this.config.size) {
+        this.r.x = this.config.size;
+      }
+      if (this.r.x > (Game.width - this.config.size)) {
+        this.r.x = Game.width - this.config.size;
+      }
       return Ship.__super__.draw.apply(this, arguments);
     };
 
     Ship.prototype.destroy = function() {
-      var dur, fill,
+      var dur, fill, index,
         _this = this;
       if (this.is_destroyed) {
         return;
       }
       this.is_destroyed = true;
+      index = Physics.game.ship.indexOf(this);
+      if (index = Physics.game.ship.length - 1) {
+        Physics.game.ship.pop();
+      } else {
+        Physics.game.ship[index] = Physics.game.ship[Physics.game.ship.length - 1];
+        Physics.game.ship.pop();
+      }
       this.stop();
       if (this.offscreen()) {
         Gamescore.decrement_value();
@@ -1784,7 +1823,12 @@
       this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
         return _this.g.remove();
       });
-      return Game.sound.play('boom');
+      Game.sound.play('boom');
+      if (Physics.game.ship.every(function(ship) {
+        return ship.is_destroyed;
+      })) {
+        return Physics.game.spawn_ships();
+      }
     };
 
     Ship.prototype.destroy_check = function(element) {
@@ -1809,6 +1853,9 @@
         for (i = _i = 0, _ref = Ship.increment_count[this.difficulty]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
           Gamescore.increment_value();
         }
+        if (Physics.game.ball.length < Spacepong.ball_count()) {
+          Physics.game.spawn_ball('MULTIBALL UP');
+        }
         this.destroy();
         return true;
       } else {
@@ -1828,10 +1875,10 @@
 
     Spacepong.ball_count = function() {
       var count, _ref, _ref1, _ref2;
-      if (Gamescore.value < 500) {
+      if (Gamescore.value < 1000) {
         count = 1;
       }
-      if ((500 <= (_ref = Gamescore.value) && _ref < 5000)) {
+      if ((1000 <= (_ref = Gamescore.value) && _ref < 5000)) {
         count = 2;
       }
       if ((5000 <= (_ref1 = Gamescore.value) && _ref1 < 10000)) {
@@ -1854,6 +1901,9 @@
       };
       this.progress = function() {
         return Spacepong.prototype.progress.apply(_this, arguments);
+      };
+      this.spawn_ball_callback = function() {
+        return Spacepong.prototype.spawn_ball_callback.apply(_this, arguments);
       };
       this.keydown = function() {
         return Spacepong.prototype.keydown.apply(_this, arguments);
@@ -1881,11 +1931,14 @@
 
     Spacepong.prototype.setup = function() {
       this.paddle = Factory.spawn(Paddle);
+      this.paddle_x = this.paddle.r.x;
+      this.paddle_y = this.paddle.r.y;
       Game.paddle = this.paddle;
       this.game_over = false;
       this.spawn_check_needed = true;
       this.ball = [];
-      return this.ship = [];
+      this.ship = [];
+      return Gamescore.lives = 3;
     };
 
     Spacepong.prototype.keydown = function() {
@@ -1903,48 +1956,42 @@
       }
     };
 
-    Spacepong.prototype.spawn_check = function() {
-      var dur, length, ready, txt,
-        _this = this;
-      this.spawn_check_needed = false;
-      length = this.ball.length;
-      if (!(length > 0 && this.ball.every(function(ball) {
-        return !ball.is_destroyed;
-      }))) {
-        this.ball = this.ball.filter(function(ball) {
-          return !ball.is_destroyed;
-        });
-        txt = length > 0 && this.ball.length === length ? (Game.sound.play('whoosh'), 'MULTIBALL UP') : 'GET READY';
-        Physics.stop();
-        ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
-        dur = 1000;
-        ready.transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', function() {
-          while (_this.ball.length < Spacepong.ball_count()) {
-            _this.ball.push(Factory.spawn(Ball));
-          }
-          Physics.start(_this);
-          return _this.spawn_ships();
-        });
-      } else {
-        this.spawn_ships();
+    Spacepong.prototype.message = function(txt, callback) {
+      var dur, ready;
+      if (callback == null) {
+        callback = function() {};
       }
+      ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      dur = 1000;
+      return ready.transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
+    };
+
+    Spacepong.prototype.spawn_ball = function(txt) {
+      this.paddle_x = this.paddle.r.x;
+      this.paddle_y = this.paddle.r.y;
+      Physics.stop();
+      this.message(txt, this.spawn_ball_callback);
+    };
+
+    Spacepong.prototype.spawn_ball_callback = function() {
+      var ball;
+      ball = Factory.spawn(Ball);
+      this.ball.push(ball);
+      ball.start();
+      this.paddle.r.x = this.paddle_x;
+      this.paddle.r.y = this.paddle_y;
+      return Physics.start();
     };
 
     Spacepong.prototype.spawn_ships = function() {
       var ship;
       this.new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000));
-      console.log(this.ship);
-      if (this.ship.every(function(ship) {
-        return ship.is_destroyed;
-      })) {
-        this.ship = [];
-        while (this.ship.length < this.new_ship_count) {
-          ship = Factory.spawn(Ship);
-          this.ship.push(ship);
-          ship.start();
-        }
+      this.ship = [];
+      while (this.ship.length < this.new_ship_count) {
+        ship = Factory.spawn(Ship);
+        this.ship.push(ship);
+        ship.start();
       }
-      this.spawn_check_needed = true;
     };
 
     Spacepong.prototype.start = function() {
@@ -1969,14 +2016,14 @@
           Gameprez.start();
         }
         Game.sound.play('whoosh');
-        return Physics.callbacks.push(_this.progress);
+        Physics.callbacks.push(_this.progress);
+        _this.spawn_ball('GET READY');
+        return _this.spawn_ships();
       });
     };
 
     Spacepong.prototype.progress = function() {
-      var callback, dur, ship, _i, _len, _ref,
-        _this = this;
-      console.log('spacepong.progress: ', this.spawn_check_needed);
+      var dur, ship, _i, _len, _ref;
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       if (Gamescore.lives >= 0) {
         this.lives.text('LIVES: ' + Gamescore.lives);
@@ -1989,14 +2036,8 @@
           ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
         }
         this.stop();
-        callback = function() {
-          _this.lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', _this.reset);
-          _this.game_over = true;
-          return true;
-        };
-      }
-      if (this.spawn_check_needed) {
-        this.spawn_check();
+        this.message('GAME OVER');
+        this.game_over = true;
       }
     };
 

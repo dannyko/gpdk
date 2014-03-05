@@ -78,7 +78,6 @@ class @Paddle extends Polygon
       n.v.x = relative_intersect * n.speed
       n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
       @reaction(n)  
-      Game.sound.play('bong')
     else # hit a ship
       n.destroy()
   

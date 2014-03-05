@@ -40,11 +40,19 @@ class @Ship extends Polygon
   draw: ->
     if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.1
     if @v.y > Ship.speed[@difficulty] + 0.1 then @v.y *= 0.9
+    @r.x = @config.size if @r.x < @config.size
+    @r.x = (Game.width - @config.size) if @r.x > (Game.width - @config.size)
     super
 
   destroy: ->
     return if @is_destroyed # don't allow destruction twice (i.e. before transition finishes)
     @is_destroyed = true
+    index = Physics.game.ship.indexOf(@)
+    if index = Physics.game.ship.length - 1
+      Physics.game.ship.pop()
+    else
+      Physics.game.ship[index] = Physics.game.ship[Physics.game.ship.length - 1]
+      Physics.game.ship.pop()
     @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
     (Gamescore.decrement_value() ; Game.sound.play('loss') ) if @offscreen() # penalize score for missing a ship
     fill = '#FFF' 
@@ -59,6 +67,7 @@ class @Ship extends Polygon
         @g.remove()
       )
     Game.sound.play('boom')
+    Physics.game.spawn_ships() if Physics.game.ship.every((ship) -> ship.is_destroyed)
 
   destroy_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
     if element.name is 'Ball' # hit by ball, destroy and awaard points
@@ -71,6 +80,7 @@ class @Ship extends Polygon
         when 2 then element.v.x =  Math.abs(element.v.x)
         when 3 then element.v.y =  Math.abs(element.v.y)
       Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
+      Physics.game.spawn_ball('MULTIBALL UP') if Physics.game.ball.length < Spacepong.ball_count()
       @destroy()
       return true
     else # hit another ship, let physics engine handle the reaction
