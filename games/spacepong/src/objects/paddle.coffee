@@ -41,7 +41,9 @@ class @Paddle extends Polygon
     func = =>
       done = false
       done = true if (@r.x >= x1 and dx > 0) or (@r.x <= x1 and dx < 0)
-      @r.x += dx unless done
+      unless done
+        @r.x += dx
+        @draw()
       @r.x = @max_x if @r.x > @max_x
       @r.x = @min_x if @r.x < @min_x
       done
@@ -51,6 +53,7 @@ class @Paddle extends Polygon
     @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
+    @draw()
     return
 
   start: ->
@@ -66,7 +69,7 @@ class @Paddle extends Polygon
     d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is in iframe
     @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
 
-  destroy_check: (n) -> # what happens when paddle gets hit by a ball
+  remove_check: (n) -> # what happens when paddle gets hit by a ball
     if n.type is 'Circle' # hit a ball
       intersect_x        = n.r.x - @r.x
       relative_intersect = intersect_x / @size
@@ -79,9 +82,9 @@ class @Paddle extends Polygon
       n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
       @reaction(n)  
     else # hit a ship
-      n.destroy()
+      n.remove()
   
-  destroy: ->
+  remove: ->
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter

@@ -10,7 +10,7 @@ class @Dronewar extends Game
     @initialN = @config.initialN || 5
     @N        = @initialN
     @maxN     = 36 # limit the max number of ships
-    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never destroy it
+    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
       .attr("fill", "white")
@@ -228,8 +228,8 @@ class @Dronewar extends Game
       @root.game_over(dur)
       @stop()
       return true
-    all_is_destroyed = @element.every (element) -> element.is_destroyed
-    if all_is_destroyed # i.e. went offscreen or hit by bullet
+    all_is_removed = @element.every (element) -> element.is_removed
+    if all_is_removed # i.e. went offscreen or hit by bullet
       drone_increment = 1
       @N += drone_increment unless @N >= @maxN
       @charge *= 20

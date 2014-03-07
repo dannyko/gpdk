@@ -5,7 +5,26 @@ class @Game
   @scale:  1 # class variable for global scaling transformations
   @audioSwitch: true
   @musicSwitch: true
+  @instance: null
   
+  constructor: (@config = {}) ->
+    @element    = [] # initialize
+    @div        = d3.select("#game_div")
+    @svg        = d3.select("#game_svg")
+    @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
+    Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
+    Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
+    @scale      = 1 # initialize zoom level (implementation still pending)
+    @g          = d3.select("#game_g")
+    @g          = @svg.append('g') if @g.empty()
+    @g.attr('id', 'game_g')
+      .attr('width', @svg.attr('width'))
+      .attr('height', @svg.attr('height'))
+      .style('width', '')
+      .style('height', '')
+    @update_window(force = true)
+    $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
+
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]
     x = $(element).width()
@@ -43,30 +62,13 @@ class @Game
     $(document.body).css('width', w).css('height', h)
     return
 
-  constructor: (@config = {}) ->
-    @element    = [] # initialize
-    @div        = d3.select("#game_div")
-    @svg        = d3.select("#game_svg")
-    @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
-    Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
-    Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
-    @scale      = 1 # initialize zoom level (implementation still pending)
-    @g          = d3.select("#game_g")
-    @g          = @svg.append('g') if @g.empty()
-    @g.attr('id', 'game_g')
-	    .attr('width', @svg.attr('width'))
-	    .attr('height', @svg.attr('height'))
-	    .style('width', '')
-	    .style('height', '')
-    Physics.game = @
-    @update_window(force = true)
-    $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
-
   start: -> 
     Physics.start() # start all elements and associate physics engine with this game instance
+    Game.instance = @
     return
     
   stop: -> 
+    Collision.list.forEach((d) -> d.remove())
     Physics.stop() 
     return # stop all elements
 
@@ -79,7 +81,32 @@ class @Game
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
     len = Collision.list.length          # length
-    while (len--)                        # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.destroy()
+    while (len--)                        # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.remove()
       soundSwitch = false                # no sound for cleanup
-      Collision.list[len].destroy(soundSwitch)
+      Collision.list[len].remove(soundSwitch)
+    return
+
+  message: (txt, callback, dur = 1000) ->
+    if callback is undefined
+      callback = ->
+    @g.selectAll('.game_message').remove()
+    ready = @g.append("text")
+      .attr('class', 'game_message')
+      .text(txt)
+      .attr("stroke", "none")
+      .attr("fill", "#FFF")
+      .attr("font-size", "36")
+      .attr("x", Game.width  / 2 - 105)
+      .attr("y", Game.height / 2 + 20)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+      .transition()
+      .duration(dur)
+      .style("opacity", 1)
+      .transition()
+      .duration(dur)
+      .style('opacity', 0)
+      .remove()
+      .each('end', callback)
     return

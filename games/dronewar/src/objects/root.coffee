@@ -71,7 +71,7 @@ class @Root extends Polygon
     return
 
   fire: () =>
-    return true if @is_destroyed
+    return true if @is_removed
     if @lastfire is undefined
       @lastfire = Physics.timestamp
       return
@@ -151,7 +151,7 @@ class @Root extends Polygon
     return if n.is_bullet # bullets don't hurt the ship
     damage = 5
     Gamescore.lives -= damage # decrement lives for this game
-    n.destroy()
+    n.remove()
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter
@@ -182,4 +182,4 @@ class @Root extends Polygon
       .duration(dur * 0.25 )
       .ease('linear')
       .style("opacity", 0)
-    @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @destroy())
+    @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @remove())

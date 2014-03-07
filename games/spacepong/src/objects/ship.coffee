@@ -1,8 +1,8 @@
 class @Ship extends Polygon
   @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
-  @speed = [2, 3, 4]
-  @size  = [40, 35, 30]
+  @speed = [4, 5, 6]
+  @size  = [50, 45, 40]
 
   set_ship = (w, h) ->
     [ 
@@ -44,21 +44,24 @@ class @Ship extends Polygon
     @r.x = (Game.width - @config.size) if @r.x > (Game.width - @config.size)
     super
 
-  destroy: ->
-    return if @is_destroyed # don't allow destruction twice (i.e. before transition finishes)
-    @is_destroyed = true
-    index = Physics.game.ship.indexOf(@)
-    if index = Physics.game.ship.length - 1
-      Physics.game.ship.pop()
+  remove: (quietSwitch = false) ->
+    return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
+    @is_removed = true
+    index = Game.instance.ship.indexOf(@)
+    if index = Game.instance.ship.length - 1
+      Game.instance.ship.pop()
     else
-      Physics.game.ship[index] = Physics.game.ship[Physics.game.ship.length - 1]
-      Physics.game.ship.pop()
+      Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1]
+      Game.instance.ship.pop()
     @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
-    (Gamescore.decrement_value() ; Game.sound.play('loss') ) if @offscreen() # penalize score for missing a ship
+    if @offscreen() # penalize score for missing a ship
+     Gamescore.decrement_value()
+     Game.sound.play('loss')
+     Game.instance.text()
     fill = '#FFF' 
     dur  = 210 # color effect transition duration parameter
     @image.attr('opacity', 1)
-    @image # ship destroy reaction 
+    @image # ship remove reaction 
       .transition()
       .duration(dur)
       .ease('sqrt')
@@ -66,22 +69,23 @@ class @Ship extends Polygon
       .each('end', =>  
         @g.remove()
       )
-    Game.sound.play('boom')
-    Physics.game.spawn_ships() if Physics.game.ship.every((ship) -> ship.is_destroyed)
+    Game.sound.play('boom') unless quietSwitch
+    Game.instance.spawn_ships() if Game.instance.ship.length is 0
 
-  destroy_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
-    if element.name is 'Ball' # hit by ball, destroy and awaard points
+  remove_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
+    if element.name is 'Ball' # hit by ball, remove and awaard points
       element.reaction()
       d = Collision.circle_polygon(element, @)
-      console.log(d.i)
       switch d.i
         when 0 then element.v.x = -Math.abs(element.v.x)
         when 1 then element.v.y = -Math.abs(element.v.y)
         when 2 then element.v.x =  Math.abs(element.v.x)
         when 3 then element.v.y =  Math.abs(element.v.y)
+      old_count = Spacepong.ball_count()        
       Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
-      Physics.game.spawn_ball('MULTIBALL UP') if Physics.game.ball.length < Spacepong.ball_count()
-      @destroy()
+      Game.instance.text()
+      Game.instance.spawn_ball('MULTIBALL UP') if old_count < Spacepong.ball_count()
+      @remove()
       return true
     else # hit another ship, let physics engine handle the reaction
       return false

@@ -3,16 +3,16 @@ class @Reaction # reaction module with no class variables only class and private
   ## class methods:
 
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
-    return if m.destroy_check(n) || n.destroy_check(m)
+    return if m.remove_check(n) || n.remove_check(m)
     line     = m.line.init(d).normalize()
     overstep = Math.max(d.dmin - d.dist, 0) # account for overstep since simulated movement occurs in discrete jumps
     shift    = 0.5 * (Math.max(m.tol, n.tol) + overstep) # shift both by an equal amount adding up to satisfy tolerance while taking into account overstep
     Reaction.elastic_collision(m, n, line, shift)
-    m.reaction(n) # should give the same result as n.reaction(m) - symmetric after destroy_check
+    m.reaction(n) # should give the same result as n.reaction(m) - symmetric after remove_check
     return  
     
   @circle_polygon: (circle, polygon, d) ->
-    return if circle.destroy_check(polygon) || polygon.destroy_check(circle)
+    return if circle.remove_check(polygon) || polygon.remove_check(circle)
     intersecting_segment = polygon.path[d.i]
     normal = intersecting_segment.n
     shift = 0.5 * Math.max(circle.tol, polygon.tol)
@@ -21,7 +21,7 @@ class @Reaction # reaction module with no class variables only class and private
     return
     
   @polygon_polygon: (m, n, d) -> # perfectly elastic default collision type
-    return if m.destroy_check(n) || n.destroy_check(m)
+    return if m.remove_check(n) || n.remove_check(m)
     # exhange the velocities parallel to the normal vector most collinear with the line joining the centroids
     mseg   = m.path[d.i]
     nseg   = n.path[d.j]

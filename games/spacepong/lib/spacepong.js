@@ -20,8 +20,8 @@
         old = new klass(config);
       } else {
         old = this.inactive[klass].pop();
-        if (old.is_sleeping === false || old.is_destroyed === false) {
-          console.log('Factory.spawn: not sleeping & undestroyed instance found in inactive list!', old);
+        if (old.is_sleeping === false || old.is_removed === false) {
+          console.log('Factory.spawn: not sleeping & unremoveed instance found in inactive list!', old);
           Factory.spawn(klass, config);
           return;
         }
@@ -269,7 +269,7 @@
       this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Physics.verlet;
-      this.is_destroyed = false;
+      this.is_removed = false;
       this.is_sleeping = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
@@ -293,7 +293,7 @@
       this.g.attr("transform", "translate(" + this.r.x + "," + this.r.y + ") rotate(" + (360 * 0.5 * this.angle / Math.PI) + ")");
     };
 
-    Element.prototype.destroy_check = function(n) {
+    Element.prototype.remove_check = function(n) {
       if (this.is_root || this.is_bullet) {
         this.reaction(n);
         return true;
@@ -308,7 +308,7 @@
     Element.prototype.fadeIn = function(dur, callback) {
       var _this = this;
       if (dur == null) {
-        dur = 30;
+        dur = 300;
       }
       return this.g.style("opacity", 0).transition().duration(dur).ease('linear').style("opacity", 1).each('end', function() {
         return typeof callback === "function" ? callback(_this) : void 0;
@@ -318,7 +318,7 @@
     Element.prototype.fadeOut = function(dur, callback) {
       var _this = this;
       if (dur == null) {
-        dur = 30;
+        dur = 300;
       }
       return this.g.style("opacity", 1).transition().duration(dur).ease('linear').style("opacity", 0).each('end', function() {
         return typeof callback === "function" ? callback(_this) : void 0;
@@ -334,14 +334,14 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_destroyed or is_sleeping', this);
+        console.log('element.start: is_removed or is_sleeping... bug?', this);
       }
       index = Collision.list.indexOf(this);
       if (index > -1) {
-        console.log('element.start: already on physics list!', this);
+        console.log('element.start: already on physics list! bug?', this);
       } else {
         Collision.list.push(this);
-        this.is_destroyed = false;
+        this.is_removed = false;
         this.draw();
         this.fadeIn(duration, callback);
       }
@@ -362,13 +362,13 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
-      if (this.is_destroyed) {
+      if (this.is_removed) {
         return;
       }
       if (this._cleanup && this.offscreen()) {
-        this.destroy();
+        this.remove();
       }
-      return this.is_destroyed;
+      return this.is_removed;
     };
 
     Element.prototype.sleep = function() {
@@ -376,14 +376,17 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.destroy = function(remove) {
+    Element.prototype.remove = function(remove) {
       if (remove == null) {
         remove = false;
       }
+      if (this.is_removed) {
+        return;
+      }
+      this.is_removed = true;
       this.fadeOut();
       this.stop();
       this.sleep();
-      this.is_destroyed = true;
     };
 
     Element.prototype.spawn = function() {
@@ -405,7 +408,6 @@
     Element.prototype.wake = function(config) {
       this.is_sleeping = false;
       this.init();
-      console.log(this.constructor.name, this.r.x, this.r.y, config);
       if (config != null) {
         Utils.set(this, config);
       }
@@ -435,6 +437,36 @@
     Game.audioSwitch = true;
 
     Game.musicSwitch = true;
+
+    Game.instance = null;
+
+    function Game(config) {
+      var force,
+        _this = this;
+      this.config = config != null ? config : {};
+      this.update_window = function(force) {
+        if (force == null) {
+          force = false;
+        }
+        return Game.prototype.update_window.apply(_this, arguments);
+      };
+      this.element = [];
+      this.div = d3.select("#game_div");
+      this.svg = d3.select("#game_svg");
+      if (this.svg.empty()) {
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
+      }
+      Game.width = 800;
+      Game.height = 600;
+      this.scale = 1;
+      this.g = d3.select("#game_g");
+      if (this.g.empty()) {
+        this.g = this.svg.append('g');
+      }
+      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window(force = true);
+      $(window).on('resize', this.update_window);
+    }
 
     current_width = function(padding) {
       var element, x;
@@ -498,40 +530,15 @@
       $(document.body).css('width', w).css('height', h);
     };
 
-    function Game(config) {
-      var force,
-        _this = this;
-      this.config = config != null ? config : {};
-      this.update_window = function(force) {
-        if (force == null) {
-          force = false;
-        }
-        return Game.prototype.update_window.apply(_this, arguments);
-      };
-      this.element = [];
-      this.div = d3.select("#game_div");
-      this.svg = d3.select("#game_svg");
-      if (this.svg.empty()) {
-        this.svg = this.div.append('svg').attr('id', 'game_svg');
-      }
-      Game.width = 800;
-      Game.height = 600;
-      this.scale = 1;
-      this.g = d3.select("#game_g");
-      if (this.g.empty()) {
-        this.g = this.svg.append('g');
-      }
-      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
-      Physics.game = this;
-      this.update_window(force = true);
-      $(window).on('resize', this.update_window);
-    }
-
     Game.prototype.start = function() {
       Physics.start();
+      Game.instance = this;
     };
 
     Game.prototype.stop = function() {
+      Collision.list.forEach(function(d) {
+        return d.remove();
+      });
       Physics.stop();
     };
 
@@ -552,8 +559,20 @@
       len = Collision.list.length;
       while (len--) {
         soundSwitch = false;
-        Collision.list[len].destroy(soundSwitch);
+        Collision.list[len].remove(soundSwitch);
       }
+    };
+
+    Game.prototype.message = function(txt, callback, dur) {
+      var ready;
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (callback === void 0) {
+        callback = function() {};
+      }
+      this.g.selectAll('.game_message').remove();
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -780,7 +799,7 @@
             var p;
             p = node.point;
             if (p !== null) {
-              if (p.is_destroyed) {
+              if (p.is_removed) {
                 return false;
               }
               if (!(d !== p.d && p.d.collision)) {
@@ -1151,9 +1170,9 @@
 
     Physics.fps = 60;
 
-    Physics.off = false;
+    Physics.tick = 1000 / Physics.fps;
 
-    Physics.timestamp = 0;
+    Physics.off = false;
 
     Physics.game = null;
 
@@ -1181,25 +1200,23 @@
       element.force_param.forEach(function(param) {
         return Force["eval"](element, param, element.f, accumulateSwitch);
       });
-      return element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
+      element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
     Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step, _results;
+      var Nstep, diff, dt, scale, step;
       if (Physics.fps > fps) {
         Nstep = Math.floor(Physics.fps / fps);
         step = 0;
-        _results = [];
         while (step < Nstep) {
           Physics.verlet_step(element);
-          _results.push(++step);
+          ++step;
         }
-        return _results;
       } else {
         diff = fps - Physics.fps;
         scale = diff / Physics.fps;
         dt = element.dt / (1 + scale);
-        Physics.verlet_step(element, dt);
+        Physics.verlet_step(element);
       }
     };
 
@@ -1208,12 +1225,16 @@
       if (Physics.off) {
         return true;
       }
-      dt = Physics.timestamp > 0 ? t - Physics.timestamp : Physics.tick;
-      Physics.timestamp = t;
+      if (t > Physics.timestamp) {
+        dt = t - Physics.timestamp;
+      } else {
+        dt = Physics.tick;
+      }
       fps = 1000 / dt;
       if (Physics.debug) {
-        console.log('fps: ' + fps);
+        console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
+      Physics.timestamp = t;
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update(fps);
@@ -1234,17 +1255,13 @@
           Physics.callbacks.pop();
         }
       }
+      return this.off;
     };
 
-    Physics.start = function(game, delay) {
-      if (game == null) {
-        game = void 0;
-      }
-      if (delay == null) {
-        delay = 0;
-      }
+    Physics.start = function() {
       this.off = false;
-      d3.timer(Physics.integrate);
+      this.timestamp = 0;
+      d3.timer(this.integrate);
     };
 
     Physics.stop = function() {
@@ -1261,7 +1278,7 @@
 
     Reaction.circle_circle = function(m, n, d) {
       var line, overstep, shift;
-      if (m.destroy_check(n) || n.destroy_check(m)) {
+      if (m.remove_check(n) || n.remove_check(m)) {
         return;
       }
       line = m.line.init(d).normalize();
@@ -1273,7 +1290,7 @@
 
     Reaction.circle_polygon = function(circle, polygon, d) {
       var intersecting_segment, normal, shift;
-      if (circle.destroy_check(polygon) || polygon.destroy_check(circle)) {
+      if (circle.remove_check(polygon) || polygon.remove_check(circle)) {
         return;
       }
       intersecting_segment = polygon.path[d.i];
@@ -1285,7 +1302,7 @@
 
     Reaction.polygon_polygon = function(m, n, d) {
       var dot_a, dot_b, mseg, normal, nseg, segj, shift;
-      if (m.destroy_check(n) || n.destroy_check(m)) {
+      if (m.remove_check(n) || n.remove_check(m)) {
         return;
       }
       mseg = m.path[d.i];
@@ -1503,26 +1520,31 @@
         this.reaction();
       }
       if (this.r.y >= Game.height - this.size - this.tol) {
+        if (Gamescore.lives <= 0) {
+          Gamescore.lives = -1;
+          Game.instance.message('GAME OVER', Game.instance.stop);
+          return;
+        }
         Gamescore.lives -= 1;
+        Game.instance.text();
         Game.sound.play('miss');
-        this.destroy();
-        return;
+        this.remove();
       }
       return Ball.__super__.draw.apply(this, arguments);
     };
 
-    Ball.prototype.destroy = function() {
+    Ball.prototype.remove = function() {
       var index;
-      Ball.__super__.destroy.apply(this, arguments);
-      index = Physics.game.ball.indexOf(this);
-      if (index = Physics.game.ball.length - 1) {
-        Physics.game.ball.pop();
+      Ball.__super__.remove.apply(this, arguments);
+      index = Game.instance.ball.indexOf(this);
+      if (index = Game.instance.ball.length - 1) {
+        Game.instance.ball.pop();
       } else {
-        Physics.game.ball[index] = Physics.game.ball[Physics.game.ball.length - 1];
-        Physics.game.ball.pop();
+        Game.instance.ball[index] = Game.instance.ball[Game.instance.ball.length - 1];
+        Game.instance.ball.pop();
       }
       if (!(Gamescore.lives < 0)) {
-        return Physics.game.spawn_ball('GET READY');
+        return Game.instance.spawn_ball('GET READY');
       }
     };
 
@@ -1625,6 +1647,7 @@
         }
         if (!done) {
           _this.r.x += dx;
+          _this.draw();
         }
         if (_this.r.x > _this.max_x) {
           _this.r.x = _this.max_x;
@@ -1648,6 +1671,7 @@
       if (this.r.x > this.max_x) {
         this.r.x = this.max_x;
       }
+      this.draw();
     };
 
     Paddle.prototype.start = function() {
@@ -1669,7 +1693,7 @@
       return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
-    Paddle.prototype.destroy_check = function(n) {
+    Paddle.prototype.remove_check = function(n) {
       var L, intersect_x, relative_intersect;
       if (n.type === 'Circle') {
         intersect_x = n.r.x - this.r.x;
@@ -1689,11 +1713,11 @@
         n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x);
         return this.reaction(n);
       } else {
-        return n.destroy();
+        return n.remove();
       }
     };
 
-    Paddle.prototype.destroy = function() {
+    Paddle.prototype.remove = function() {
       var N, dur, fill;
       N = 240;
       fill = '#ff0';
@@ -1723,9 +1747,9 @@
 
     Ship.increment_count = [1, 2, 4];
 
-    Ship.speed = [2, 3, 4];
+    Ship.speed = [4, 5, 6];
 
-    Ship.size = [40, 35, 30];
+    Ship.size = [50, 45, 40];
 
     set_ship = function(w, h) {
       return [
@@ -1798,24 +1822,28 @@
       return Ship.__super__.draw.apply(this, arguments);
     };
 
-    Ship.prototype.destroy = function() {
+    Ship.prototype.remove = function(quietSwitch) {
       var dur, fill, index,
         _this = this;
-      if (this.is_destroyed) {
+      if (quietSwitch == null) {
+        quietSwitch = false;
+      }
+      if (this.is_removed) {
         return;
       }
-      this.is_destroyed = true;
-      index = Physics.game.ship.indexOf(this);
-      if (index = Physics.game.ship.length - 1) {
-        Physics.game.ship.pop();
+      this.is_removed = true;
+      index = Game.instance.ship.indexOf(this);
+      if (index = Game.instance.ship.length - 1) {
+        Game.instance.ship.pop();
       } else {
-        Physics.game.ship[index] = Physics.game.ship[Physics.game.ship.length - 1];
-        Physics.game.ship.pop();
+        Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1];
+        Game.instance.ship.pop();
       }
       this.stop();
       if (this.offscreen()) {
         Gamescore.decrement_value();
         Game.sound.play('loss');
+        Game.instance.text();
       }
       fill = '#FFF';
       dur = 210;
@@ -1823,20 +1851,19 @@
       this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
         return _this.g.remove();
       });
-      Game.sound.play('boom');
-      if (Physics.game.ship.every(function(ship) {
-        return ship.is_destroyed;
-      })) {
-        return Physics.game.spawn_ships();
+      if (!quietSwitch) {
+        Game.sound.play('boom');
+      }
+      if (Game.instance.ship.length === 0) {
+        return Game.instance.spawn_ships();
       }
     };
 
-    Ship.prototype.destroy_check = function(element) {
-      var d, i, _i, _ref;
+    Ship.prototype.remove_check = function(element) {
+      var d, i, old_count, _i, _ref;
       if (element.name === 'Ball') {
         element.reaction();
         d = Collision.circle_polygon(element, this);
-        console.log(d.i);
         switch (d.i) {
           case 0:
             element.v.x = -Math.abs(element.v.x);
@@ -1850,13 +1877,15 @@
           case 3:
             element.v.y = Math.abs(element.v.y);
         }
+        old_count = Spacepong.ball_count();
         for (i = _i = 0, _ref = Ship.increment_count[this.difficulty]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
           Gamescore.increment_value();
         }
-        if (Physics.game.ball.length < Spacepong.ball_count()) {
-          Physics.game.spawn_ball('MULTIBALL UP');
+        Game.instance.text();
+        if (old_count < Spacepong.ball_count()) {
+          Game.instance.spawn_ball('MULTIBALL UP');
         }
-        this.destroy();
+        this.remove();
         return true;
       } else {
         return false;
@@ -1896,11 +1925,8 @@
     function Spacepong(config) {
       var _this = this;
       this.config = config != null ? config : {};
-      this.reset = function() {
-        return Spacepong.prototype.reset.apply(_this, arguments);
-      };
-      this.progress = function() {
-        return Spacepong.prototype.progress.apply(_this, arguments);
+      this.stop = function() {
+        return Spacepong.prototype.stop.apply(_this, arguments);
       };
       this.spawn_ball_callback = function() {
         return Spacepong.prototype.spawn_ball_callback.apply(_this, arguments);
@@ -1909,6 +1935,7 @@
         return Spacepong.prototype.keydown.apply(_this, arguments);
       };
       Spacepong.__super__.constructor.apply(this, arguments);
+      this.initialN = 4;
       this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -1931,10 +1958,7 @@
 
     Spacepong.prototype.setup = function() {
       this.paddle = Factory.spawn(Paddle);
-      this.paddle_x = this.paddle.r.x;
-      this.paddle_y = this.paddle.r.y;
       Game.paddle = this.paddle;
-      this.game_over = false;
       this.spawn_check_needed = true;
       this.ball = [];
       this.ship = [];
@@ -1948,27 +1972,13 @@
           break;
         case 37:
           this.paddle.nudge(-1);
-          break;
-        case 82:
-          if (this.game_over) {
-            this.reset();
-          }
       }
-    };
-
-    Spacepong.prototype.message = function(txt, callback) {
-      var dur, ready;
-      if (callback == null) {
-        callback = function() {};
-      }
-      ready = this.g.append("text").text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
-      dur = 1000;
-      return ready.transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     Spacepong.prototype.spawn_ball = function(txt) {
-      this.paddle_x = this.paddle.r.x;
-      this.paddle_y = this.paddle.r.y;
+      if (Physics.off) {
+        return;
+      }
       Physics.stop();
       this.message(txt, this.spawn_ball_callback);
     };
@@ -1978,14 +1988,12 @@
       ball = Factory.spawn(Ball);
       this.ball.push(ball);
       ball.start();
-      this.paddle.r.x = this.paddle_x;
-      this.paddle.r.y = this.paddle_y;
       return Physics.start();
     };
 
     Spacepong.prototype.spawn_ships = function() {
       var ship;
-      this.new_ship_count = Math.max(1, 1 + Math.floor(Gamescore.value / 1000));
+      this.new_ship_count = Math.max(1, this.initialN + Math.floor(Gamescore.value / 1000));
       this.ship = [];
       while (this.ship.length < this.new_ship_count) {
         ship = Factory.spawn(Ship);
@@ -1994,11 +2002,27 @@
       }
     };
 
+    Spacepong.prototype.text = function() {
+      this.scoretxt.text('SCORE: ' + Gamescore.value);
+      return this.lives.text('LIVES: ' + Gamescore.lives);
+    };
+
+    Spacepong.prototype.stop = function() {
+      var quietSwitch;
+      Spacepong.__super__.stop.apply(this, arguments);
+      quietSwitch = true;
+      this.ship.forEach(function(ship) {
+        return ship.remove(quietSwitch);
+      });
+      return this.ball.forEach(function(ball) {
+        return ball.remove();
+      });
+    };
+
     Spacepong.prototype.start = function() {
       var go, how, title,
         _this = this;
       Spacepong.__super__.start.apply(this, arguments);
-      this.game_over = false;
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("SPACEPONG");
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", Game.height / 2 + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("Use the mouse for controlling movement.");
@@ -2016,40 +2040,9 @@
           Gameprez.start();
         }
         Game.sound.play('whoosh');
-        Physics.callbacks.push(_this.progress);
         _this.spawn_ball('GET READY');
         return _this.spawn_ships();
       });
-    };
-
-    Spacepong.prototype.progress = function() {
-      var dur, ship, _i, _len, _ref;
-      this.scoretxt.text('SCORE: ' + Gamescore.value);
-      if (Gamescore.lives >= 0) {
-        this.lives.text('LIVES: ' + Gamescore.lives);
-      } else {
-        dur = 420;
-        this.paddle.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
-        _ref = this.ship;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          ship = _ref[_i];
-          ship.image.transition().duration(dur).ease('sqrt').style("opacity", 0);
-        }
-        this.stop();
-        this.message('GAME OVER');
-        this.game_over = true;
-      }
-    };
-
-    Spacepong.prototype.reset = function() {
-      this.cleanup();
-      this.g.selectAll("g").remove();
-      this.lives.text("");
-      this.scoretxt.text("");
-      this.svg.style("cursor", "auto");
-      this.setup();
-      Gamescore.lives = Gamescore.initialLives;
-      this.start();
     };
 
     return Spacepong;

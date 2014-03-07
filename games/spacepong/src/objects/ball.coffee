@@ -37,21 +37,25 @@ class @Ball extends Circle
       @v.x = -Math.abs(@v.x)
       @reaction()
     if @r.y >= Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
+      if Gamescore.lives <= 0
+        Gamescore.lives = -1
+        Game.instance.message('GAME OVER', Game.instance.stop)
+        return
       Gamescore.lives -= 1
+      Game.instance.text()
       Game.sound.play('miss')
-      @destroy()
-      return
+      @remove()
     super
 
-  destroy: ->
+  remove: ->
     super
-    index = Physics.game.ball.indexOf(@)
-    if index = Physics.game.ball.length - 1
-      Physics.game.ball.pop()
+    index = Game.instance.ball.indexOf(@)
+    if index = Game.instance.ball.length - 1
+      Game.instance.ball.pop()
     else
-      Physics.game.ball[index] = Physics.game.ball[Physics.game.ball.length - 1]
-      Physics.game.ball.pop()
-    Physics.game.spawn_ball('GET READY') unless Gamescore.lives < 0
+      Game.instance.ball[index] = Game.instance.ball[Game.instance.ball.length - 1]
+      Game.instance.ball.pop()
+    Game.instance.spawn_ball('GET READY') unless Gamescore.lives < 0
 
   reaction: (n) ->  
     @v.normalize(@speed)

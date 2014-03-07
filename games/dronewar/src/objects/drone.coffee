@@ -68,7 +68,7 @@ class @Drone extends Circle
   depleted: ->
     if @energy <= 0 then true else false
 
-  destroy: (effects = true) ->
+  remove: (effects = true) ->
     Game.sound.play('boom') if Game.audioSwitch
     if effects
       @stop()
