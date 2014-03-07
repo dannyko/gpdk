@@ -71,7 +71,7 @@ class @Root extends Polygon
     @rotate_path()
     return
 
-  fire: () =>
+  fire: =>
     return true if @is_removed
     if @lastfire is undefined
       @lastfire = Physics.timestamp
@@ -130,7 +130,7 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => 
+      .each('end', => 
         @set_path()
         @collision = true
         Physics.callbacks.push(@fire)

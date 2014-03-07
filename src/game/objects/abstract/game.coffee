@@ -65,6 +65,7 @@ class @Game
   start: -> 
     Physics.start() # start all elements and associate physics engine with this game instance
     Game.instance = @ # associate class variable with this instance for global accessibility from any context
+    Gameprez?.start()
     return
     
   stop: (callback = ->) -> 

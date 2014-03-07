@@ -29,6 +29,7 @@ class @Paddle extends Polygon
      .attr("x", -@size).attr("y", -@height)
      .attr("width", @size * 2)
      .attr("height", @height * 2)
+    @start()
 
   nudge: (sign) ->
     dist = 2 * @size
@@ -42,6 +43,7 @@ class @Paddle extends Polygon
       @r.x += dx unless done
       @r.x = @max_x if @r.x > @max_x
       @r.x = @min_x if @r.x < @min_x
+      @draw()
       done
     d3.timer(func)
 
@@ -50,6 +52,7 @@ class @Paddle extends Polygon
     @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
+    @draw()
     return
 
   start: ->
@@ -64,7 +67,7 @@ class @Paddle extends Polygon
     d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is rendered in an iframe
     @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
 
-  destroy_check: (n) -> # what happens when root gets hit by a ball
+  remove_check: (n) -> # what happens when root gets hit by a ball
     intersect_x        = n.r.x - @r.x
     relative_intersect = intersect_x / @size
     L = 0.8
@@ -76,7 +79,7 @@ class @Paddle extends Polygon
     n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
     @reaction(n)  
 
-  destroy: ->
+  remove: ->
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter

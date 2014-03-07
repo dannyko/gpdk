@@ -77,7 +77,7 @@ class @Dronewar extends Game
      #  )
     return
 
-  keydown: () =>
+  keydown: =>
     switch d3.event.keyCode 
       # when 70 then @root.fire() # f key fires bullets
       when 39 then @root.angle += @root.angleStep  ; @root.draw([@root.r.x, @root.r.y]) # right arrow changes firing angle by default

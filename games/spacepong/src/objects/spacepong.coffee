@@ -96,7 +96,6 @@ class @Spacepong extends Game
     @ball.forEach((ball) -> ball.remove()) # in case any balls were in the middle of spawning
 
   start: -> # start new game
-    super
 
     title = @g.append("text")
       .text("")
@@ -140,7 +139,7 @@ class @Spacepong extends Game
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       Gamescore.value = 0
-      Gameprez?.start()
+      super()
       Game.sound.play('whoosh')
       @text()
       @spawn_ball('GET READY')
