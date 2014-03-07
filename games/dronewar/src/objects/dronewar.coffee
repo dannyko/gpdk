@@ -209,12 +209,12 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", Game.width / 2 - 320)
+      .attr("x", Game.width / 2 - 350)
       .attr("y", @root.r.y + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    how.text("Use mouse/tap screen to control movement and use scrollwheel/drag for rotation")
+    how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation")
     Game.sound?.play('music') if Game.musicSwitch
     super
     return
