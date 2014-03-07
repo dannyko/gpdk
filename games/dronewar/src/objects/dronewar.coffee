@@ -95,8 +95,7 @@ class @Dronewar extends Game
   stop: -> # stop the game
     super
     @root.stop()
-    callback = => @lives.text("GAME OVER") ; return true
-    @stop(callback)
+    @lives.text("GAME OVER")
     @message('GAME OVER')
     return
 
@@ -118,7 +117,7 @@ class @Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", Game.width / 2 - 320)
+      .attr("x", Game.width / 2 - 350)
       .attr("y", Game.height / 4 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -131,7 +130,7 @@ class @Dronewar extends Game
       .attr("fill", "white")
       .attr("font-size", "32")
       .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 80)
+      .attr("y", Game.height / 4 + 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -150,7 +149,7 @@ class @Dronewar extends Game
       .attr("fill", "white")
       .attr("font-size", "32")
       .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 180)
+      .attr("y", Game.height / 4 + 200)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
@@ -167,7 +166,7 @@ class @Dronewar extends Game
       .attr("fill", "white")
       .attr("font-size", "32")
       .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 280)
+      .attr("y", Game.height / 4 + 300)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -210,7 +209,7 @@ class @Dronewar extends Game
       .attr("fill", "white")
       .attr("font-size", "18")
       .attr("x", Game.width / 2 - 350)
-      .attr("y", @root.r.y + 130)
+      .attr("y", @root.r.y + 140)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")

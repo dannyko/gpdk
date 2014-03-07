@@ -1985,15 +1985,9 @@
     };
 
     Dronewar.prototype.stop = function() {
-      var callback,
-        _this = this;
       Dronewar.__super__.stop.apply(this, arguments);
       this.root.stop();
-      callback = function() {
-        _this.lives.text("GAME OVER");
-        return true;
-      };
-      this.stop(callback);
+      this.lives.text("GAME OVER");
       this.message('GAME OVER');
     };
 
@@ -2004,10 +1998,10 @@
       this.root.stop();
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 150).attr("y", 60).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
-      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 20).attr('font-family', 'arial').attr('font-weight', 'bold');
+      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 20).attr('font-family', 'arial').attr('font-weight', 'bold');
       prompt.text("SELECT SHIP:");
       root = this.root;
-      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       sidewinder.text("SIDEWINDER").style("fill", "#099");
       dur = 500;
       sidewinder.on("click", function() {
@@ -2019,7 +2013,7 @@
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 180).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 200).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       viper.text("VIPER");
       viper.on("click", function() {
         if (this.style.fill === '#000996') {
@@ -2030,7 +2024,7 @@
         sidewinder.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 280).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 300).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       fang.text("FANG");
       fang.on("click", function() {
         if (this.style.fill === '#000996') {
@@ -2059,8 +2053,8 @@
         }
         return Physics.callbacks.push(_this.progress);
       });
-      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      how.text("Use mouse/tap screen to control movement and use scrollwheel/drag for rotation");
+      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 350).attr("y", this.root.r.y + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation");
       if (Game.musicSwitch) {
         if ((_ref = Game.sound) != null) {
           _ref.play('music');
