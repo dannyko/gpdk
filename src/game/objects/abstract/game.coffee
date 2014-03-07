@@ -4,8 +4,14 @@ class @Game
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
-  @core: 0
+  @score: 0
+  @score_increment = 100
+  @lives: 0
+  @initialLives = 0
   
+  @increment_score: ->
+    Game.score += Game.score_increment
+
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]
     x = $(element).width()

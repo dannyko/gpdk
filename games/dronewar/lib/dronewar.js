@@ -298,7 +298,17 @@
 
     Game.scale = 1;
 
-    Game.core = 0;
+    Game.score = 0;
+
+    Game.score_increment = 100;
+
+    Game.lives = 0;
+
+    Game.initialLives = 0;
+
+    Game.increment_score = function() {
+      return Game.score += Game.score_increment;
+    };
 
     current_width = function(padding) {
       var element, x;
@@ -1531,7 +1541,7 @@
       this.destroy();
       n.deplete(this.power);
       if (n.depleted()) {
-        Gamescore.increment_value();
+        Game.increment_score();
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.score(Game.score);
         }
