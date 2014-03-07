@@ -13,6 +13,6 @@ class @Bullet extends Circle
     n.deplete(@power) # deplete the drone
     if n.depleted() # detroy the drone if depleted
       Gamescore.increment_value()  # increment score for hitting the drone
-      Gameprez?.score(Gamescore.value) # send score update to Gameprez if available
+      Gameprez?.score(Game.score) # send score update to Gameprez if available
       n.destroy() 
     true

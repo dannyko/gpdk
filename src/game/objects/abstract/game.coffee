@@ -4,6 +4,7 @@ class @Game
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects
   @scale:  1 # class variable for global scaling transformations
+  @core: 0
   
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]

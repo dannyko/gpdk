@@ -216,7 +216,7 @@ class @Dronewar extends Game
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
-      Gamescore.value = 0
+      Game.score = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
       d3.timer(@progress)
     )

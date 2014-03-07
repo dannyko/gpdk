@@ -298,6 +298,8 @@
 
     Game.scale = 1;
 
+    Game.core = 0;
+
     current_width = function(padding) {
       var element, x;
       if (padding == null) {
@@ -1531,7 +1533,7 @@
       if (n.depleted()) {
         Gamescore.increment_value();
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-          Gameprez.score(Gamescore.value);
+          Gameprez.score(Game.score);
         }
         n.destroy();
       }
@@ -1818,7 +1820,7 @@
         go.transition().duration(dur).style("opacity", 0).remove();
         how.transition().duration(dur).style("opacity", 0).remove();
         _this.root.start();
-        Gamescore.value = 0;
+        Game.score = 0;
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.start(_this.max_score_increment);
         }
