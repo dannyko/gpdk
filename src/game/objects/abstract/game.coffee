@@ -64,20 +64,17 @@ class @Game
 
   start: -> 
     Physics.start() # start all elements and associate physics engine with this game instance
-    Game.instance = @
+    Game.instance = @ # associate class variable with this instance for global accessibility from any context
     return
     
-  stop: -> 
+  stop: (callback = ->) -> 
+    Physics.stop() # stop all elements
     Collision.list.forEach((d) -> d.fadeOut())
-    Physics.stop() 
-    return # stop all elements
-
-  end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
     if Gameprez?
       Gameprez.end(Gamescore.value, callback)
     else 
       callback()
-    return true # game over so return true to stop the d3 timer calling @progress()
+    return
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
     len = Collision.list.length          # length

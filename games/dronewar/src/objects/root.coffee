@@ -17,6 +17,7 @@ class @Root extends Polygon
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick    = -> return
     @drawing = false
+    @fadeIn()
     @
 
   redraw: (xy = d3.mouse(@game_g.node())) =>

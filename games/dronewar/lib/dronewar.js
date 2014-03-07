@@ -20,8 +20,8 @@
         old = new klass(config);
       } else {
         old = this.inactive[klass].pop();
-        if (old.is_sleeping === false || old.is_destroyed === false) {
-          console.log('Factory.spawn: not sleeping & undestroyed instance found in inactive list!', old);
+        if (old.is_sleeping === false || old.is_removed === false) {
+          console.log('Factory.spawn: not sleeping & unremoveed instance found in inactive list!', old);
           Factory.spawn(klass, config);
           return;
         }
@@ -64,7 +64,7 @@
 
     Gamescore.increment = 100;
 
-    Gamescore.initialLives = 0;
+    Gamescore.initialLives = 1;
 
     Gamescore.lives = Gamescore.initialLives;
 
@@ -263,13 +263,13 @@
       this.is_bullet = this.config.is_bullet || false;
       this.type = this.config.type || null;
       this.image = this.config.image || null;
-      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")");
+      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
       this.game_g = this.config.game_g || d3.select("#game_g");
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || Physics.verlet;
-      this.is_destroyed = false;
+      this.is_removed = false;
       this.is_sleeping = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
@@ -293,7 +293,7 @@
       this.g.attr("transform", "translate(" + this.r.x + "," + this.r.y + ") rotate(" + (360 * 0.5 * this.angle / Math.PI) + ")");
     };
 
-    Element.prototype.destroy_check = function(n) {
+    Element.prototype.remove_check = function(n) {
       if (this.is_root || this.is_bullet) {
         this.reaction(n);
         return true;
@@ -310,7 +310,17 @@
       if (dur == null) {
         dur = 30;
       }
-      return this.g.style("opacity", 0).transition().duration(dur).ease('linear').style("opacity", 1).each('end', function() {
+      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function() {
+        return typeof callback === "function" ? callback(_this) : void 0;
+      });
+    };
+
+    Element.prototype.fadeOut = function(dur, callback) {
+      var _this = this;
+      if (dur == null) {
+        dur = 30;
+      }
+      return this.g.transition().duration(dur).ease('linear').style("opacity", 0).each('end', function() {
         return typeof callback === "function" ? callback(_this) : void 0;
       });
     };
@@ -324,14 +334,14 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_destroyed or is_sleeping', this);
+        console.log('element.start: is_removed or is_sleeping... bug?', this);
       }
       index = Collision.list.indexOf(this);
       if (index > -1) {
-        console.log('element.start: already on physics list!', this);
+        console.log('element.start: already on physics list! bug?', this);
       } else {
         Collision.list.push(this);
-        this.is_destroyed = false;
+        this.is_removed = false;
         this.draw();
         this.fadeIn(duration, callback);
       }
@@ -352,13 +362,13 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
-      if (this.is_destroyed) {
+      if (this.is_removed) {
         return;
       }
       if (this._cleanup && this.offscreen()) {
-        this.destroy();
+        this.remove();
       }
-      return this.is_destroyed;
+      return this.is_removed;
     };
 
     Element.prototype.sleep = function() {
@@ -366,14 +376,22 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.destroy = function(remove) {
+    Element.prototype.remove = function(remove) {
       if (remove == null) {
         remove = false;
       }
-      this.g.style('opacity', 0);
+      if (this.is_removed) {
+        return;
+      }
+      this.is_removed = true;
+      this.fadeOut();
       this.stop();
       this.sleep();
-      this.is_destroyed = true;
+    };
+
+    Element.prototype.spawn = function() {
+      this.wake();
+      return this.start();
     };
 
     Element.prototype.init = function() {
@@ -419,6 +437,36 @@
     Game.audioSwitch = true;
 
     Game.musicSwitch = true;
+
+    Game.instance = null;
+
+    function Game(config) {
+      var force,
+        _this = this;
+      this.config = config != null ? config : {};
+      this.update_window = function(force) {
+        if (force == null) {
+          force = false;
+        }
+        return Game.prototype.update_window.apply(_this, arguments);
+      };
+      this.element = [];
+      this.div = d3.select("#game_div");
+      this.svg = d3.select("#game_svg");
+      if (this.svg.empty()) {
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
+      }
+      Game.width = 800;
+      Game.height = 600;
+      this.scale = 1;
+      this.g = d3.select("#game_g");
+      if (this.g.empty()) {
+        this.g = this.svg.append('g');
+      }
+      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window(force = true);
+      $(window).on('resize', this.update_window);
+    }
 
     current_width = function(padding) {
       var element, x;
@@ -482,52 +530,24 @@
       $(document.body).css('width', w).css('height', h);
     };
 
-    function Game(config) {
-      var force,
-        _this = this;
-      this.config = config != null ? config : {};
-      this.update_window = function(force) {
-        if (force == null) {
-          force = false;
-        }
-        return Game.prototype.update_window.apply(_this, arguments);
-      };
-      this.element = [];
-      this.div = d3.select("#game_div");
-      this.svg = d3.select("#game_svg");
-      if (this.svg.empty()) {
-        this.svg = this.div.append('svg').attr('id', 'game_svg');
-      }
-      Game.width = 800;
-      Game.height = 600;
-      this.scale = 1;
-      this.g = d3.select("#game_g");
-      if (this.g.empty()) {
-        this.g = this.svg.append('g');
-      }
-      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
-      this.update_window(force = true);
-      $(window).on('resize', this.update_window);
-    }
-
     Game.prototype.start = function() {
-      Physics.start(this);
+      Physics.start();
+      Game.instance = this;
     };
 
-    Game.prototype.stop = function() {
-      Physics.stop();
-    };
-
-    Game.prototype.end = function(callback) {
+    Game.prototype.stop = function(callback) {
       if (callback == null) {
         callback = function() {};
       }
+      Physics.stop();
+      Collision.list.forEach(function(d) {
+        return d.fadeOut();
+      });
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.end(Gamescore.value, callback);
       } else {
         callback();
       }
-      return true;
     };
 
     Game.prototype.cleanup = function() {
@@ -535,8 +555,20 @@
       len = Collision.list.length;
       while (len--) {
         soundSwitch = false;
-        Collision.list[len].destroy(soundSwitch);
+        Collision.list[len].remove(soundSwitch);
       }
+    };
+
+    Game.prototype.message = function(txt, callback, dur) {
+      var ready;
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (callback === void 0) {
+        callback = function() {};
+      }
+      this.g.selectAll('.game_message').remove();
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -889,7 +921,7 @@
             var p;
             p = node.point;
             if (p !== null) {
-              if (p.is_destroyed) {
+              if (p.is_removed) {
                 return false;
               }
               if (!(d !== p.d && p.d.collision)) {
@@ -929,6 +961,8 @@
         m = ej;
         n = ei;
       }
+      m.d.collision = false;
+      n.d.collision = false;
       switch (m.type) {
         case 'Circle':
           switch (n.type) {
@@ -1258,9 +1292,9 @@
 
     Physics.fps = 60;
 
-    Physics.off = false;
+    Physics.tick = 1000 / Physics.fps;
 
-    Physics.timestamp = 0;
+    Physics.off = false;
 
     Physics.game = null;
 
@@ -1288,25 +1322,23 @@
       element.force_param.forEach(function(param) {
         return Force["eval"](element, param, element.f, accumulateSwitch);
       });
-      return element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
+      element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
     Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step, _results;
+      var Nstep, diff, dt, scale, step;
       if (Physics.fps > fps) {
         Nstep = Math.floor(Physics.fps / fps);
         step = 0;
-        _results = [];
         while (step < Nstep) {
           Physics.verlet_step(element);
-          _results.push(++step);
+          ++step;
         }
-        return _results;
       } else {
         diff = fps - Physics.fps;
         scale = diff / Physics.fps;
         dt = element.dt / (1 + scale);
-        Physics.verlet_step(element, dt);
+        Physics.verlet_step(element);
       }
     };
 
@@ -1315,12 +1347,16 @@
       if (Physics.off) {
         return true;
       }
-      dt = Physics.timestamp > 0 ? t - Physics.timestamp : Physics.tick;
-      Physics.timestamp = t;
+      if (t > Physics.timestamp) {
+        dt = t - Physics.timestamp;
+      } else {
+        dt = Physics.tick;
+      }
       fps = 1000 / dt;
       if (Physics.debug) {
-        console.log('fps: ' + fps);
+        console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
+      Physics.timestamp = t;
       len = Collision.list.length;
       while (len--) {
         Collision.list[len].update(fps);
@@ -1341,22 +1377,16 @@
           Physics.callbacks.pop();
         }
       }
+      return this.off;
     };
 
-    Physics.start = function(game, delay) {
-      if (game == null) {
-        game = void 0;
-      }
-      if (delay == null) {
-        delay = 0;
-      }
-      this.game = game;
+    Physics.start = function() {
       this.off = false;
-      d3.timer(Physics.integrate);
+      this.timestamp = 0;
+      d3.timer(this.integrate);
     };
 
     Physics.stop = function() {
-      this.callbacks = [];
       this.off = true;
     };
 
@@ -1370,7 +1400,7 @@
 
     Reaction.circle_circle = function(m, n, d) {
       var line, overstep, shift;
-      if (m.destroy_check(n) || n.destroy_check(m)) {
+      if (m.remove_check(n) || n.remove_check(m)) {
         return;
       }
       line = m.line.init(d).normalize();
@@ -1382,7 +1412,7 @@
 
     Reaction.circle_polygon = function(circle, polygon, d) {
       var intersecting_segment, normal, shift;
-      if (circle.destroy_check(polygon) || polygon.destroy_check(circle)) {
+      if (circle.remove_check(polygon) || polygon.remove_check(circle)) {
         return;
       }
       intersecting_segment = polygon.path[d.i];
@@ -1394,7 +1424,7 @@
 
     Reaction.polygon_polygon = function(m, n, d) {
       var dot_a, dot_b, mseg, normal, nseg, segj, shift;
-      if (m.destroy_check(n) || n.destroy_check(m)) {
+      if (m.remove_check(n) || n.remove_check(m)) {
         return;
       }
       mseg = m.path[d.i];
@@ -1697,7 +1727,7 @@
       this.power = this.config.power || 1;
     }
 
-    Bullet.prototype.destroy_check = function(n) {
+    Bullet.prototype.remove_check = function(n) {
       if (n.is_root) {
         return true;
       }
@@ -1710,10 +1740,10 @@
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.score(Gamescore.value);
         }
-        n.destroy();
+        n.remove();
       }
       if (!n.invincible) {
-        this.destroy();
+        this.remove();
       }
       return true;
     };
@@ -1818,7 +1848,7 @@
       }
     };
 
-    Drone.prototype.destroy = function(effects) {
+    Drone.prototype.remove = function(effects) {
       var dur, scaleSwitch,
         _this = this;
       if (effects == null) {
@@ -1833,14 +1863,14 @@
         this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
         this.g.transition().duration(dur).style("opacity", "0").each('end', function() {
           _this.g.selectAll('circle').remove();
-          return Drone.__super__.destroy.call(_this);
+          return Drone.__super__.remove.call(_this);
         });
         scaleSwitch = false;
         if (scaleSwitch) {
           this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(5)');
         }
       } else {
-        Drone.__super__.destroy.apply(this, arguments);
+        Drone.__super__.remove.apply(this, arguments);
         this.g.selectAll('circle').remove();
       }
     };
@@ -1890,9 +1920,9 @@
       this.N = this.initialN;
       this.maxN = 36;
       this.root = Factory.spawn(Root);
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "40").attr('font-family', 'arial bold');
-      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "20").attr('font-family', 'arial bold');
-      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", "20").attr("y", "60").attr('font-family', 'arial bold');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "30").attr('font-family', 'arial bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "55").attr('font-family', 'arial bold');
+      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "80").attr('font-family', 'arial bold');
       d3.select(window.top).on("keydown", this.keydown);
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
@@ -1963,7 +1993,8 @@
         _this.lives.text("GAME OVER");
         return true;
       };
-      this.end(callback);
+      this.stop(callback);
+      this.message('GAME OVER');
     };
 
     Dronewar.prototype.start = function() {
@@ -1971,12 +2002,12 @@
         _this = this;
       this.root.draw();
       this.root.stop();
-      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
+      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 150).attr("y", 60).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
-      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "36").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold');
-      prompt.text("SELECT SHIP");
+      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 20).attr('font-family', 'arial').attr('font-weight', 'bold');
+      prompt.text("SELECT SHIP:");
       root = this.root;
-      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 80).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       sidewinder.text("SIDEWINDER").style("fill", "#099");
       dur = 500;
       sidewinder.on("click", function() {
@@ -1988,7 +2019,7 @@
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 110).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      viper = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 180).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       viper.text("VIPER");
       viper.on("click", function() {
         if (this.style.fill === '#000996') {
@@ -1999,7 +2030,7 @@
         sidewinder.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
-      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 320).attr("y", Game.height / 4 + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 280).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       fang.text("FANG");
       fang.on("click", function() {
         if (this.style.fill === '#000996') {
@@ -2010,7 +2041,7 @@
         viper.style("fill", "#FFF");
         return sidewinder.style("fill", "#FFF");
       });
-      go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", this.root.r.x - 60).attr("y", this.root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "42").attr("x", this.root.r.x - 70).attr("y", this.root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       go.text("START");
       go.on("click", function() {
         dur = 500;
@@ -2029,7 +2060,7 @@
         return Physics.callbacks.push(_this.progress);
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", this.root.r.y + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation");
+      how.text("Use mouse/tap screen to control movement and use scrollwheel/drag for rotation");
       if (Game.musicSwitch) {
         if ((_ref = Game.sound) != null) {
           _ref.play('music');
@@ -2039,7 +2070,7 @@
     };
 
     Dronewar.prototype.progress = function() {
-      var all_is_destroyed, drone_increment, dur;
+      var all_is_removed, drone_increment, dur;
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
       if (Gamescore.lives >= 0) {
@@ -2050,10 +2081,10 @@
         this.stop();
         return true;
       }
-      all_is_destroyed = this.element.every(function(element) {
-        return element.is_destroyed;
+      all_is_removed = this.element.every(function(element) {
+        return element.is_removed;
       });
-      if (all_is_destroyed) {
+      if (all_is_removed) {
         drone_increment = 1;
         if (!(this.N >= this.maxN)) {
           this.N += drone_increment;
@@ -2116,6 +2147,7 @@
       this.ship();
       this.tick = function() {};
       this.drawing = false;
+      this.fadeIn();
       return this;
     };
 
@@ -2201,7 +2233,7 @@
     };
 
     Root.prototype.fire = function() {
-      if (this.is_destroyed) {
+      if (this.is_removed) {
         return true;
       }
       if (this.lastfire === void 0) {
@@ -2284,7 +2316,7 @@
       }
       damage = 5;
       Gamescore.lives -= damage;
-      n.destroy();
+      n.remove();
       N = 240;
       fill = '#ff0';
       dur = 120;
@@ -2298,7 +2330,7 @@
       }
       this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
       return this.bitmap.transition().duration(dur).attr('opacity', 0).each('end', function() {
-        return _this.destroy();
+        return _this.remove();
       });
     };
 

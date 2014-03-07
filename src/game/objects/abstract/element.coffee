@@ -71,17 +71,15 @@ class @Element
 
   offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > Game.width + @size or @r.y > Game.height + @size
 
-  fadeIn: (dur = 300, callback) ->
-    @g.style("opacity", 0)
-    .transition()
+  fadeIn: (dur = 30, callback) ->
+    @g.transition()
     .duration(dur)
     .ease('linear')
     .style("opacity", 1)
     .each('end', => callback?(@))
 
-  fadeOut: (dur = 300, callback) ->
-    @g.style("opacity", 1)
-    .transition()
+  fadeOut: (dur = 30, callback) ->
+    @g.transition()
     .duration(dur)
     .ease('linear')
     .style("opacity", 0)
