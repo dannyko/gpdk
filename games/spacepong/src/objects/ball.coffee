@@ -39,7 +39,8 @@ class @Ball extends Circle
     if @r.y >= Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
       if Gamescore.lives <= 0
         Gamescore.lives = -1
-        Game.instance.message('GAME OVER', Game.instance.stop)
+        Game.instance.stop()
+        Game.instance.message('GAME OVER')
         return
       Gamescore.lives -= 1
       Game.instance.text()

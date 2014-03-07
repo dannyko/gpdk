@@ -68,7 +68,7 @@ class @Game
     return
     
   stop: -> 
-    Collision.list.forEach((d) -> d.remove())
+    Collision.list.forEach((d) -> d.fadeOut())
     Physics.stop() 
     return # stop all elements
 

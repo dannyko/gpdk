@@ -142,6 +142,7 @@ class @Spacepong extends Game
       Gamescore.value = 0
       Gameprez?.start()
       Game.sound.play('whoosh')
+      @text()
       @spawn_ball('GET READY')
       @spawn_ships()
     )

@@ -537,7 +537,7 @@
 
     Game.prototype.stop = function() {
       Collision.list.forEach(function(d) {
-        return d.remove();
+        return d.fadeOut();
       });
       Physics.stop();
     };
@@ -1522,7 +1522,8 @@
       if (this.r.y >= Game.height - this.size - this.tol) {
         if (Gamescore.lives <= 0) {
           Gamescore.lives = -1;
-          Game.instance.message('GAME OVER', Game.instance.stop);
+          Game.instance.stop();
+          Game.instance.message('GAME OVER');
           return;
         }
         Gamescore.lives -= 1;
@@ -2040,6 +2041,7 @@
           Gameprez.start();
         }
         Game.sound.play('whoosh');
+        _this.text();
         _this.spawn_ball('GET READY');
         return _this.spawn_ships();
       });
