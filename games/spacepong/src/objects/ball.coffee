@@ -67,7 +67,7 @@ class @Ball extends Circle
   flash: ->
     # N    = 240 # random color parameter
     dur  = 200 # color effect transition duration parameter
-    fill = "#FFF" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    fill = "#F90" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)

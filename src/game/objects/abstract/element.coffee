@@ -98,16 +98,6 @@ class @Element
       @fadeIn(duration, callback)
     return
 
-  stop: -> 
-    index = Collision.list.indexOf(@)
-    if index > -1
-      if Collision.list.length > 1
-        swap  = Collision.list[index]
-        Collision.list[index] = Collision.list[Collision.list.length - 1]
-        Collision.list[Collision.list.length - 1] = swap
-      Collision.list.pop()
-    return
-
   cleanup: (@_cleanup = @_cleanup) ->
     return if @is_removed
     @remove() if @_cleanup and @offscreen()
@@ -118,11 +108,10 @@ class @Element
     @is_sleeping = true # mark the element instance as asleep
     return
 
-  remove: (remove = false) -> # removeing with remove = false is the same as sleeping plus setting is_removed = true.
+  remove: (fadeOutSwitch = true) -> # fade out element (opacity = 0) by default 
     return if @is_removed
     @is_removed = true # mark the element instance as removeed
-    @fadeOut()
-    @stop() # decouple the element from the physics engine
+    @fadeOut() if fadeOutSwitch
     @sleep() # put it back in the object pool for potential reuse later
     return
 

@@ -77,6 +77,7 @@ class @Paddle extends Polygon
     relative_intersect = .1 if relative_intersect == 0
     n.v.x = relative_intersect * n.speed
     n.v.y = -Math.sqrt(n.speed * n.speed - n.v.x * n.v.x) # value of v.y determined from v.x by the Pythagorean theorem since speed is constant
+    n.r.y -= 2 * n.tol
     @reaction(n)  
 
   remove: ->

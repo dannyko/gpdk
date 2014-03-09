@@ -7,9 +7,9 @@ class @Wallball extends Game
     @scoretxt = @g.append("text")
       .text("")
       .attr("stroke", "#222")
-      .attr('stroke-width', '2px')
+      .attr('stroke-width', '3px')
       .attr("fill", "#F90")
-      .attr("font-size", "42")
+      .attr("font-size", "40px")
       .attr("x", "20")
       .attr("y", "80")
       .attr('font-family', 'arial')
@@ -17,9 +17,9 @@ class @Wallball extends Game
     @lives = @g.append("text")
       .text("")
       .attr("stroke", "#222")
-      .attr('stroke-width', '2px')
+      .attr('stroke-width', '3px')
       .attr("fill", "#F90")
-      .attr("font-size", "42")
+      .attr("font-size", "40px")
       .attr("x", "20")
       .attr("y", "40")
       .attr('font-family', 'arial')
@@ -27,7 +27,7 @@ class @Wallball extends Game
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
-
+    Game.message_color = '#FF0'
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
       sprite: {
@@ -53,13 +53,14 @@ class @Wallball extends Game
     @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
 
   spawn_ball: ->
+    return if Physics.off
     return unless @ball is null or @ball?.is_removed
     @ball = null
     @svg.style("cursor", "none")
     ready = @g.append("text")
       .text("GET READY")
       .attr("stroke", "none")
-      .attr("fill", "#F90")
+      .attr("fill", "#FF0")
       .attr("font-size", "36")
       .attr("x", Game.width / 2 - 105)
       .attr("y", Game.height / 2 + 20)

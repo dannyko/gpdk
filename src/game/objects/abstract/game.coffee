@@ -6,6 +6,7 @@ class @Game
   @audioSwitch: true
   @musicSwitch: true
   @instance: null
+  @message_color: "#FFF"
   
   constructor: (@config = {}) ->
     @element    = [] # initialize
@@ -70,7 +71,7 @@ class @Game
     
   stop: (callback = ->) -> 
     Physics.stop() # stop all elements
-    Collision.list.forEach((d) -> d.fadeOut())
+    Collision.list.forEach((d) -> d.remove())
     if Gameprez?
       Gameprez.end(Gamescore.value, callback)
     else 
@@ -92,7 +93,7 @@ class @Game
       .attr('class', 'game_message')
       .text(txt)
       .attr("stroke", "none")
-      .attr("fill", "#FFF")
+      .attr("fill", Game.message_color)
       .attr("font-size", "36")
       .attr("x", Game.width  / 2 - 105)
       .attr("y", Game.height / 2 + 20)

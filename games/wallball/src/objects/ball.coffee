@@ -21,8 +21,8 @@ class @Ball extends Circle
   init: ->
     @r.x = Game.instance.paddle.r.x
     @r.y = Game.height - Game.instance.paddle.padding - Game.instance.paddle.bb_height - @config.size
-    @v.x   = 0 
-    @v.y   = -@speed
+    @v.x = 0 
+    @v.y = -@speed
 
   draw: ->
     @speed = Math.min(@max_speed, @initial_speed + Gamescore.value * @speed_factor)
@@ -52,6 +52,8 @@ class @Ball extends Circle
           Game.instance.text()
         else 
           Game.instance.stop()
+          Game.paddle.fadeOut()
+          Game.instance.message('GAME OVER')
         Game.sound.play('miss')
         @remove()
         Game.instance.spawn_ball()

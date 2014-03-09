@@ -43,6 +43,10 @@ class @Wall extends Polygon
     @v.y = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
     super
 
+  remove: ->
+    fadeOutSwitch = false
+    super(fadeOutSwitch)
+
   remove_check: (element) -> # wall handles its own reactions and always overrides the default physics engine
     if element.type == 'Circle'
       return true

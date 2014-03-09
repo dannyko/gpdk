@@ -59,18 +59,25 @@ class @Physics # numerical integration module for solving differential equations
     if Physics.debug
       console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
     Physics.timestamp = t
-    len = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
-    Collision.list[len].update(fps) while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+    index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
+    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      swap  = Collision.list[index]
+      if swap.is_removed
+        Collision.list[index] = Collision.list[Collision.list.length - 1]
+        Collision.list[Collision.list.length - 1] = swap
+        Collision.list.pop()    
+      else
+        Collision.list[index].update(fps)
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
-    len = Physics.callbacks.length 
-    while (len--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+    index = Physics.callbacks.length 
+    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
       break if Physics.callbacks.length == 0
-      bool = Physics.callbacks[len](t)
+      bool = Physics.callbacks[index](t)
       if bool # returning a value of true means we can remove this callback
-        if len < Physics.callbacks.length - 1 # reorder to put element to remove at the end
+        if index < Physics.callbacks.length - 1 # reorder to put element to remove at the end
           swap = Physics.callbacks[Physics.callbacks.length - 1]
-          Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[len]
-          Physics.callbacks[len] = swap
+          Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index]
+          Physics.callbacks[index] = swap
         Physics.callbacks.pop()
     @off
   
