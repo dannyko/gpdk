@@ -21,7 +21,7 @@ class @Wall extends Polygon
     @r.y = -Game.height * 0.5 + 0.05 * Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
     @speed = 2 # initial wall speed
-    @padding = 144
+    @padding = 300
     @g.remove()
     @g = d3.select('#game_g').insert("g", ":first-child")
     @g.attr("class", "wall")

@@ -347,19 +347,6 @@
       }
     };
 
-    Element.prototype.stop = function() {
-      var index, swap;
-      index = Collision.list.indexOf(this);
-      if (index > -1) {
-        if (Collision.list.length > 1) {
-          swap = Collision.list[index];
-          Collision.list[index] = Collision.list[Collision.list.length - 1];
-          Collision.list[Collision.list.length - 1] = swap;
-        }
-        Collision.list.pop();
-      }
-    };
-
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
       if (this.is_removed) {
@@ -376,16 +363,17 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.remove = function(remove) {
-      if (remove == null) {
-        remove = false;
+    Element.prototype.remove = function(fadeOutSwitch) {
+      if (fadeOutSwitch == null) {
+        fadeOutSwitch = true;
       }
       if (this.is_removed) {
         return;
       }
       this.is_removed = true;
-      this.fadeOut();
-      this.stop();
+      if (fadeOutSwitch) {
+        this.fadeOut();
+      }
       this.sleep();
     };
 
@@ -439,6 +427,8 @@
     Game.musicSwitch = true;
 
     Game.instance = null;
+
+    Game.message_color = "#FFF";
 
     function Game(config) {
       var force,
@@ -533,6 +523,9 @@
     Game.prototype.start = function() {
       Physics.start();
       Game.instance = this;
+      if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+        Gameprez.start();
+      }
     };
 
     Game.prototype.stop = function(callback) {
@@ -541,7 +534,7 @@
       }
       Physics.stop();
       Collision.list.forEach(function(d) {
-        return d.fadeOut();
+        return d.remove();
       });
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.end(Gamescore.value, callback);
@@ -568,7 +561,7 @@
         callback = function() {};
       }
       this.g.selectAll('.game_message').remove();
-      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", "#FFF").attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", Game.message_color).attr("font-size", "36").attr("x", Game.width / 2 - 105).attr("y", Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -1343,7 +1336,7 @@
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, len, swap;
+      var bool, dt, fps, index, swap;
       if (Physics.off) {
         return true;
       }
@@ -1357,22 +1350,29 @@
         console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      len = Collision.list.length;
-      while (len--) {
-        Collision.list[len].update(fps);
+      index = Collision.list.length;
+      while (index--) {
+        swap = Collision.list[index];
+        if (swap.is_removed) {
+          Collision.list[index] = Collision.list[Collision.list.length - 1];
+          Collision.list[Collision.list.length - 1] = swap;
+          Collision.list.pop();
+        } else {
+          Collision.list[index].update(fps);
+        }
       }
       Collision.detect();
-      len = Physics.callbacks.length;
-      while (len--) {
+      index = Physics.callbacks.length;
+      while (index--) {
         if (Physics.callbacks.length === 0) {
           break;
         }
-        bool = Physics.callbacks[len](t);
+        bool = Physics.callbacks[index](t);
         if (bool) {
-          if (len < Physics.callbacks.length - 1) {
+          if (index < Physics.callbacks.length - 1) {
             swap = Physics.callbacks[Physics.callbacks.length - 1];
-            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[len];
-            Physics.callbacks[len] = swap;
+            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index];
+            Physics.callbacks[index] = swap;
           }
           Physics.callbacks.pop();
         }

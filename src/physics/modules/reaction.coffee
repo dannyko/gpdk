@@ -17,7 +17,6 @@ class @Reaction # reaction module with no class variables only class and private
     normal = intersecting_segment.n
     shift = 0.5 * Math.max(circle.tol, polygon.tol)
     Reaction.elastic_collision(circle, polygon, normal, shift)
-    console.log('circle_polygon', circle, polygon)
     return
     
   @polygon_polygon: (m, n, d) -> # perfectly elastic default collision type

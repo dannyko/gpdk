@@ -51,7 +51,7 @@ class @Element
     Utils.addChainedAttributeAccessor(@, 'stroke')
         
   reaction: (element) -> # interface for reactions after a collision event with another element occurs 
-    element.reaction() if element?  # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
+    element?.reaction() # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
 
   BB: ->
     @left   = @r.x - 0.5 * @bb_width
@@ -87,15 +87,16 @@ class @Element
 
   start: (duration = undefined, callback = undefined) ->
     if @is_sleeping
-      console.log('element.start: is_removed or is_sleeping... bug?', @)
-    index = Collision.list.indexOf(@)
-    if index > -1
-      console.log('element.start: already on physics list! bug?', @)
+      console.log('element.start: is_removed or is_sleeping... bug?')
+      return
+    index = Physics.staging.indexOf(@)
+    if index == -1
+      Physics.staging.push(@) # tell physics module that this element wants to join
     else
-      Collision.list.push(@) # add element to collision list by default unless it's already there
-      @is_removed = false  # mark the element as removeed
-      @draw()
-      @fadeIn(duration, callback)
+      console.log('element.start: this element is already on the physics staging list! bug?')
+    @is_removed = false  # mark the element as removeed
+    @draw()
+    @fadeIn(duration, callback)
     return
 
   cleanup: (@_cleanup = @_cleanup) ->
@@ -118,6 +119,7 @@ class @Element
   spawn: ->
     @wake()
     @start()
+    @
   
   init: ->
     @r.x  = 0
@@ -128,6 +130,7 @@ class @Element
     @v.y  = 0
     @f.x  = 0
     @f.y  = 0  
+    @
 
   wake: (config) ->
     @is_sleeping  = false  # mark the eleemnt as awake
@@ -139,3 +142,4 @@ class @Element
   update: (fps) -> # helper to combine these three operations into one loop for efficiency    
     @tick?(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
     @draw()
+    return

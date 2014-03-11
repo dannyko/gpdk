@@ -84,6 +84,18 @@
 
     function Utils() {}
 
+    Utils.index_pop = function(array, index) {
+      var length, swap;
+      length = array.length;
+      if (index < array.length - 1) {
+        swap = array[index];
+        array[index] = array[length - 1];
+        array[length - 1] = swap;
+      }
+      array.pop();
+      return array;
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -277,9 +289,7 @@
     }
 
     Element.prototype.reaction = function(element) {
-      if (element != null) {
-        return element.reaction();
-      }
+      return element != null ? element.reaction() : void 0;
     };
 
     Element.prototype.BB = function() {
@@ -334,17 +344,18 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_removed or is_sleeping... bug?', this);
+        console.log('element.start: is_removed or is_sleeping... bug?');
+        return;
       }
-      index = Collision.list.indexOf(this);
-      if (index > -1) {
-        console.log('element.start: already on physics list! bug?', this);
+      index = Physics.staging.indexOf(this);
+      if (index === -1) {
+        Physics.staging.push(this);
       } else {
-        Collision.list.push(this);
-        this.is_removed = false;
-        this.draw();
-        this.fadeIn(duration, callback);
+        console.log('element.start: this element is already on the physics staging list! bug?');
       }
+      this.is_removed = false;
+      this.draw();
+      this.fadeIn(duration, callback);
     };
 
     Element.prototype.cleanup = function(_cleanup) {
@@ -379,7 +390,8 @@
 
     Element.prototype.spawn = function() {
       this.wake();
-      return this.start();
+      this.start();
+      return this;
     };
 
     Element.prototype.init = function() {
@@ -390,7 +402,8 @@
       this.v.x = 0;
       this.v.y = 0;
       this.f.x = 0;
-      return this.f.y = 0;
+      this.f.y = 0;
+      return this;
     };
 
     Element.prototype.wake = function(config) {
@@ -406,7 +419,7 @@
       if (typeof this.tick === "function") {
         this.tick(this, fps);
       }
-      return this.draw();
+      this.draw();
     };
 
     return Element;
@@ -1167,6 +1180,8 @@
 
     Physics.callbacks = [];
 
+    Physics.staging = [];
+
     Physics.debug = false;
 
     Physics.verlet_step = function(element, dt) {
@@ -1224,17 +1239,20 @@
         console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      index = Collision.list.length;
+      index = Physics.staging.length;
       while (index--) {
-        swap = Collision.list[index];
-        if (swap.is_removed) {
-          Collision.list[index] = Collision.list[Collision.list.length - 1];
-          Collision.list[Collision.list.length - 1] = swap;
-          Collision.list.pop();
+        if (Collision.list.indexOf(Physics.staging[index]) === -1) {
+          swap = Physics.staging[Physics.staging.length - 1];
+          Physics.staging[Physics.staging.length - 1] = Physics.staging[index];
+          Physics.staging[index] = swap;
+          Collision.list.push(Physics.staging.pop());
         } else {
-          Collision.list[index].update(fps);
+          if (Physics.debug) {
+            console.log('staged element not removed', Physics.staging[Physics.staging.length - 1]);
+          }
         }
       }
+      Physics.update(fps);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1243,15 +1261,27 @@
         }
         bool = Physics.callbacks[index](t);
         if (bool) {
-          if (index < Physics.callbacks.length - 1) {
-            swap = Physics.callbacks[Physics.callbacks.length - 1];
-            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index];
-            Physics.callbacks[index] = swap;
-          }
-          Physics.callbacks.pop();
+          Utils.index_pop(Physics.callbacks, index);
         }
       }
       return this.off;
+    };
+
+    Physics.update = function(fps) {
+      var index, _results;
+      if (fps == null) {
+        fps = Physics.fps;
+      }
+      index = Collision.list.length;
+      _results = [];
+      while (index--) {
+        if (Collision.list[index].is_removed) {
+          _results.push(Utils.index_pop(Collision.list, index));
+        } else {
+          _results.push(Collision.list[index].update(fps));
+        }
+      }
+      return _results;
     };
 
     Physics.start = function() {
@@ -1261,6 +1291,7 @@
     };
 
     Physics.stop = function() {
+      Physics.update();
       this.off = true;
     };
 
@@ -1293,7 +1324,6 @@
       normal = intersecting_segment.n;
       shift = 0.5 * Math.max(circle.tol, polygon.tol);
       Reaction.elastic_collision(circle, polygon, normal, shift);
-      console.log('circle_polygon', circle, polygon);
     };
 
     Reaction.polygon_polygon = function(m, n, d) {
@@ -1537,11 +1567,10 @@
       if (index = Game.instance.ball.length - 1) {
         Game.instance.ball.pop();
       } else {
-        Game.instance.ball[index] = Game.instance.ball[Game.instance.ball.length - 1];
-        Game.instance.ball.pop();
+        Utils.index_pop(Game.instance.ball, index);
       }
       if (!(Gamescore.lives < 0)) {
-        return Game.instance.spawn_ball('GET READY');
+        Game.instance.spawn_ball('GET READY');
       }
     };
 
@@ -1555,8 +1584,8 @@
     Ball.prototype.flash = function() {
       var dur, fill;
       dur = 200;
-      fill = "#F90";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .8).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      fill = "#FF0";
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", 1).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
     };
 
     return Ball;
@@ -1724,7 +1753,9 @@
 
     Paddle.prototype.reaction = function(n) {
       var N, dur, fill;
-      n.reaction();
+      if (n != null) {
+        n.reaction();
+      }
       N = 240;
       fill = '#ff0';
       dur = 120;
@@ -1836,7 +1867,6 @@
         Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1];
         Game.instance.ship.pop();
       }
-      this.stop();
       if (this.offscreen()) {
         Gamescore.decrement_value();
         Game.sound.play('loss');
@@ -1973,15 +2003,18 @@
     };
 
     Spacepong.prototype.spawn_ball = function(txt) {
+      var _ref, _ref1;
       if (Physics.off) {
         return;
       }
+      console.log('spawn_ball:', (_ref = Collision.list[0]) != null ? _ref.constructor.name : void 0, (_ref1 = Collision.list[0]) != null ? _ref1.is_removed : void 0);
       Physics.stop();
       this.message(txt, this.spawn_ball_callback);
     };
 
     Spacepong.prototype.spawn_ball_callback = function() {
-      var ball;
+      var ball, _ref;
+      console.log('spacepong.ball:', this.ball, 'C.list:', Collision.list, (_ref = this.ball[0]) != null ? _ref.is_removed : void 0);
       ball = Factory.spawn(Ball);
       this.ball.push(ball);
       ball.start();

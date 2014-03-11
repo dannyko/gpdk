@@ -6,6 +6,7 @@ class @Physics # numerical integration module for solving differential equations
   @off: false # a boolean switch determining whether or not to run the physics engine
   @game: null # initialize reference to game instance associated with the physics engine
   @callbacks: []
+  @staging: [] # for elements that want to join the physics engine
   @debug: false
 
 # for testing:
@@ -59,28 +60,32 @@ class @Physics # numerical integration module for solving differential equations
     if Physics.debug
       console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
     Physics.timestamp = t
-    index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
-    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      swap  = Collision.list[index]
-      if swap.is_removed
-        Collision.list[index] = Collision.list[Collision.list.length - 1]
-        Collision.list[Collision.list.length - 1] = swap
-        Collision.list.pop()    
-      else
-        Collision.list[index].update(fps)
+    index = Physics.staging.length
+    while index-- # bring the elements from the staging array into the physics engine
+      if Collision.list.indexOf(Physics.staging[index]) == -1
+        swap = Physics.staging[Physics.staging.length - 1]
+        Physics.staging[Physics.staging.length - 1] = Physics.staging[index]
+        Physics.staging[index] = swap
+        Collision.list.push(Physics.staging.pop())
+      else 
+        console.log('staged element not removed', Physics.staging[Physics.staging.length - 1]) if Physics.debug
+    Physics.update(fps)
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     index = Physics.callbacks.length 
     while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      break if Physics.callbacks.length == 0
+      break if Physics.callbacks.length is 0
       bool = Physics.callbacks[index](t)
-      if bool # returning a value of true means we can remove this callback
-        if index < Physics.callbacks.length - 1 # reorder to put element to remove at the end
-          swap = Physics.callbacks[Physics.callbacks.length - 1]
-          Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index]
-          Physics.callbacks[index] = swap
-        Physics.callbacks.pop()
+      Utils.index_pop(Physics.callbacks, index) if bool # returning a value of true means we can remove this callback
     @off
   
+  @update: (fps = Physics.fps) ->
+    index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
+    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      if Collision.list[index].is_removed
+        Utils.index_pop(Collision.list, index)
+      else
+        Collision.list[index].update(fps)  
+
   @start: -> 
     @off = false 
     @timestamp = 0 # to keep track of integration frequency
@@ -88,5 +93,6 @@ class @Physics # numerical integration module for solving differential equations
     return
 
   @stop: -> 
+    Physics.update() # flush elements waiting to be removed
     @off = true
     return

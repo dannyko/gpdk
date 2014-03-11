@@ -54,9 +54,9 @@ class @Ball extends Circle
     if index = Game.instance.ball.length - 1
       Game.instance.ball.pop()
     else
-      Game.instance.ball[index] = Game.instance.ball[Game.instance.ball.length - 1]
-      Game.instance.ball.pop()
+      Utils.index_pop(Game.instance.ball, index)
     Game.instance.spawn_ball('GET READY') unless Gamescore.lives < 0
+    return
 
   reaction: (n) ->  
     @v.normalize(@speed)
@@ -67,7 +67,7 @@ class @Ball extends Circle
   flash: ->
     # N    = 240 # random color parameter
     dur  = 200 # color effect transition duration parameter
-    fill = "#F90" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    fill = "#FF0" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)
@@ -77,7 +77,7 @@ class @Ball extends Circle
       .transition()
       .duration(dur)
       .ease('poly(0.5)')
-      .attr("opacity", .8)
+      .attr("opacity", 1)
       .transition()
       .duration(dur)
       .ease('linear')

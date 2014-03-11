@@ -1534,6 +1534,7 @@
             Game.instance.text();
           } else {
             Game.instance.stop();
+            Game.instance.paddle.fadeOut();
             Game.instance.message('GAME OVER');
           }
           Game.sound.play('miss');
@@ -1837,7 +1838,7 @@
       this.r.y = -Game.height * 0.5 + 0.05 * Game.height;
       this.switch_probability = 0.005;
       this.speed = 2;
-      this.padding = 144;
+      this.padding = 300;
       this.g.remove();
       this.g = d3.select('#game_g').insert("g", ":first-child");
       this.g.attr("class", "wall");

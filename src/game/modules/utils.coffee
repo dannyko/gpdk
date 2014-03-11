@@ -1,4 +1,13 @@
 class @Utils
+  @index_pop: (array, index) ->
+    length = array.length
+    if index < array.length - 1
+      swap = array[index]
+      array[index] = array[length - 1]
+      array[length - 1] = swap
+    array.pop()
+    return array
+
   @set: (obj, config) ->
     for x of config # set the new configuration values for the object to prepare it for its new role
       obj[x] = config[x] # set configuration value

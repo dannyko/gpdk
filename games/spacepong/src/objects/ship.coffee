@@ -53,7 +53,6 @@ class @Ship extends Polygon
     else
       Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1]
       Game.instance.ship.pop()
-    @stop() # decouple it from the physics engine to prevent any additional collision events from occurring
     if @offscreen() # penalize score for missing a ship
      Gamescore.decrement_value()
      Game.sound.play('loss')

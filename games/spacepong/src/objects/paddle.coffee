@@ -99,7 +99,7 @@ class @Paddle extends Polygon
       .attr("fill", @fill())
   
   reaction: (n) -> 
-    n.reaction()
+    n?.reaction()
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 120 # color effect transition duration parameter
