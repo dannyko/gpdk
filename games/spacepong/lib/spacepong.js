@@ -347,11 +347,11 @@
         console.log('element.start: is_removed or is_sleeping... bug?');
         return;
       }
-      index = Physics.staging.indexOf(this);
+      index = Collision.list.indexOf(this);
       if (index === -1) {
-        Physics.staging.push(this);
+        Collision.list.push(this);
       } else {
-        console.log('element.start: this element is already on the physics staging list! bug?');
+        console.log('element.start: this element is already on the physics list! bug?');
       }
       this.is_removed = false;
       this.draw();
@@ -1180,8 +1180,6 @@
 
     Physics.callbacks = [];
 
-    Physics.staging = [];
-
     Physics.debug = false;
 
     Physics.verlet_step = function(element, dt) {
@@ -1225,7 +1223,7 @@
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index, swap;
+      var bool, dt, fps, index;
       if (Physics.off) {
         return true;
       }
@@ -1239,19 +1237,6 @@
         console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      index = Physics.staging.length;
-      while (index--) {
-        if (Collision.list.indexOf(Physics.staging[index]) === -1) {
-          swap = Physics.staging[Physics.staging.length - 1];
-          Physics.staging[Physics.staging.length - 1] = Physics.staging[index];
-          Physics.staging[index] = swap;
-          Collision.list.push(Physics.staging.pop());
-        } else {
-          if (Physics.debug) {
-            console.log('staged element not removed', Physics.staging[Physics.staging.length - 1]);
-          }
-        }
-      }
       Physics.update(fps);
       Collision.detect();
       index = Physics.callbacks.length;
@@ -1881,7 +1866,7 @@
       if (!quietSwitch) {
         Game.sound.play('boom');
       }
-      if (Game.instance.ship.length === 0) {
+      if (Game.instance.ship.length === 0 && Gamescore.lives >= 0) {
         return Game.instance.spawn_ships();
       }
     };
@@ -2003,18 +1988,15 @@
     };
 
     Spacepong.prototype.spawn_ball = function(txt) {
-      var _ref, _ref1;
       if (Physics.off) {
         return;
       }
-      console.log('spawn_ball:', (_ref = Collision.list[0]) != null ? _ref.constructor.name : void 0, (_ref1 = Collision.list[0]) != null ? _ref1.is_removed : void 0);
       Physics.stop();
       this.message(txt, this.spawn_ball_callback);
     };
 
     Spacepong.prototype.spawn_ball_callback = function() {
-      var ball, _ref;
-      console.log('spacepong.ball:', this.ball, 'C.list:', Collision.list, (_ref = this.ball[0]) != null ? _ref.is_removed : void 0);
+      var ball;
       ball = Factory.spawn(Ball);
       this.ball.push(ball);
       ball.start();

@@ -69,7 +69,7 @@ class @Ship extends Polygon
         @g.remove()
       )
     Game.sound.play('boom') unless quietSwitch
-    Game.instance.spawn_ships() if Game.instance.ship.length is 0
+    Game.instance.spawn_ships() if Game.instance.ship.length is 0 and Gamescore.lives >= 0
 
   remove_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
     if element.name is 'Ball' # hit by ball, remove and awaard points

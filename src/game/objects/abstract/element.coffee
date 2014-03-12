@@ -89,11 +89,11 @@ class @Element
     if @is_sleeping
       console.log('element.start: is_removed or is_sleeping... bug?')
       return
-    index = Physics.staging.indexOf(@)
+    index = Collision.list.indexOf(@)
     if index == -1
-      Physics.staging.push(@) # tell physics module that this element wants to join
+      Collision.list.push(@) # tell physics module that this element wants to join
     else
-      console.log('element.start: this element is already on the physics staging list! bug?')
+      console.log('element.start: this element is already on the physics list! bug?')
     @is_removed = false  # mark the element as removeed
     @draw()
     @fadeIn(duration, callback)

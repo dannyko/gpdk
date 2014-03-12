@@ -6,7 +6,6 @@ class @Physics # numerical integration module for solving differential equations
   @off: false # a boolean switch determining whether or not to run the physics engine
   @game: null # initialize reference to game instance associated with the physics engine
   @callbacks: []
-  @staging: [] # for elements that want to join the physics engine
   @debug: false
 
 # for testing:
@@ -60,15 +59,6 @@ class @Physics # numerical integration module for solving differential equations
     if Physics.debug
       console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
     Physics.timestamp = t
-    index = Physics.staging.length
-    while index-- # bring the elements from the staging array into the physics engine
-      if Collision.list.indexOf(Physics.staging[index]) == -1
-        swap = Physics.staging[Physics.staging.length - 1]
-        Physics.staging[Physics.staging.length - 1] = Physics.staging[index]
-        Physics.staging[index] = swap
-        Collision.list.push(Physics.staging.pop())
-      else 
-        console.log('staged element not removed', Physics.staging[Physics.staging.length - 1]) if Physics.debug
     Physics.update(fps)
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     index = Physics.callbacks.length 
