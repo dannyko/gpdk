@@ -30,6 +30,7 @@ class @Wallball extends Game
     Game.message_color = '#FF0'
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
+      volume: 0.5,
       sprite: {
         start:[0, 899],
         miss:[899, 1231],
