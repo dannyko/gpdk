@@ -41,6 +41,7 @@ class @Spacepong extends Game
 
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
+      volume: 0.25,
       sprite: {
         whoosh:[0, 1060],
         boom:[1060, 557],
@@ -54,8 +55,6 @@ class @Spacepong extends Game
     @paddle = Factory.spawn(Paddle) # paddle element i.e. under user control
     Game.paddle = @paddle
     @spawn_check_needed = true
-    @ball = []
-    @ship = []
     Gamescore.lives = 2
 
   keydown: =>
@@ -72,16 +71,14 @@ class @Spacepong extends Game
 
   spawn_ball_callback: =>
     ball = Factory.spawn(Ball)
-    @ball.push(ball)
     ball.start()
     Physics.start() # unpause the physics engine
 
   spawn_ships: ->
     @new_ship_count = Math.max(1, @initialN + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
-    @ship = [] # initialize
-    while @ship.length < @new_ship_count
+    index = @new_ship_count
+    while index--
       ship = Factory.spawn(Ship)
-      @ship.push(ship) 
       ship.start()
     return
 
@@ -91,9 +88,7 @@ class @Spacepong extends Game
 
   stop: =>
     super
-    quietSwitch = true
-    @ship.forEach((ship) -> ship.remove(quietSwitch)) # in case any ships were in the middle of spawning 
-    @ball.forEach((ball) -> ball.remove()) # in case any balls were in the middle of spawning
+    @paddle.remove()
 
   start: -> # start new game
 

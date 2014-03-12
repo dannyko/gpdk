@@ -50,11 +50,6 @@ class @Ball extends Circle
 
   remove: ->
     super
-    index = Game.instance.ball.indexOf(@)
-    if index = Game.instance.ball.length - 1
-      Game.instance.ball.pop()
-    else
-      Utils.index_pop(Game.instance.ball, index)
     Game.instance.spawn_ball('GET READY') unless Gamescore.lives < 0
     return
 

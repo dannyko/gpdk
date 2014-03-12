@@ -91,12 +91,13 @@ class @Paddle extends Polygon
     @image # default reaction
       .transition()
       .duration(dur)
-      .ease('sqrt')
+      .ease('poly(0.5)')
       .attr("fill", fill)
       .transition()
       .duration(dur)
       .ease('linear')
       .attr("fill", @fill())
+    super
   
   reaction: (n) -> 
     n?.reaction()
@@ -106,7 +107,7 @@ class @Paddle extends Polygon
     @image # default reaction
       .transition()
       .duration(dur)
-      .ease('sqrt')
+      .ease('poly(0.5)')
       .attr("fill", fill)
       .transition()
       .duration(dur)

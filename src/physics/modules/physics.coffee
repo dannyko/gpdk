@@ -71,6 +71,7 @@ class @Physics # numerical integration module for solving differential equations
   @update: (fps = Physics.fps) ->
     index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
     while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      console.log(Collision.list, index) unless Collision.list[index]?
       if Collision.list[index].is_removed
         Utils.index_pop(Collision.list, index)
       else
@@ -83,6 +84,6 @@ class @Physics # numerical integration module for solving differential equations
     return
 
   @stop: -> 
-    Physics.update() # flush elements waiting to be removed
     @off = true
+    setTimeout(Physics.update, 2 * Physics.tick) # flush elements waiting to be removed
     return

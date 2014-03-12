@@ -143,3 +143,11 @@ class @Element
     @tick?(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
     @draw()
     return
+
+  scale: (scalingFactor = 10, dur = 420) ->
+    console.log(scalingFactor, dur)
+    @image
+     .attr('transform', 'scale(1)')
+     .transition()
+     .duration(dur)
+     .attr('transform', 'scale(' + scalingFactor + ')')

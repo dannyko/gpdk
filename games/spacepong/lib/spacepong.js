@@ -422,6 +422,17 @@
       this.draw();
     };
 
+    Element.prototype.scale = function(scalingFactor, dur) {
+      if (scalingFactor == null) {
+        scalingFactor = 10;
+      }
+      if (dur == null) {
+        dur = 420;
+      }
+      console.log(scalingFactor, dur);
+      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
+    };
+
     return Element;
 
   })();
@@ -545,10 +556,8 @@
       if (callback == null) {
         callback = function() {};
       }
+      this.cleanup();
       Physics.stop();
-      Collision.list.forEach(function(d) {
-        return d.remove();
-      });
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.end(Gamescore.value, callback);
       } else {
@@ -557,11 +566,10 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len, soundSwitch;
+      var len;
       len = Collision.list.length;
       while (len--) {
-        soundSwitch = false;
-        Collision.list[len].remove(soundSwitch);
+        Collision.list[len].remove();
       }
     };
 
@@ -1260,6 +1268,9 @@
       index = Collision.list.length;
       _results = [];
       while (index--) {
+        if (Collision.list[index] == null) {
+          console.log(Collision.list, index);
+        }
         if (Collision.list[index].is_removed) {
           _results.push(Utils.index_pop(Collision.list, index));
         } else {
@@ -1276,8 +1287,8 @@
     };
 
     Physics.stop = function() {
-      Physics.update();
       this.off = true;
+      setTimeout(Physics.update, 2 * Physics.tick);
     };
 
     return Physics;
@@ -1546,14 +1557,7 @@
     };
 
     Ball.prototype.remove = function() {
-      var index;
       Ball.__super__.remove.apply(this, arguments);
-      index = Game.instance.ball.indexOf(this);
-      if (index = Game.instance.ball.length - 1) {
-        Game.instance.ball.pop();
-      } else {
-        Utils.index_pop(Game.instance.ball, index);
-      }
       if (!(Gamescore.lives < 0)) {
         Game.instance.spawn_ball('GET READY');
       }
@@ -1733,7 +1737,8 @@
       N = 240;
       fill = '#ff0';
       dur = 120;
-      return this.image.transition().duration(dur).ease('sqrt').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill());
+      this.image.transition().duration(dur).ease('poly(0.5)').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill());
+      return Paddle.__super__.remove.apply(this, arguments);
     };
 
     Paddle.prototype.reaction = function(n) {
@@ -1744,7 +1749,7 @@
       N = 240;
       fill = '#ff0';
       dur = 120;
-      return this.image.transition().duration(dur).ease('sqrt').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill());
+      return this.image.transition().duration(dur).ease('poly(0.5)').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill());
     };
 
     return Paddle;
@@ -1821,10 +1826,10 @@
 
     Ship.prototype.draw = function() {
       if (this.v.y < Ship.speed[this.difficulty] - 0.1) {
-        this.v.y *= 1.1;
+        this.v.y *= 1.05;
       }
       if (this.v.y > Ship.speed[this.difficulty] + 0.1) {
-        this.v.y *= 0.9;
+        this.v.y *= 0.95;
       }
       if (this.r.x < this.config.size) {
         this.r.x = this.config.size;
@@ -1835,38 +1840,43 @@
       return Ship.__super__.draw.apply(this, arguments);
     };
 
+    Ship.prototype.reaction = function(n) {
+      if ((n != null) && n.constructor === Ship) {
+        if (n.r.y > this.r.y) {
+          n.v.y = 3 * n.speed;
+        } else {
+          this.v.y = 3 * n.speed;
+        }
+      }
+      return Ship.__super__.reaction.apply(this, arguments);
+    };
+
     Ship.prototype.remove = function(quietSwitch) {
-      var dur, fill, index,
-        _this = this;
+      var Nship, dur, fill;
       if (quietSwitch == null) {
-        quietSwitch = false;
+        quietSwitch = Gamescore.lives < 0;
       }
       if (this.is_removed) {
         return;
       }
       this.is_removed = true;
-      index = Game.instance.ship.indexOf(this);
-      if (index = Game.instance.ship.length - 1) {
-        Game.instance.ship.pop();
-      } else {
-        Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1];
-        Game.instance.ship.pop();
-      }
       if (this.offscreen()) {
         Gamescore.decrement_value();
         Game.sound.play('loss');
         Game.instance.text();
       }
       fill = '#FFF';
-      dur = 210;
+      dur = 420;
       this.image.attr('opacity', 1);
-      this.image.transition().duration(dur).ease('sqrt').attr("opacity", 0).each('end', function() {
-        return _this.g.remove();
-      });
+      this.scale(0.2);
+      this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0);
       if (!quietSwitch) {
         Game.sound.play('boom');
       }
-      if (Game.instance.ship.length === 0 && Gamescore.lives >= 0) {
+      Nship = Collision.list.filter(function(d) {
+        return d.constructor === Ship && !d.is_removed;
+      }).length;
+      if (Nship === 0 && Gamescore.lives >= 0) {
         return Game.instance.spawn_ships();
       }
     };
@@ -1958,6 +1968,7 @@
       }
       Game.sound = new Howl({
         urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
+        volume: 0.25,
         sprite: {
           whoosh: [0, 1060],
           boom: [1060, 557],
@@ -1972,9 +1983,7 @@
       this.paddle = Factory.spawn(Paddle);
       Game.paddle = this.paddle;
       this.spawn_check_needed = true;
-      this.ball = [];
-      this.ship = [];
-      return Gamescore.lives = 3;
+      return Gamescore.lives = 2;
     };
 
     Spacepong.prototype.keydown = function() {
@@ -1998,18 +2007,16 @@
     Spacepong.prototype.spawn_ball_callback = function() {
       var ball;
       ball = Factory.spawn(Ball);
-      this.ball.push(ball);
       ball.start();
       return Physics.start();
     };
 
     Spacepong.prototype.spawn_ships = function() {
-      var ship;
+      var index, ship;
       this.new_ship_count = Math.max(1, this.initialN + Math.floor(Gamescore.value / 1000));
-      this.ship = [];
-      while (this.ship.length < this.new_ship_count) {
+      index = this.new_ship_count;
+      while (index--) {
         ship = Factory.spawn(Ship);
-        this.ship.push(ship);
         ship.start();
       }
     };
@@ -2020,15 +2027,8 @@
     };
 
     Spacepong.prototype.stop = function() {
-      var quietSwitch;
       Spacepong.__super__.stop.apply(this, arguments);
-      quietSwitch = true;
-      this.ship.forEach(function(ship) {
-        return ship.remove(quietSwitch);
-      });
-      return this.ball.forEach(function(ball) {
-        return ball.remove();
-      });
+      return this.paddle.remove();
     };
 
     Spacepong.prototype.start = function() {

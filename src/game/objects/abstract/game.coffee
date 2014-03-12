@@ -70,8 +70,8 @@ class @Game
     return
     
   stop: (callback = ->) -> 
-    Physics.stop() # stop all elements
-    Collision.list.forEach((d) -> d.remove())
+    @cleanup()
+    Physics.stop() # stop all elements and decouple them from the Physics engine
     if Gameprez?
       Gameprez.end(Gamescore.value, callback)
     else 
@@ -79,10 +79,8 @@ class @Game
     return
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
-    len = Collision.list.length          # length
-    while (len--)                        # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.remove()
-      soundSwitch = false                # no sound for cleanup
-      Collision.list[len].remove(soundSwitch)
+    len = Collision.list.length # length
+    Collision.list[len].remove() while (len--) # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.remove()      
     return
 
   message: (txt, callback, dur = 1000) ->

@@ -38,47 +38,39 @@ class @Ship extends Polygon
      .attr("height", 2 * h)
 
   draw: ->
-    if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.1
-    if @v.y > Ship.speed[@difficulty] + 0.1 then @v.y *= 0.9
+    if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.05
+    if @v.y > Ship.speed[@difficulty] + 0.1 then @v.y *= 0.95
     @r.x = @config.size if @r.x < @config.size
     @r.x = (Game.width - @config.size) if @r.x > (Game.width - @config.size)
     super
 
   reaction: (n) ->
-    if n.constructor is Ship
+    if n? and n.constructor is Ship
       if n.r.y > @r.y # ship is below this ship
-       n.v.y += 5
+       n.v.y = 3 * n.speed
       else
-        @v.y += 5
+        @v.y = 3 * n.speed
     super
 
-
-  remove: (quietSwitch = false) ->
+  remove: (quietSwitch = Gamescore.lives < 0) ->
     return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
     @is_removed = true
-    index = Game.instance.ship.indexOf(@)
-    if index = Game.instance.ship.length - 1
-      Game.instance.ship.pop()
-    else
-      Game.instance.ship[index] = Game.instance.ship[Game.instance.ship.length - 1]
-      Game.instance.ship.pop()
     if @offscreen() # penalize score for missing a ship
      Gamescore.decrement_value()
      Game.sound.play('loss')
      Game.instance.text()
     fill = '#FFF' 
-    dur  = 210 # color effect transition duration parameter
+    dur  = 420 # color effect transition duration parameter
     @image.attr('opacity', 1)
-    @image # ship remove reaction 
-      .transition()
+    @scale(0.2)
+    @g.transition()
       .duration(dur)
-      .ease('sqrt')
-      .attr("opacity", 0)
-      .each('end', =>  
-        @g.remove()
-      )
+      .ease('poly(0.5)')
+      .style("opacity", 0)
+
     Game.sound.play('boom') unless quietSwitch
-    Game.instance.spawn_ships() if Game.instance.ship.length is 0 and Gamescore.lives >= 0
+    Nship = Collision.list.filter((d) -> d.constructor is Ship and not d.is_removed).length
+    Game.instance.spawn_ships() if Nship is 0 and Gamescore.lives >= 0
 
   remove_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
     if element.name is 'Ball' # hit by ball, remove and awaard points
