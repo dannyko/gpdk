@@ -18,6 +18,7 @@ class @Drone extends Circle
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
+    @overlay = @g.append('circle')
 
   set_param: ->
     @param.cx       = @root.r.x
@@ -54,9 +55,7 @@ class @Drone extends Circle
     dur = 50
     fill0 = '#300'
     fill = "#FF0"
-    last = @g.select('circle:last-child')
-    if last isnt @image then last.remove()
-    @g.append("circle")
+    @g.select("circle")
       .attr("r", @size * .9)
       .attr("x", 0)
       .attr("y", 0)
@@ -69,11 +68,11 @@ class @Drone extends Circle
     if @energy <= 0 then true else false
 
   remove: (effects = true) ->
+    @is_removed = true
     Game.sound.play('boom') if Game.audioSwitch
     if effects
-      @stop()
-      dur = 500
-      @g.append('circle')
+      dur = 800
+      @overlay
         .attr("r", @size * .9)
         .attr("x", 0)
         .attr("y", 0)
@@ -82,12 +81,13 @@ class @Drone extends Circle
         .transition()
         .duration(dur)
         .attr('transform', 'scale(5)')
-        .remove()
+        .ease('linear')
+        .each('end', => @overlay.attr('transform', 'scale(1)'))
       @g.transition()
        .duration(dur)
+       .ease('linear')
        .style("opacity", "0")
        .each('end', =>
-          @g.selectAll('circle').remove()
           super()
         )
       scaleSwitch = false
@@ -96,15 +96,16 @@ class @Drone extends Circle
          .attr('transform', 'scale(1)')
          .transition()
          .duration(dur)
+         .ease('linear')
          .attr('transform', 'scale(5)')
     else
       super
-      @g.selectAll('circle').remove()
     return
     
   init: ->
      super
      @image.attr('transform', 'scale(1)')
+     @overlay.style('opacity', 0)
 
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5

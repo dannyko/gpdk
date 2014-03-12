@@ -41,6 +41,7 @@ class @Dronewar extends Game
     if Game.audioSwitch
       Game.sound = new Howl({
         urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+        volume: 0.5,
         sprite: {
           music:[0, 10782],
           boom: [10782, 856],
@@ -94,14 +95,13 @@ class @Dronewar extends Game
 
   stop: -> # stop the game
     super
-    @root.stop()
+    @root.remove()
     @lives.text("GAME OVER")
     @message('GAME OVER')
     return
 
   start: -> # start new game
     @root.draw()
-    @root.stop()
     title = @g.append("text")
       .text("")
       .attr("stroke", "none")
@@ -225,7 +225,6 @@ class @Dronewar extends Game
       @lives.text('ENERGY: ' + Gamescore.lives) 
     else 
       dur = 420
-      @root.game_over(dur)
       @stop()
       return true
     all_is_removed = @element.every (element) -> element.is_removed

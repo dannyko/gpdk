@@ -84,6 +84,18 @@
 
     function Utils() {}
 
+    Utils.index_pop = function(array, index) {
+      var length, swap;
+      length = array.length;
+      if (index < array.length - 1) {
+        swap = array[index];
+        array[index] = array[length - 1];
+        array[length - 1] = swap;
+      }
+      array.pop();
+      return array;
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -277,9 +289,7 @@
     }
 
     Element.prototype.reaction = function(element) {
-      if (element != null) {
-        return element.reaction();
-      }
+      return element != null ? element.reaction() : void 0;
     };
 
     Element.prototype.BB = function() {
@@ -334,17 +344,18 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_removed or is_sleeping... bug?', this);
+        console.log('element.start: is_removed or is_sleeping... bug?');
+        return;
       }
       index = Collision.list.indexOf(this);
-      if (index > -1) {
-        console.log('element.start: already on physics list! bug?', this);
-      } else {
+      if (index === -1) {
         Collision.list.push(this);
-        this.is_removed = false;
-        this.draw();
-        this.fadeIn(duration, callback);
+      } else {
+        console.log('element.start: this element is already on the physics list! bug?');
       }
+      this.is_removed = false;
+      this.draw();
+      this.fadeIn(duration, callback);
     };
 
     Element.prototype.cleanup = function(_cleanup) {
@@ -379,7 +390,8 @@
 
     Element.prototype.spawn = function() {
       this.wake();
-      return this.start();
+      this.start();
+      return this;
     };
 
     Element.prototype.init = function() {
@@ -390,7 +402,8 @@
       this.v.x = 0;
       this.v.y = 0;
       this.f.x = 0;
-      return this.f.y = 0;
+      this.f.y = 0;
+      return this;
     };
 
     Element.prototype.wake = function(config) {
@@ -406,7 +419,18 @@
       if (typeof this.tick === "function") {
         this.tick(this, fps);
       }
-      return this.draw();
+      this.draw();
+    };
+
+    Element.prototype.scale = function(scalingFactor, dur) {
+      if (scalingFactor == null) {
+        scalingFactor = 10;
+      }
+      if (dur == null) {
+        dur = 420;
+      }
+      console.log(scalingFactor, dur);
+      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
     };
 
     return Element;
@@ -532,10 +556,8 @@
       if (callback == null) {
         callback = function() {};
       }
+      this.cleanup();
       Physics.stop();
-      Collision.list.forEach(function(d) {
-        return d.remove();
-      });
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.end(Gamescore.value, callback);
       } else {
@@ -544,11 +566,10 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len, soundSwitch;
+      var len;
       len = Collision.list.length;
       while (len--) {
-        soundSwitch = false;
-        Collision.list[len].remove(soundSwitch);
+        Collision.list[len].remove();
       }
     };
 
@@ -1336,7 +1357,7 @@
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index, swap;
+      var bool, dt, fps, index;
       if (Physics.off) {
         return true;
       }
@@ -1350,17 +1371,7 @@
         console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      index = Collision.list.length;
-      while (index--) {
-        swap = Collision.list[index];
-        if (swap.is_removed) {
-          Collision.list[index] = Collision.list[Collision.list.length - 1];
-          Collision.list[Collision.list.length - 1] = swap;
-          Collision.list.pop();
-        } else {
-          Collision.list[index].update(fps);
-        }
-      }
+      Physics.update(fps);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1369,15 +1380,30 @@
         }
         bool = Physics.callbacks[index](t);
         if (bool) {
-          if (index < Physics.callbacks.length - 1) {
-            swap = Physics.callbacks[Physics.callbacks.length - 1];
-            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index];
-            Physics.callbacks[index] = swap;
-          }
-          Physics.callbacks.pop();
+          Utils.index_pop(Physics.callbacks, index);
         }
       }
       return this.off;
+    };
+
+    Physics.update = function(fps) {
+      var index, _results;
+      if (fps == null) {
+        fps = Physics.fps;
+      }
+      index = Collision.list.length;
+      _results = [];
+      while (index--) {
+        if (Collision.list[index] == null) {
+          console.log(Collision.list, index);
+        }
+        if (Collision.list[index].is_removed) {
+          _results.push(Utils.index_pop(Collision.list, index));
+        } else {
+          _results.push(Collision.list[index].update(fps));
+        }
+      }
+      return _results;
     };
 
     Physics.start = function() {
@@ -1388,6 +1414,7 @@
 
     Physics.stop = function() {
       this.off = true;
+      setTimeout(Physics.update, 2 * Physics.tick);
     };
 
     return Physics;
@@ -1419,7 +1446,6 @@
       normal = intersecting_segment.n;
       shift = 0.5 * Math.max(circle.tol, polygon.tol);
       Reaction.elastic_collision(circle, polygon, normal, shift);
-      console.log('circle_polygon', circle, polygon);
     };
 
     Reaction.polygon_polygon = function(m, n, d) {
@@ -1526,7 +1552,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 4,
-        bullet_speed: 20,
+        bullet_speed: 25,
         bullet_tick: 60
       };
     };
@@ -1627,7 +1653,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 6,
-        bullet_speed: 12,
+        bullet_speed: 15,
         bullet_tick: 90
       };
     };
@@ -1707,7 +1733,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#099',
         bullet_size: 5,
-        bullet_speed: 15,
+        bullet_speed: 20,
         bullet_tick: 100
       };
     };
@@ -1778,6 +1804,7 @@
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.overlay = this.g.append('circle');
     }
 
     Drone.prototype.set_param = function() {
@@ -1817,7 +1844,7 @@
     };
 
     Drone.prototype.deplete = function(power) {
-      var dur, fill, fill0, last, _ref;
+      var dur, fill, fill0, _ref;
       if (power == null) {
         power = 1;
       }
@@ -1828,11 +1855,7 @@
       dur = 50;
       fill0 = '#300';
       fill = "#FF0";
-      last = this.g.select('circle:last-child');
-      if (last !== this.image) {
-        last.remove();
-      }
-      this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
+      this.g.select("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
       if (Game.audioSwitch) {
         if ((_ref = Game.sound) != null) {
           _ref.play('shot');
@@ -1854,30 +1877,31 @@
       if (effects == null) {
         effects = true;
       }
+      this.is_removed = true;
       if (Game.audioSwitch) {
         Game.sound.play('boom');
       }
       if (effects) {
-        this.stop();
-        dur = 500;
-        this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').remove();
-        this.g.transition().duration(dur).style("opacity", "0").each('end', function() {
-          _this.g.selectAll('circle').remove();
+        dur = 800;
+        this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').ease('linear').each('end', function() {
+          return _this.overlay.attr('transform', 'scale(1)');
+        });
+        this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', function() {
           return Drone.__super__.remove.call(_this);
         });
         scaleSwitch = false;
         if (scaleSwitch) {
-          this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(5)');
+          this.image.attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)');
         }
       } else {
         Drone.__super__.remove.apply(this, arguments);
-        this.g.selectAll('circle').remove();
       }
     };
 
     Drone.prototype.init = function() {
       Drone.__super__.init.apply(this, arguments);
-      return this.image.attr('transform', 'scale(1)');
+      this.image.attr('transform', 'scale(1)');
+      return this.overlay.style('opacity', 0);
     };
 
     Drone.prototype.offscreen = function() {
@@ -1931,6 +1955,7 @@
       if (Game.audioSwitch) {
         Game.sound = new Howl({
           urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+          volume: 0.5,
           sprite: {
             music: [0, 10782],
             boom: [10782, 856],
@@ -1986,7 +2011,7 @@
 
     Dronewar.prototype.stop = function() {
       Dronewar.__super__.stop.apply(this, arguments);
-      this.root.stop();
+      this.root.remove();
       this.lives.text("GAME OVER");
       this.message('GAME OVER');
     };
@@ -1995,7 +2020,6 @@
       var dur, fang, go, how, prompt, root, sidewinder, title, viper, _ref,
         _this = this;
       this.root.draw();
-      this.root.stop();
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 150).attr("y", 60).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
       prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", Game.width / 2 - 350).attr("y", Game.height / 4 + 20).attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -2071,7 +2095,6 @@
         this.lives.text('ENERGY: ' + Gamescore.lives);
       } else {
         dur = 420;
-        this.root.game_over(dur);
         this.stop();
         return true;
       }

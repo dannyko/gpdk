@@ -84,6 +84,18 @@
 
     function Utils() {}
 
+    Utils.index_pop = function(array, index) {
+      var length, swap;
+      length = array.length;
+      if (index < array.length - 1) {
+        swap = array[index];
+        array[index] = array[length - 1];
+        array[length - 1] = swap;
+      }
+      array.pop();
+      return array;
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -277,9 +289,7 @@
     }
 
     Element.prototype.reaction = function(element) {
-      if (element != null) {
-        return element.reaction();
-      }
+      return element != null ? element.reaction() : void 0;
     };
 
     Element.prototype.BB = function() {
@@ -334,17 +344,18 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_removed or is_sleeping... bug?', this);
+        console.log('element.start: is_removed or is_sleeping... bug?');
+        return;
       }
       index = Collision.list.indexOf(this);
-      if (index > -1) {
-        console.log('element.start: already on physics list! bug?', this);
-      } else {
+      if (index === -1) {
         Collision.list.push(this);
-        this.is_removed = false;
-        this.draw();
-        this.fadeIn(duration, callback);
+      } else {
+        console.log('element.start: this element is already on the physics list! bug?');
       }
+      this.is_removed = false;
+      this.draw();
+      this.fadeIn(duration, callback);
     };
 
     Element.prototype.cleanup = function(_cleanup) {
@@ -379,7 +390,8 @@
 
     Element.prototype.spawn = function() {
       this.wake();
-      return this.start();
+      this.start();
+      return this;
     };
 
     Element.prototype.init = function() {
@@ -390,7 +402,8 @@
       this.v.x = 0;
       this.v.y = 0;
       this.f.x = 0;
-      return this.f.y = 0;
+      this.f.y = 0;
+      return this;
     };
 
     Element.prototype.wake = function(config) {
@@ -406,7 +419,18 @@
       if (typeof this.tick === "function") {
         this.tick(this, fps);
       }
-      return this.draw();
+      this.draw();
+    };
+
+    Element.prototype.scale = function(scalingFactor, dur) {
+      if (scalingFactor == null) {
+        scalingFactor = 10;
+      }
+      if (dur == null) {
+        dur = 420;
+      }
+      console.log(scalingFactor, dur);
+      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
     };
 
     return Element;
@@ -532,10 +556,8 @@
       if (callback == null) {
         callback = function() {};
       }
+      this.cleanup();
       Physics.stop();
-      Collision.list.forEach(function(d) {
-        return d.remove();
-      });
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.end(Gamescore.value, callback);
       } else {
@@ -544,11 +566,10 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len, soundSwitch;
+      var len;
       len = Collision.list.length;
       while (len--) {
-        soundSwitch = false;
-        Collision.list[len].remove(soundSwitch);
+        Collision.list[len].remove();
       }
     };
 
@@ -1210,7 +1231,7 @@
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index, swap;
+      var bool, dt, fps, index;
       if (Physics.off) {
         return true;
       }
@@ -1224,17 +1245,7 @@
         console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      index = Collision.list.length;
-      while (index--) {
-        swap = Collision.list[index];
-        if (swap.is_removed) {
-          Collision.list[index] = Collision.list[Collision.list.length - 1];
-          Collision.list[Collision.list.length - 1] = swap;
-          Collision.list.pop();
-        } else {
-          Collision.list[index].update(fps);
-        }
-      }
+      Physics.update(fps);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1243,15 +1254,30 @@
         }
         bool = Physics.callbacks[index](t);
         if (bool) {
-          if (index < Physics.callbacks.length - 1) {
-            swap = Physics.callbacks[Physics.callbacks.length - 1];
-            Physics.callbacks[Physics.callbacks.length - 1] = Physics.callbacks[index];
-            Physics.callbacks[index] = swap;
-          }
-          Physics.callbacks.pop();
+          Utils.index_pop(Physics.callbacks, index);
         }
       }
       return this.off;
+    };
+
+    Physics.update = function(fps) {
+      var index, _results;
+      if (fps == null) {
+        fps = Physics.fps;
+      }
+      index = Collision.list.length;
+      _results = [];
+      while (index--) {
+        if (Collision.list[index] == null) {
+          console.log(Collision.list, index);
+        }
+        if (Collision.list[index].is_removed) {
+          _results.push(Utils.index_pop(Collision.list, index));
+        } else {
+          _results.push(Collision.list[index].update(fps));
+        }
+      }
+      return _results;
     };
 
     Physics.start = function() {
@@ -1262,6 +1288,7 @@
 
     Physics.stop = function() {
       this.off = true;
+      setTimeout(Physics.update, 2 * Physics.tick);
     };
 
     return Physics;
@@ -1293,7 +1320,6 @@
       normal = intersecting_segment.n;
       shift = 0.5 * Math.max(circle.tol, polygon.tol);
       Reaction.elastic_collision(circle, polygon, normal, shift);
-      console.log('circle_polygon', circle, polygon);
     };
 
     Reaction.polygon_polygon = function(m, n, d) {
@@ -1556,7 +1582,7 @@
       var dur, fill;
       dur = 1000 / 3;
       fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('sqrt').attr("opacity", 0.4).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", 0.5).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
     };
 
     return Ball;
