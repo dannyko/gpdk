@@ -56,7 +56,7 @@ class @Spacepong extends Game
     @spawn_check_needed = true
     @ball = []
     @ship = []
-    Gamescore.lives = 3
+    Gamescore.lives = 2
 
   keydown: =>
     switch d3.event.keyCode 

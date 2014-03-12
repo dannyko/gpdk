@@ -44,6 +44,15 @@ class @Ship extends Polygon
     @r.x = (Game.width - @config.size) if @r.x > (Game.width - @config.size)
     super
 
+  reaction: (n) ->
+    if n.constructor is Ship
+      if n.r.y > @r.y # ship is below this ship
+       n.v.y += 5
+      else
+        @v.y += 5
+    super
+
+
   remove: (quietSwitch = false) ->
     return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
     @is_removed = true
