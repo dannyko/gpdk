@@ -24,7 +24,7 @@ class @Physics # numerical integration module for solving differential equations
     element.dr.y = element.v.y # initialize displacement vector
     element.dr.scale(dt).add(element.f) # store displacement vector
     element.r.add(element.dr) # update position
-    return if element.cleanup() # don't setup for the next update if element is removeed
+    return if element.cleanup() # don't setup for the next update if element is removed
     element.fcopy.init(element.f) # copy this object for temporary storage
     element.f.x = 0 # initialize current force
     element.f.y = 0 # initialize current force
@@ -70,10 +70,9 @@ class @Physics # numerical integration module for solving differential equations
   
   @update: (fps = Physics.fps) ->
     index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
-    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      console.log(Collision.list, index) unless Collision.list[index]?
+    while (index--) # iterate backwards to avoid indexing/variable array length issues, caused by removing elements from the array as we go
       if Collision.list[index].is_removed
-        Utils.index_pop(Collision.list, index)
+        Utils.index_pop(Collision.list, index).sleep() # place this element into the object pool for potential reuse later
       else
         Collision.list[index].update(fps)  
 

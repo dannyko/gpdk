@@ -6,7 +6,6 @@ class @Utils
       array[index] = array[length - 1]
       array[length - 1] = swap
     array.pop()
-    return array
 
   @set: (obj, config) ->
     for x of config # set the new configuration values for the object to prepare it for its new role

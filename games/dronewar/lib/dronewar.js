@@ -21,7 +21,7 @@
       } else {
         old = this.inactive[klass].pop();
         if (old.is_sleeping === false || old.is_removed === false) {
-          console.log('Factory.spawn: not sleeping & unremoveed instance found in inactive list!', old);
+          console.log('Factory.spawn: not sleeping & unremoved instance found in inactive list!', old);
           Factory.spawn(klass, config);
           return;
         }
@@ -92,8 +92,7 @@
         array[index] = array[length - 1];
         array[length - 1] = swap;
       }
-      array.pop();
-      return array;
+      return array.pop();
     };
 
     Utils.set = function(obj, config) {
@@ -344,7 +343,7 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_removed or is_sleeping... bug?');
+        console.log('element.start: is_sleeping... bug?');
         return;
       }
       index = Collision.list.indexOf(this);
@@ -385,7 +384,6 @@
       if (fadeOutSwitch) {
         this.fadeOut();
       }
-      this.sleep();
     };
 
     Element.prototype.spawn = function() {
@@ -1394,11 +1392,8 @@
       index = Collision.list.length;
       _results = [];
       while (index--) {
-        if (Collision.list[index] == null) {
-          console.log(Collision.list, index);
-        }
         if (Collision.list[index].is_removed) {
-          _results.push(Utils.index_pop(Collision.list, index));
+          _results.push(Utils.index_pop(Collision.list, index).sleep());
         } else {
           _results.push(Collision.list[index].update(fps));
         }
@@ -1875,14 +1870,14 @@
       var dur, scaleSwitch,
         _this = this;
       if (effects == null) {
-        effects = true;
+        effects = Gamescore.lives >= 0;
       }
       this.is_removed = true;
-      if (Game.audioSwitch) {
+      if (Game.audioSwitch && effects) {
         Game.sound.play('boom');
       }
+      dur = 800;
       if (effects) {
-        dur = 800;
         this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').ease('linear').each('end', function() {
           return _this.overlay.attr('transform', 'scale(1)');
         });
@@ -1894,6 +1889,7 @@
           this.image.attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)');
         }
       } else {
+        this.fadeOut(dur);
         Drone.__super__.remove.apply(this, arguments);
       }
     };
@@ -1937,10 +1933,11 @@
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
       Dronewar.__super__.constructor.apply(this, arguments);
-      Gamescore.lives = 100;
+      Gamescore.initialLives = 100;
+      Gamescore.lives = Gamescore.initialLives;
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
-      this.initialN = this.config.initialN || 5;
+      this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;
       this.root = Factory.spawn(Root);
@@ -1969,8 +1966,8 @@
       var drone_config, dur, i, multiplier, n, newAttacker, offset, _i, _ref;
       this.svg.style("cursor", "none");
       this.element = [];
-      multiplier = 2;
-      offset = 10;
+      multiplier = 20;
+      offset = 200;
       Drone.max_speed += 0.1;
       drone_config = {
         energy: this.N * multiplier + offset,
@@ -2088,13 +2085,12 @@
     };
 
     Dronewar.prototype.progress = function() {
-      var all_is_removed, drone_increment, dur;
+      var all_is_removed, drone_increment;
       this.scoretxt.text('SCORE: ' + Gamescore.value);
       this.leveltxt.text('LEVEL: ' + (this.N - this.initialN));
       if (Gamescore.lives >= 0) {
         this.lives.text('ENERGY: ' + Gamescore.lives);
       } else {
-        dur = 420;
         this.stop();
         return true;
       }
@@ -2331,24 +2327,22 @@
       if (n.is_bullet) {
         return;
       }
-      damage = 5;
+      damage = 10;
       Gamescore.lives -= damage;
       n.remove();
       N = 240;
       fill = '#ff0';
-      dur = 120;
-      return this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).ease('poly(0.5)').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill()).transition().duration(dur / 5).attr('opacity', 0);
+      dur = 150;
+      return this.image.transition().duration(dur / 5).attr('opacity', 1).ease('linear').transition().duration(dur).ease('poly(0.5)').attr("fill", fill).transition().duration(dur).ease('linear').attr("fill", this.fill()).transition().duration(dur).ease('linear').attr('opacity', 0);
     };
 
-    Root.prototype.game_over = function(dur) {
-      var _this = this;
+    Root.prototype.remove = function(dur) {
       if (dur == null) {
         dur = 500;
       }
-      this.image.transition().duration(dur / 5).attr('opacity', 1).transition().duration(dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
-      return this.bitmap.transition().duration(dur).attr('opacity', 0).each('end', function() {
-        return _this.remove();
-      });
+      this.image.transition().duration(dur * 0.5).attr('opacity', 1).transition().duration(1.5 * dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
+      this.bitmap.transition().duration(2 * dur).ease('linear').attr('transform', 'scale(10)').attr('opacity', 0);
+      return this.g.transition().duration(dur).ease('linear').style('opacity', 0);
     };
 
     return Root;

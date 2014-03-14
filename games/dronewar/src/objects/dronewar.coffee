@@ -4,10 +4,11 @@ class @Dronewar extends Game
 
   constructor: ->
     super
-    Gamescore.lives = 100
+    Gamescore.initialLives = 100 
+    Gamescore.lives = Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 5
+    @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of ships
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
@@ -52,8 +53,8 @@ class @Dronewar extends Game
   level: ->
     @svg.style("cursor", "none")
     @element   = [] # reinitialize element list
-    multiplier = 2
-    offset     = 10
+    multiplier = 20
+    offset     = 200
     Drone.max_speed += 0.1
     drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
@@ -224,7 +225,6 @@ class @Dronewar extends Game
     if Gamescore.lives >= 0
       @lives.text('ENERGY: ' + Gamescore.lives) 
     else 
-      dur = 420
       @stop()
       return true
     all_is_removed = @element.every (element) -> element.is_removed

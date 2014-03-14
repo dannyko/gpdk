@@ -67,11 +67,11 @@ class @Drone extends Circle
   depleted: ->
     if @energy <= 0 then true else false
 
-  remove: (effects = true) ->
+  remove: (effects = Gamescore.lives >= 0) ->
     @is_removed = true
-    Game.sound.play('boom') if Game.audioSwitch
+    Game.sound.play('boom') if Game.audioSwitch and effects
+    dur = 800
     if effects
-      dur = 800
       @overlay
         .attr("r", @size * .9)
         .attr("x", 0)
@@ -99,6 +99,7 @@ class @Drone extends Circle
          .ease('linear')
          .attr('transform', 'scale(5)')
     else
+      @fadeOut(dur)
       super
     return
     

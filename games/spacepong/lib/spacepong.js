@@ -21,7 +21,7 @@
       } else {
         old = this.inactive[klass].pop();
         if (old.is_sleeping === false || old.is_removed === false) {
-          console.log('Factory.spawn: not sleeping & unremoveed instance found in inactive list!', old);
+          console.log('Factory.spawn: not sleeping & unremoved instance found in inactive list!', old);
           Factory.spawn(klass, config);
           return;
         }
@@ -92,8 +92,7 @@
         array[index] = array[length - 1];
         array[length - 1] = swap;
       }
-      array.pop();
-      return array;
+      return array.pop();
     };
 
     Utils.set = function(obj, config) {
@@ -344,7 +343,7 @@
         callback = void 0;
       }
       if (this.is_sleeping) {
-        console.log('element.start: is_removed or is_sleeping... bug?');
+        console.log('element.start: is_sleeping... bug?');
         return;
       }
       index = Collision.list.indexOf(this);
@@ -385,7 +384,6 @@
       if (fadeOutSwitch) {
         this.fadeOut();
       }
-      this.sleep();
     };
 
     Element.prototype.spawn = function() {
@@ -1268,11 +1266,8 @@
       index = Collision.list.length;
       _results = [];
       while (index--) {
-        if (Collision.list[index] == null) {
-          console.log(Collision.list, index);
-        }
         if (Collision.list[index].is_removed) {
-          _results.push(Utils.index_pop(Collision.list, index));
+          _results.push(Utils.index_pop(Collision.list, index).sleep());
         } else {
           _results.push(Collision.list[index].update(fps));
         }

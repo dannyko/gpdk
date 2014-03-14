@@ -9,7 +9,7 @@ class @Factory # a module that keeps track of unused instances to reduce garbage
     else
       old = @inactive[klass].pop() # remove one of the inactive elements from the inactive list for re-use instead of creating a new object to reduce garbage collection
       if old.is_sleeping is false or old.is_removed is false
-        console.log('Factory.spawn: not sleeping & unremoveed instance found in inactive list!', old)
+        console.log('Factory.spawn: not sleeping & unremoved instance found in inactive list!', old)
         Factory.spawn(klass, config) # toss this element our of the object pool and try spawning again
         return
       if old.wake?

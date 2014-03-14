@@ -150,16 +150,17 @@ class @Root extends Polygon
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship
-    damage = 5
+    damage = 10
     Gamescore.lives -= damage # decrement lives for this game
     n.remove()
     N    = 240 # random color parameter
     fill = '#ff0' 
-    dur  = 120 # color effect transition duration parameter
+    dur  = 150 # color effect transition duration parameter
     @image # default reaction
       .transition()
       .duration(dur / 5)
       .attr('opacity', 1)
+      .ease('linear')
       .transition()
       .duration(dur)
       .ease('poly(0.5)')
@@ -169,18 +170,27 @@ class @Root extends Polygon
       .ease('linear')
       .attr("fill", @fill())
       .transition()
-      .duration(dur / 5)
+      .duration(dur)
+      .ease('linear')
       .attr('opacity', 0)
       
-  game_over: (dur = 500) ->
+  remove: (dur = 500) ->
     @image.transition()
-      .duration(dur / 5)
+      .duration(dur * 0.5)
       .attr('opacity', 1)
       .transition()
-      .duration(dur)
+      .duration(1.5 * dur)
       .attr("fill", "#900")
       .transition()
       .duration(dur * 0.25 )
       .ease('linear')
       .style("opacity", 0)
-    @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @remove())
+    @bitmap.transition()
+      .duration(2 * dur)
+      .ease('linear')
+      .attr('transform', 'scale(10)')
+      .attr('opacity', 0)
+    @g.transition()
+      .duration(dur)
+      .ease('linear')
+      .style('opacity', 0)

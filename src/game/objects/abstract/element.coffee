@@ -87,14 +87,14 @@ class @Element
 
   start: (duration = undefined, callback = undefined) ->
     if @is_sleeping
-      console.log('element.start: is_removed or is_sleeping... bug?')
+      console.log('element.start: is_sleeping... bug?')
       return
     index = Collision.list.indexOf(@)
     if index == -1
       Collision.list.push(@) # tell physics module that this element wants to join
     else
       console.log('element.start: this element is already on the physics list! bug?')
-    @is_removed = false  # mark the element as removeed
+    @is_removed = false  # mark the element as removed
     @draw()
     @fadeIn(duration, callback)
     return
@@ -111,9 +111,8 @@ class @Element
 
   remove: (fadeOutSwitch = true) -> # fade out element (opacity = 0) by default 
     return if @is_removed
-    @is_removed = true # mark the element instance as removeed
+    @is_removed = true # important detail: mark the element instance as removed but let the Physics engine call sleep() to avoid inconsistent data!
     @fadeOut() if fadeOutSwitch
-    @sleep() # put it back in the object pool for potential reuse later
     return
 
   spawn: ->
