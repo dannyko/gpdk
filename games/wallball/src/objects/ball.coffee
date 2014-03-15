@@ -8,7 +8,7 @@ class @Ball extends Circle
     @speed_factor = 0.005
     @initial_speed = 30
     @speed = @initial_speed + Gamescore.value * @speed_factor
-    @max_speed = 100
+    @max_speed = 200
     @image.remove()
     @g.attr("class", "ball")
     @image = @g.append("image")

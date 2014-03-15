@@ -64,7 +64,7 @@
 
     Gamescore.increment = 100;
 
-    Gamescore.initialLives = 1;
+    Gamescore.initialLives = 2;
 
     Gamescore.lives = Gamescore.initialLives;
 
@@ -427,7 +427,6 @@
       if (dur == null) {
         dur = 420;
       }
-      console.log(scalingFactor, dur);
       return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
     };
 
@@ -1508,7 +1507,7 @@
       this.speed_factor = 0.005;
       this.initial_speed = 30;
       this.speed = this.initial_speed + Gamescore.value * this.speed_factor;
-      this.max_speed = 100;
+      this.max_speed = 200;
       this.image.remove();
       this.g.attr("class", "ball");
       this.image = this.g.append("image").attr("xlink:href", Ball.image_url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);

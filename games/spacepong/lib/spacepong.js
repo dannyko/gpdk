@@ -427,7 +427,6 @@
       if (dur == null) {
         dur = 420;
       }
-      console.log(scalingFactor, dur);
       return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
     };
 
@@ -1801,23 +1800,27 @@
       w = this.config.size;
       h = this.config.size;
       (_base2 = this.config).path || (_base2.path = set_ship(w, h));
-      this.config.r = Factory.spawn(Vec);
-      this.config.r.x = Game.width * 0.8 * Math.random();
-      this.config.r.y = 0.05 * Game.height * Math.random();
-      if (this.config.r.x < 2 * this.config.size) {
-        this.config.r.x = 2 * this.config.size;
-      }
-      if (this.config.r.x > (Game.width - 2 * this.config.size)) {
-        this.config.r.x = Game.width - 2 * this.config.size;
-      }
       Ship.__super__.constructor.call(this, this.config);
       this.name = 'Ship';
-      this.image.remove();
       this.g.attr("class", "ship");
+      this.image.remove();
+      this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
+      this.init();
+    }
+
+    Ship.prototype.init = function() {
+      this.r.x = Game.width * 0.8 * Math.random();
+      this.r.y = 0.05 * Game.height * Math.random();
+      if (this.r.x < 2 * this.config.size) {
+        this.r.x = 2 * this.config.size;
+      }
+      if (this.r.x > (Game.width - 2 * this.config.size)) {
+        this.r.x = Game.width - 2 * this.config.size;
+      }
       this.speed = Ship.speed[this.difficulty];
       this.v.y = this.speed;
-      this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
-    }
+      return this.scale(1, 1);
+    };
 
     Ship.prototype.draw = function() {
       if (this.v.y < Ship.speed[this.difficulty] - 0.1) {
@@ -1871,6 +1874,7 @@
       Nship = Collision.list.filter(function(d) {
         return d.constructor === Ship && !d.is_removed;
       }).length;
+      console.log('ship.remove:', Nship, Gamescore.lives);
       if (Nship === 0 && Gamescore.lives >= 0) {
         return Game.instance.spawn_ships();
       }
@@ -2010,6 +2014,7 @@
       var index, ship;
       this.new_ship_count = Math.max(1, this.initialN + Math.floor(Gamescore.value / 1000));
       index = this.new_ship_count;
+      console.log('spacepong.spawn_ships:', this.new_ship_count);
       while (index--) {
         ship = Factory.spawn(Ship);
         ship.start();

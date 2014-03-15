@@ -20,22 +20,25 @@ class @Ship extends Polygon
     w = @config.size
     h = @config.size
     @config.path ||= set_ship(w, h)
-    @config.r   = Factory.spawn(Vec)
-    @config.r.x = Game.width * 0.8 * Math.random()
-    @config.r.y = 0.05 * Game.height * Math.random()
-    @config.r.x = 2 * @config.size if @config.r.x < 2 * @config.size
-    @config.r.x = Game.width - 2 * @config.size if @config.r.x > (Game.width - 2 * @config.size)
     super(@config)
     @name = 'Ship'
-    @image.remove() # don't display default SVG image, instead replace by custom bitmap defined below via an SVG <image> tag
     @g.attr("class", "ship")
-    @speed = Ship.speed[@difficulty] # initial ship speed
-    @v.y   = @speed # initial ship velocity
+    @image.remove() # don't display default SVG image, instead replace by custom bitmap defined below via an SVG <image> tag
     @image = @g.append("image")
      .attr("xlink:href", Ship.image_url[@difficulty])
      .attr("x", -w).attr("y", -h)
      .attr("width", 2 * w)
      .attr("height", 2 * h)
+    @init()
+
+  init: ->
+    @r.x = Game.width * 0.8 * Math.random()
+    @r.y = 0.05 * Game.height * Math.random()
+    @r.x = 2 * @config.size if @r.x < 2 * @config.size
+    @r.x = Game.width - 2 * @config.size if @r.x > (Game.width - 2 * @config.size)
+    @speed = Ship.speed[@difficulty] # initial ship speed
+    @v.y   = @speed # initial ship velocity
+    @scale(1, 1)
 
   draw: ->
     if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.05
@@ -89,3 +92,4 @@ class @Ship extends Polygon
       return true
     else # hit another ship, let physics engine handle the reaction
       return false
+

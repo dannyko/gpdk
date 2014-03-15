@@ -144,7 +144,6 @@ class @Element
     return
 
   scale: (scalingFactor = 10, dur = 420) ->
-    console.log(scalingFactor, dur)
     @image
      .attr('transform', 'scale(1)')
      .transition()
