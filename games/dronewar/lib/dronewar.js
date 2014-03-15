@@ -306,8 +306,70 @@
 
     Game.initialLives = 0;
 
+    Game.image_list = [];
+
     Game.increment_score = function() {
       return Game.score += Game.score_increment;
+    };
+
+    function Game(config) {
+      var force;
+      this.config = config != null ? config : {};
+      this.element = [];
+      this.div = d3.select("#game_div");
+      this.svg = d3.select("#game_svg");
+      if (this.svg.empty()) {
+        this.svg = this.div.append('svg').attr('id', 'game_svg');
+      }
+      Game.width = 800;
+      Game.height = 600;
+      this.scale = 1;
+      this.g = d3.select("#game_g");
+      if (this.g.empty()) {
+        this.g = this.svg.append('g');
+      }
+      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.update_window(force = true);
+      (function($) {
+        return $.extend(jQuery, {
+          preloadImage: function(src, callback) {
+            var f, i;
+            i = new Image();
+            f = false;
+            i.onload = function() {
+              f = true;
+              if (callback !== void 0) {
+                callback(this);
+              }
+              return $(this).remove();
+            };
+            if (!f) {
+              return $(i).attr('src', src).css({
+                position: 'absolute',
+                display: 'none',
+                width: 1,
+                height: 1
+              }).appendTo(document.body);
+            }
+          }
+        });
+      })(jQuery);
+      this.preload_images(this.init);
+    }
+
+    Game.prototype.preload_images = function(final_callback) {
+      var callback,
+        _this = this;
+      callback = function(image) {
+        console.log(Game.image_list);
+        Game.image_list.pop();
+        if (Game.image_list.length > 0) {
+          return $.preloadImage(Game.image_list[Game.image_list.length - 1], callback);
+        } else {
+          return final_callback();
+        }
+      };
+      return $.preloadImage(Game.image_list[Game.image_list.length - 1], callback);
     };
 
     current_width = function(padding) {
@@ -371,64 +433,6 @@
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
       $(document.body).css('width', w).css('height', h);
     };
-
-    Game.prototype.preload_images = function(image_list) {
-      var callback,
-        _this = this;
-      callback = function(image) {
-        image_list.pop();
-        if (image_list.length > 0) {
-          return $.preloadImage(image_list[image_list.length - 1], callback);
-        } else {
-          return _this.run();
-        }
-      };
-      return $.preloadImage(image_list[list.length - 1], callback);
-    };
-
-    function Game(config) {
-      var force;
-      this.config = config != null ? config : {};
-      this.element = [];
-      this.div = d3.select("#game_div");
-      this.svg = d3.select("#game_svg");
-      if (this.svg.empty()) {
-        this.svg = this.div.append('svg').attr('id', 'game_svg');
-      }
-      Game.width = 800;
-      Game.height = 600;
-      this.scale = 1;
-      this.g = d3.select("#game_g");
-      if (this.g.empty()) {
-        this.g = this.svg.append('g');
-      }
-      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
-      this.update_window(force = true);
-      (function($) {
-        return $.extend(jQuery, {
-          preloadImage: function(src, callback) {
-            var f, i;
-            i = new Image();
-            f = false;
-            i.onload = function() {
-              f = true;
-              if (callback !== void 0) {
-                callback(this);
-              }
-              return $(this).remove();
-            };
-            if (!f) {
-              return $(i).attr('src', src).css({
-                position: 'absolute',
-                display: 'none',
-                width: 1,
-                height: 1
-              }).appendTo(document.body);
-            }
-          }
-        });
-      })(jQuery);
-    }
 
     Game.prototype.start = function() {
       return Physics.start(this);
@@ -1647,8 +1651,7 @@
     Dronewar.bg_img = GameAssetsUrl + 'space_background.jpg';
 
     function Dronewar() {
-      var img,
-        _this = this;
+      var _this = this;
       this.reset = function() {
         return Dronewar.prototype.reset.apply(_this, arguments);
       };
@@ -1658,7 +1661,14 @@
       this.keydown = function() {
         return Dronewar.prototype.keydown.apply(_this, arguments);
       };
+      this.init = function() {
+        return Dronewar.prototype.init.apply(_this, arguments);
+      };
+      Game.image_list = ['space_background.jpg', 'drone_1.png', 'sidewinder_1.png', 'fang_1.png', 'viper_1.png'];
       Dronewar.__super__.constructor.apply(this, arguments);
+    }
+
+    Dronewar.prototype.init = function() {
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
       this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 2;
@@ -1671,11 +1681,6 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
-      img = new Image();
-      img.src = Ship.viper().url;
-      img.src = Ship.sidewinder().url;
-      img.src = Ship.fang().url;
-      img.src = Drone.url;
       Game.sound = new Howl({
         urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
         sprite: {
@@ -1685,7 +1690,8 @@
         }
       });
       Game.sound.play('music');
-    }
+      return this.start();
+    };
 
     Dronewar.prototype.level = function() {
       var Nlevel, dur, i, multiplier, n, newAttacker, offset, _i, _ref,

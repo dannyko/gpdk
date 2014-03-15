@@ -3,7 +3,10 @@ class @Dronewar extends Game
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
   constructor: ->
+    Game.image_list = ['space_background.jpg', 'drone_1.png', 'sidewinder_1.png', 'fang_1.png', 'viper_1.png']
     super
+
+  init: =>
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 2
@@ -34,11 +37,6 @@ class @Dronewar extends Game
       .attr('font-family', 'arial bold')
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
-    img     = new Image()
-    img.src = Ship.viper().url
-    img.src = Ship.sidewinder().url
-    img.src = Ship.fang().url
-    img.src = Drone.url
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
       sprite: {
@@ -48,6 +46,7 @@ class @Dronewar extends Game
       }
     })
     Game.sound.play('music')
+    @start()
 
 
   level: ->

@@ -8,9 +8,58 @@ class @Game
   @score_increment = 100
   @lives: 0
   @initialLives = 0
+  @image_list = []
   
   @increment_score: ->
     Game.score += Game.score_increment
+
+  constructor: (@config = {}) ->
+    @element    = [] # initialize
+    @div        = d3.select("#game_div")
+    @svg        = d3.select("#game_svg")
+    @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
+    Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
+    Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
+    @scale      = 1 # initialize zoom level (implementation still pending)
+    @g          = d3.select("#game_g")
+    @g          = @svg.append('g') if @g.empty()
+    @g.attr('id', 'game_g')
+      .attr('width', @svg.attr('width'))
+      .attr('height', @svg.attr('height'))
+      .style('width', '')
+      .style('height', '')
+    @update_window(force = true)
+    # extend jQuery:
+    ( ($) -> # image preload with callbacks using jQuery, taken from: http://designdotworks.blogspot.com/2009/05/jquery-image-preloading-with-callbacks.html?showComment=1391404596835#c6592061457251911304
+     $.extend(jQuery, {  
+       preloadImage: (src, callback) ->
+         i = new Image() 
+         f = false
+         i.onload = ->  
+           f = true  
+           unless callback is undefined
+             callback(this) 
+           $(this).remove()   
+         if not f
+           $(i).attr('src', src).css({  
+             position: 'absolute',  
+             display: 'none',  
+             width: 1,  
+             height: 1  
+           }).appendTo(document.body)
+     })
+    )(jQuery)
+    @preload_images(@init)
+
+  preload_images: (final_callback) ->
+    callback = (image) =>
+       console.log(Game.image_list)
+       Game.image_list.pop()
+       if Game.image_list.length > 0
+         $.preloadImage( Game.image_list[Game.image_list.length - 1], callback )
+       else
+         final_callback()
+    $.preloadImage( Game.image_list[Game.image_list.length - 1], callback)
 
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]
@@ -49,53 +98,8 @@ class @Game
     $(document.body).css('width', w).css('height', h)
     return
 
-  preload_images: (image_list) ->
-    callback = (image) =>
-       image_list.pop()
-       if image_list.length > 0
-         $.preloadImage( image_list[image_list.length - 1], callback )
-       else
-         @run()
-    $.preloadImage( image_list[list.length - 1], callback)
-
-  constructor: (@config = {}) ->
-    @element    = [] # initialize
-    @div        = d3.select("#game_div")
-    @svg        = d3.select("#game_svg")
-    @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
-    Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
-    Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
-    @scale      = 1 # initialize zoom level (implementation still pending)
-    @g          = d3.select("#game_g")
-    @g          = @svg.append('g') if @g.empty()
-    @g.attr('id', 'game_g')
-	    .attr('width', @svg.attr('width'))
-	    .attr('height', @svg.attr('height'))
-	    .style('width', '')
-	    .style('height', '')
-    @update_window(force = true)
-    # extend jQuery:
-    ( ($) -> # image preload with callbacks using jQuery, taken from: http://designdotworks.blogspot.com/2009/05/jquery-image-preloading-with-callbacks.html?showComment=1391404596835#c6592061457251911304
-     $.extend(jQuery, {  
-       preloadImage: (src, callback) ->
-         i = new Image() 
-         f = false
-         i.onload = ->  
-           f = true  
-           unless callback is undefined
-             callback(this) 
-           $(this).remove()   
-         if not f
-           $(i).attr('src', src).css({  
-             position: 'absolute',  
-             display: 'none',  
-             width: 1,  
-             height: 1  
-           }).appendTo(document.body)
-     })
-    )(jQuery)
-
-  start: -> Physics.start(@) # start all elements and associate physics engine with this game instance
+  start: -> 
+    Physics.start(@) # start all elements and associate physics engine with this game instance
     
   stop: -> Physics.stop() # stop all elements
 
