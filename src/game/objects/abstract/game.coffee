@@ -53,7 +53,6 @@ class @Game
 
   preload_images: (final_callback) ->
     callback = (image) =>
-       console.log(Game.image_list)
        Game.image_list.pop()
        if Game.image_list.length > 0
          $.preloadImage( Game.image_list[Game.image_list.length - 1], callback )

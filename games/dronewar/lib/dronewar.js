@@ -5,43 +5,6 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     _this = this;
 
-  this.Factory = (function() {
-
-    function Factory() {}
-
-    Factory.inactive = {};
-
-    Factory.spawn = function(klass, config) {
-      var old, x;
-      if (this.inactive[klass] === void 0) {
-        this.inactive[klass] = [];
-      }
-      if (this.inactive[klass].length === 0) {
-        return new klass(config);
-      } else {
-        old = this.inactive[klass].pop();
-        if (typeof old.wake === "function") {
-          old.wake();
-        }
-        for (x in config) {
-          old[x] = config[x];
-        }
-      }
-      return old;
-    };
-
-    Factory.sleep = function(instance) {
-      if (instance === void 0) {
-        console.log('Factory.sleep(): undefined input');
-        return;
-      }
-      this.inactive[instance.constructor].push(instance);
-    };
-
-    return Factory;
-
-  })();
-
   this.Utils = (function() {
 
     function Utils() {}
@@ -361,7 +324,6 @@
       var callback,
         _this = this;
       callback = function(image) {
-        console.log(Game.image_list);
         Game.image_list.pop();
         if (Game.image_list.length > 0) {
           return $.preloadImage(Game.image_list[Game.image_list.length - 1], callback);
