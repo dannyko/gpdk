@@ -84,7 +84,7 @@ class @Spacepong extends Game
 
   text: ->
     @scoretxt.text('SCORE: ' + Gamescore.value)
-    @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
+    @lives.text('LIVES: ' + Gamescore.lives) unless Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
 
   stop: =>
     super

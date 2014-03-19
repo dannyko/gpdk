@@ -73,6 +73,7 @@ class @Root extends Polygon
 
   fire: =>
     return true if @is_removed
+    return if Gamescore.lives < 0 # do nothing if game is over / ending
     if @lastfire is undefined
       @lastfire = Physics.timestamp
       return
@@ -152,6 +153,10 @@ class @Root extends Polygon
     return if n.is_bullet # bullets don't hurt the ship
     damage = 10
     Gamescore.lives -= damage # decrement lives for this game
+    if Gamescore.lives < 0
+      Game.instance.stop()
+    else
+      Game.instance.text()
     n.remove()
     N    = 240 # random color parameter
     fill = '#ff0' 

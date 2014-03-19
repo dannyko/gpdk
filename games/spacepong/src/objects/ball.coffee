@@ -24,6 +24,7 @@ class @Ball extends Circle
     @r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size - @tol
 
   draw: ->
+    return if Gamescore.lives < 0 # do nothing if game is over / ending
     if @r.y < @tol + @size # don't allow it to go beyond top sidewall
       @r.y = @tol + @size 
       @v.y = Math.abs(@v.y)
@@ -39,8 +40,8 @@ class @Ball extends Circle
     if @r.y >= Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
       if Gamescore.lives <= 0
         Gamescore.lives = -1
-        Game.instance.stop()
-        Game.instance.message('GAME OVER')
+        Game.instance.paddle.fadeOut()
+        Game.instance.message('GAME OVER', -> Game.instance.stop())
         return
       Gamescore.lives -= 1
       Game.instance.text()

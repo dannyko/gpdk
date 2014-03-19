@@ -109,10 +109,10 @@ class @Element
     @is_sleeping = true # mark the element instance as asleep
     return
 
-  remove: (fadeOutSwitch = true) -> # fade out element (opacity = 0) by default 
+  remove: (fadeOutSwitch = true, dur) -> # fade out element (opacity = 0) by default 
     return if @is_removed
     @is_removed = true # important detail: mark the element instance as removed but let the Physics engine call sleep() to avoid inconsistent data!
-    @fadeOut() if fadeOutSwitch
+    @fadeOut(dur) if fadeOutSwitch
     return
 
   spawn: ->

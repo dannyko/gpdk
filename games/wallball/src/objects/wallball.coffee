@@ -27,7 +27,7 @@ class @Wallball extends Game
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
-    Game.message_color = '#FF0'
+    Game.message_color = '#FF4'
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
       volume: 0.5,
@@ -51,9 +51,10 @@ class @Wallball extends Game
 
   text: ->
     @scoretxt.text('SCORE: ' + Gamescore.value)
-    @lives.text('LIVES: ' + Gamescore.lives) # updated text to display current # of lives
+    @lives.text('LIVES: ' + Gamescore.lives) unless Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
 
   spawn_ball: ->
+    return if Gamescore.lives < 0 # game has ended or is loading "game over" outro sequence, so do nothing
     return if Physics.off
     return unless @ball is null or @ball?.is_removed
     @ball = null
@@ -61,7 +62,7 @@ class @Wallball extends Game
     ready = @g.append("text")
       .text("GET READY")
       .attr("stroke", "none")
-      .attr("fill", "#FF0")
+      .attr("fill", "#FF4")
       .attr("font-size", "36")
       .attr("x", Game.width / 2 - 105)
       .attr("y", Game.height / 2 + 20)
@@ -96,7 +97,7 @@ class @Wallball extends Game
     go = @g.append("text")
       .text("")
       .attr("stroke", "none")
-      .attr("fill", "#FF2")
+      .attr("fill", "#FF4")
       .attr("font-size", "36")
       .attr("x", Game.width * 0.5 - 60)
       .attr("y", Game.height / 2 + 130)

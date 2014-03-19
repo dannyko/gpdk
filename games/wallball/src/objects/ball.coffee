@@ -18,6 +18,12 @@ class @Ball extends Circle
       .attr("height", @size * 2)
     @init()
 
+  start: ->
+    super(dur = 200)
+
+  remove: ->
+    super(fadeOutSwitch = true, dur = 500)
+
   init: ->
     @r.x = Game.instance.paddle.r.x
     @r.y = Game.height - Game.instance.paddle.padding - Game.instance.paddle.bb_height - @config.size
@@ -51,9 +57,8 @@ class @Ball extends Circle
         if Gamescore.lives >= 0
           Game.instance.text()
         else 
-          Game.instance.stop()
           Game.instance.paddle.fadeOut()
-          Game.instance.message('GAME OVER')
+          Game.instance.message('GAME OVER', -> Game.instance.stop())
         Game.sound.play('miss')
         @remove()
         Game.instance.spawn_ball()
@@ -68,7 +73,7 @@ class @Ball extends Circle
   flash: ->
     dur      = 1000 / 3 # color effect transition duration parameter
     # N    = 240 # random color parameter
-    fill = "#FF0" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    fill = "#FF4" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)

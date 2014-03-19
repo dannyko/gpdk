@@ -51,6 +51,11 @@ class @Dronewar extends Game
       })
 
   level: ->
+    return if Gamescore.lives < 0 # do nothing if the game is over/ending
+    drone_increment = 1
+    @N += drone_increment unless @N >= @maxN
+    @charge *= 20
+    @text()
     @svg.style("cursor", "none")
     @element   = [] # reinitialize element list
     multiplier = 20
@@ -95,10 +100,9 @@ class @Dronewar extends Game
     return
 
   stop: -> # stop the game
-    super
     @root.remove()
     @lives.text("GAME OVER")
-    @message('GAME OVER')
+    @message('GAME OVER', => super())
     return
 
   start: -> # start new game
@@ -202,7 +206,7 @@ class @Dronewar extends Game
       @root.start()
       Gamescore.value = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
-      Physics.callbacks.push(@progress)
+      @level()
     )
     how = @g.append("text")
       .text("")
@@ -218,19 +222,8 @@ class @Dronewar extends Game
     Game.sound?.play('music') if Game.musicSwitch
     super
     return
-    
-  progress: =>  # timer callback to monitor game progress
+
+  text: ->
     @scoretxt.text('SCORE: ' + Gamescore.value)
-    @leveltxt.text('LEVEL: ' + (@N - @initialN))
-    if Gamescore.lives >= 0
-      @lives.text('ENERGY: ' + Gamescore.lives) 
-    else 
-      @stop()
-      return true
-    all_is_removed = @element.every (element) -> element.is_removed
-    if all_is_removed # i.e. went offscreen or hit by bullet
-      drone_increment = 1
-      @N += drone_increment unless @N >= @maxN
-      @charge *= 20
-      @level()
-    return
+    @leveltxt.text('LEVEL: ' + (@N - @initialN))  
+    @lives.text('ENERGY: ' + Gamescore.lives) 

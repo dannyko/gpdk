@@ -82,7 +82,7 @@ class @Paddle extends Polygon
 
   remove: ->
     N    = 240 # random color parameter
-    fill = '#ff0' 
+    fill = '#FF4' 
     dur  = 120 # color effect transition duration parameter
     @image # default reaction
       .transition()
@@ -97,7 +97,7 @@ class @Paddle extends Polygon
   reaction: (n) -> 
     n.reaction()
     N    = 240 # random color parameter
-    fill = '#ff0' 
+    fill = '#FF4' 
     dur  = 120 # color effect transition duration parameter
     @image # default reaction
       .transition()

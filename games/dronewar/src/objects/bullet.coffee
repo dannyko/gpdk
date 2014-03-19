@@ -13,6 +13,7 @@ class @Bullet extends Circle
     n.deplete(@power) # deplete the drone
     if n.depleted() # remove the drone if depleted
       Gamescore.increment_value()  # increment score for hitting the drone
+      Game.instance.text()
       Gameprez?.score(Gamescore.value) # send score update to Gameprez if available
       n.remove()
     @remove() unless n.invincible # remove the bullet that hit the drone 

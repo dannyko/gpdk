@@ -101,6 +101,7 @@ class @Drone extends Circle
     else
       @fadeOut(dur)
       super
+    Game.instance.level() if Game.instance.element.every (d) -> d.is_removed
     return
     
   init: ->
