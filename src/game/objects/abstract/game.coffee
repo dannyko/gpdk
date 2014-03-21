@@ -13,6 +13,11 @@ class @Game
   @increment_score: ->
     Game.score += Game.score_increment
 
+  @audioSwitch: true
+  @musicSwitch: true
+  @instance: null
+  @message_color: "#FFF"
+  
   constructor: (@config = {}) ->
     @element    = [] # initialize
     @div        = d3.select("#game_div")
@@ -82,7 +87,7 @@ class @Game
     min_scale = 0.39
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
-  update_window: (force = false) ->
+  update_window: (force = false) =>
     return Game.scale if Game.width is null or Game.height is null
     scale = get_scale()
     tol   = .001
@@ -98,21 +103,46 @@ class @Game
     return
 
   start: -> 
-    Physics.start(@) # start all elements and associate physics engine with this game instance
+    Physics.start() # start all elements and associate physics engine with this game instance
+    Game.instance = @ # associate class variable with this instance for global accessibility from any context
+    Gameprez?.start()
+    return
     
-  stop: -> Physics.stop() # stop all elements
-
-  end: (callback = ->) -> # end the game by returning true i.e. stopping any d3 "progress" timer
+  stop: (callback = ->) -> 
+    @cleanup()
+    Physics.stop() # stop all elements and decouple them from the Physics engine
     if Gameprez?
       Gameprez.end(Game.score, callback)
     else 
       callback()
-    return true # game over so return true to stop the d3 timer calling @progress()
+    return
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
-    len = Collision.list.length
-    while (len--) # decrementing avoids potential indexing issues after popping last element off
-      element = Collision.list.pop()
-      sound = false # no sound for cleanup
-      element.destroy(sound)
-      element = null
+    len = Collision.list.length # length
+    Collision.list[len].remove() while (len--) # decrementing avoids potential indexing issues after popping last element off of Collision.list during element.remove()      
+    return
+
+  message: (txt, callback, dur = 1000) ->
+    if callback is undefined
+      callback = ->
+    @g.selectAll('.game_message').remove()
+    ready = @g.append("text")
+      .attr('class', 'game_message')
+      .text(txt)
+      .attr("stroke", "none")
+      .attr("fill", Game.message_color)
+      .attr("font-size", "36")
+      .attr("x", Game.width  / 2 - 105)
+      .attr("y", Game.height / 2 + 20)
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+      .attr('opacity', 0)
+      .transition()
+      .duration(dur)
+      .style("opacity", 1)
+      .transition()
+      .duration(dur)
+      .style('opacity', 0)
+      .remove()
+      .each('end', callback)
+    return

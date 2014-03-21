@@ -17,13 +17,13 @@ class @Polygon extends Element # simplest path-based shape by default involving 
       {pathSegTypeAsLetter: 'Z'} # close the path by default
     ]
 
-  d: -> # generate path "d" attribute
+  d_attr: -> # generate path "d" attribute
     Utils.d(@path)
     
   polygon_path: -> # assign path metadata
     for i in [0..@path.length - 2] # set edge vectors: path.r
-      @path[i].r = new Vec(@path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
-      @path[i].n = new Vec({x: -@path[i].r.y, y: @path[i].r.x}).normalize() # unit normal vector 
+      @path[i].r = Factory.spawn(Vec, @path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
+      @path[i].n = Factory.spawn(Vec, {x: -@path[i].r.y, y: @path[i].r.x}).normalize() # unit normal vector 
     @BB()
     return
 
@@ -37,9 +37,9 @@ class @Polygon extends Element # simplest path-based shape by default involving 
       node   = @path[i]
       node.d = node.x * node.x + node.y * node.y
       maxnode = @path[i] if node.d > maxd
-    @maxnode  = new Vec(maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
+    @maxnode  = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size     = @maxnode.length()
-    @image.attr("d", @d())
+    @image.attr("d", @d_attr())
   
   BB: ->
     xmax = @path[0].x # initialize

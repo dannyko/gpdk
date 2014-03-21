@@ -18,7 +18,7 @@ class @Frame extends Polygon
     @r.y = 0 # centered vertically
     @g.remove() # frame is hidden so don't render a corresponding image
 
-  destroy_check: (element) ->
+  remove_check: (element) ->
     if element.type == 'Circle'
       return true
     else 

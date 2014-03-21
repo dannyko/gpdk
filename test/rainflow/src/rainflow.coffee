@@ -65,7 +65,7 @@ class @Rainflow extends Game
       scale = 1e-4 # units
       energy = scale * Utils.bilinear_interp @elevation, x, y
 
-    updateWindow = () =>
+    updateWindow = =>
       width  = window.innerWidth || document.documentElement.clientWidth || document.getElementsByTagName('body')[0].clientWidth
       height = window.innerHeight|| document.documentElement.clientHeight|| document.getElementsByTagName('body')[0].clientHeight
      # @svg.attr("width", @width).attr("height", @height)
@@ -100,6 +100,6 @@ class @Rainflow extends Game
     clear = -> clearInterval(int)
     setTimeout(clear, dur * (config.length + 1))
 
-  keydown: () =>
+  keydown: =>
     @drop() # any key releases a drop
     return    

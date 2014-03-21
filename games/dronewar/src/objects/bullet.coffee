@@ -4,15 +4,18 @@ class @Bullet extends Circle
     @is_bullet = true
     @power = @config.power || 1
     
-  destroy_check: (n) -> # bullet handles score value updates 
-    return true if n.is_root # don't allow default reaction to occur (let root handle it)
-    if n.is_bullet
-      n.destroy() unless @is_destroyed # remove extra bullets
+  remove_check: (n) -> # bullet handles score value updates 
+    if n.is_root # don't allow default reaction to occur (let root handle it)
+      return true 
+    if n.is_bullet # i.e. bullet firing rate is too high relative to bullet size and velocity
+      # n.remove() unless @is_removed or n.is_removed # remove extra bullets
       return true
-    @destroy() # remove the bullet that hit the drone
     n.deplete(@power) # deplete the drone
-    if n.depleted() # detroy the drone if depleted
-      Game.increment_score()  # increment score for hitting the drone
+
+    if n.depleted() # remove the drone if depleted
+      Game.increment_value()  # increment score for hitting the drone
+      Game.instance.text()
       Gameprez?.score(Game.score) # send score update to Gameprez if available
-      n.destroy() 
+      n.remove()
+    @remove() unless n.invincible # remove the bullet that hit the drone 
     true

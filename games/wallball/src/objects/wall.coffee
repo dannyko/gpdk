@@ -15,12 +15,13 @@ class @Wall extends Polygon
     w = Game.width * 0.5
     h = Game.height * 0.5
     @config.path ||= set_wall(w, h)
-    @config.r = new Vec({x: Game.width * 0.5, y: -Game.height * 0.5 + 0.05 * Game.height})
     @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
     super(@config)
+    @r.x = Game.width * 0.5
+    @r.y = -Game.height * 0.5 + 0.05 * Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
     @speed = 2 # initial wall speed
-    @padding = 144
+    @padding = 300
     @g.remove()
     @g = d3.select('#game_g').insert("g", ":first-child")
     @g.attr("class", "wall")
@@ -29,6 +30,7 @@ class @Wall extends Polygon
      .attr("x", -w).attr("y", -h)
      .attr("width", Game.width)
      .attr("height", Game.height)
+    @start()
 
   draw: ->
     @r.y += @dt * @v.y # update wall position with constant speed and variable direction
@@ -41,7 +43,11 @@ class @Wall extends Polygon
     @v.y = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
     super
 
-  destroy_check: (element) -> # wall handles its own reactions and always overrides the default physics engine
+  remove: ->
+    fadeOutSwitch = false
+    super(fadeOutSwitch)
+
+  remove_check: (element) -> # wall handles its own reactions and always overrides the default physics engine
     if element.type == 'Circle'
       return true
     else 

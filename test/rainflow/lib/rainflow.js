@@ -5,23 +5,23 @@
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     _this = this;
 
-  this.Gamescore = (function() {
+  this.Game = (function() {
 
-    function Gamescore() {}
+    function Game() {}
 
-    Gamescore.value = 0;
+    Game.score = 0;
 
-    Gamescore.increment = 100;
+    Game.increment = 100;
 
-    Gamescore.initialLives = 2;
+    Game.initialLives = 2;
 
-    Gamescore.lives = Gamescore.initialLives;
+    Game.lives = Game.initialLives;
 
-    Gamescore.increment_value = function() {
+    Game.increment_value = function() {
       return this.value += this.increment;
     };
 
-    return Gamescore;
+    return Game;
 
   })();
 

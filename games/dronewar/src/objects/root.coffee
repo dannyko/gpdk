@@ -2,21 +2,27 @@ class @Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
+    @init()
+
+  init: ->
     @r.x           = Game.width / 2
     @r.y           = Game.height - 180
-    @angleStep     = 2 * Math.PI / 60 # initialize per-step angle change magnitude 
-    @lastfire      = Utils.timestamp()
-    @charge        = 5e4
+    @angle         = 0
+    @angleStep     = 2 * Math.PI / 40 # initialize per-step angle change magnitude 
+    @lastfire      = undefined # initialize timestamp
+    @charge        = 2e4 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
     @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick    = -> return
     @drawing = false
+    @fadeIn()
+    @
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
-    maxJump = 30 # max jump size
+    maxJump = 70 # max jump size
     xy      = @apply_limits(xy)
     if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
       @redraw_interp(xy)
@@ -32,22 +38,21 @@ class @Root extends Polygon
     return unless @collision # don't draw if not active
     return if @drawing
     @drawing = true
-    r1   = new Vec({x: xy[0], y: xy[1]})
+    @dr.init({x: xy[0], y: xy[1]})
     step = 20 # steplength
-    dr   = new Vec(r1).subtract(@r)
-    Nstep = Math.floor(dr.length() / step)
+    @dr.subtract(@r)
+    Nstep = Math.floor(@dr.length() / step)
     count = 1
-    dr.normalize(step) # difference vector pointing towards destination
-    func = =>
-      done = false
+    @dr.normalize(step) # difference vector pointing towards destination
+    redraw_func = =>
       if count > Nstep
-        done = true 
         @drawing = false
+        return true
       else 
-        @r.add(dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
+        @r.add(@dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
         count++
-      done
-    d3.timer(func)
+        return false
+    Physics.callbacks.push(redraw_func)
     return
  
   spin: =>
@@ -67,22 +72,33 @@ class @Root extends Polygon
     return
 
   fire: =>
-    return true if @is_destroyed
-    timestamp   = Utils.timestamp()
-    return unless @collision and timestamp - @lastfire >= @wait
-    @lastfire   = timestamp
-    bullet      = new Bullet({power: @bullet_size * @bullet_size})
-    bullet.size = @bullet_size
-    x           = Math.cos(@angle - Math.PI * 0.5)
-    y           = Math.sin(@angle - Math.PI * 0.5)
-    bullet.r.x  = @r.x + x * (@size / 3 + bullet.size)
-    bullet.r.y  = @r.y + y * 20
-    bullet.v.x  = @bullet_speed * x  
-    bullet.v.y  = @bullet_speed * y
-    bullet.stroke(@bullet_stroke)
-    bullet.fill(@bullet_fill)
+    return true if @is_removed
+    return if Game.lives < 0 # do nothing if game is over / ending
+    if @lastfire is undefined
+      @lastfire = Physics.timestamp
+      return
+    return unless (Physics.timestamp - @lastfire) >= @wait
+    @lastfire = Physics.timestamp
+    @shoot()
     return
   
+  bullet_config = {power: null, size: null} 
+
+  shoot: ->
+    x = Math.cos(@angle - Math.PI * 0.5)
+    y = Math.sin(@angle - Math.PI * 0.5)
+    bullet_config.power = @bullet_size * @bullet_size
+    bullet_config.size  = @bullet_size
+    bullet = Factory.spawn(Bullet, bullet_config) # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
+    bullet.r.x = @r.x + x * (@size / 3 + @bullet_size)
+    bullet.r.y = @r.y + y * 20
+    bullet.v.x = @bullet_speed * x
+    bullet.v.y = @bullet_speed * y
+    bullet.stroke(@bullet_stroke)
+    bullet.fill(@bullet_fill)
+    bullet.start()
+    return
+
   ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
     @collision = false
     @bullet_stroke = ship.bullet_stroke
@@ -92,7 +108,7 @@ class @Root extends Polygon
     @wait          = ship.bullet_tick # ms between bullets
     @path          = ship.path
     @BB() # set the rectangular bounding box for this path
-    endPath  = @d() # new end-path to morph to
+    endPath  = @d_attr() # new end-path to morph to
     @bitmap.attr('opacity', 1)
       .transition()
       .duration(dur * 0.5)
@@ -115,15 +131,17 @@ class @Root extends Polygon
       .delay(dur)
       .duration(dur)
       .attr("opacity", 1)
-      .each('end', () => @set_path() ; @collision = true ; d3.timer(@fire))
+      .each('end', => 
+        @set_path()
+        @collision = true
+        Physics.callbacks.push(@fire)
+      )
       
   start: ->
     super
     @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
     @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
-
-  
     
   stop: ->
     super
@@ -133,36 +151,51 @@ class @Root extends Polygon
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship
-    Game.lives -= 1 # decrement lives for this game
-    n.destroy()
+    damage = 10
+    Game.lives -= damage # decrement lives for this game
+    if Game.lives < 0
+      Game.instance.stop()
+    else
+      Game.instance.text()
+    n.remove()
     N    = 240 # random color parameter
     fill = '#ff0' 
-    dur  = 120 # color effect transition duration parameter
+    dur  = 150 # color effect transition duration parameter
     @image # default reaction
       .transition()
       .duration(dur / 5)
       .attr('opacity', 1)
+      .ease('linear')
       .transition()
       .duration(dur)
-      .ease('sqrt')
+      .ease('poly(0.5)')
       .attr("fill", fill)
       .transition()
       .duration(dur)
       .ease('linear')
       .attr("fill", @fill())
       .transition()
-      .duration(dur / 5)
+      .duration(dur)
+      .ease('linear')
       .attr('opacity', 0)
       
-  game_over: (dur = 500) ->
+  remove: (dur = 500) ->
     @image.transition()
-      .duration(dur / 5)
+      .duration(dur * 0.5)
       .attr('opacity', 1)
       .transition()
-      .duration(dur)
+      .duration(1.5 * dur)
       .attr("fill", "#900")
       .transition()
       .duration(dur * 0.25 )
-      .ease('sqrt')
+      .ease('linear')
       .style("opacity", 0)
-    @bitmap.transition().duration(dur).attr('opacity', 0).each('end', => @destroy())
+    @bitmap.transition()
+      .duration(2 * dur)
+      .ease('linear')
+      .attr('transform', 'scale(10)')
+      .attr('opacity', 0)
+    @g.transition()
+      .duration(dur)
+      .ease('linear')
+      .style('opacity', 0)

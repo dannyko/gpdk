@@ -18,11 +18,11 @@ class @Root extends Circle
     @r.y = xy[1]
     @draw() 
 
-  spin: () =>
+  spin: =>
     delta  = @angleStep * d3.event.wheelDelta / Math.abs(d3.event.wheelDelta)
     @angle = @angle - delta
 
-  keydown: () =>
+  keydown: =>
     switch d3.event.keyCode 
       when 70 then @fire() # f key fires bullets
       when 39 then @angle += @angleStep # right arrow changes firing angle by default
@@ -31,7 +31,7 @@ class @Root extends Circle
       when 40 then @angle += Math.PI # down arrow reverses direction of firing angle 
     return
 
-  fire: () =>
+  fire: =>
     bullet      = new Bullet()
     speed       = 5.5 / @dt
     x           = Math.cos(@angle)

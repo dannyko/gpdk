@@ -2,16 +2,12 @@ class @Ball extends Circle
   @image_url = GameAssetsUrl + "ball.png"
 
   constructor: (@config = {}) ->
-    @config.size   ||= 12
-    @config.fill   ||= '#FFF'
-    @config.r      ||= new Vec({x: Game.paddle.r.x + 2 * Math.random() - 1, y: Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size})
-    super(@config)
-    @name = 'Ball'
+    super
+    @size          = 12
+    @name          = 'Ball'
     @initial_speed = 25
-    @speed = @initial_speed
-    @max_speed = @size * 10
-    @v.x   = 0 
-    @v.y   = -@speed
+    @speed         = @initial_speed
+    @max_speed     = @size * 10
     @image.remove()
     @g.attr("class", "ball")
     @image = @g.append("image")
@@ -19,9 +15,17 @@ class @Ball extends Circle
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
+    @init()
+
+  init: ->
+    @v.x = 0 
+    @v.y = -@speed
+    @r.x = Game.paddle.r.x + 2 * Math.random() - 1
+    @r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size - @tol
 
   draw: ->
-    if @r.y < @tol + @size # don't allow it to go beyond left sidewall
+    return if Game.lives < 0 # do nothing if game is over / ending
+    if @r.y < @tol + @size # don't allow it to go beyond top sidewall
       @r.y = @tol + @size 
       @v.y = Math.abs(@v.y)
       @reaction()
@@ -34,24 +38,32 @@ class @Ball extends Circle
       @v.x = -Math.abs(@v.x)
       @reaction()
     if @r.y >= Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
-      if Math.abs(@r.x - Game.paddle.r.x) <= Game.paddle.size # physics engine missed the collision with the paddle
-        Game.paddle.destroy_check(@) 
-      else 
-        Gamescore.lives -= 1
-        Game.sound.play('miss')
-        @destroy()
+      if Game.lives <= 0
+        Game.lives = -1
+        Game.instance.paddle.fadeOut()
+        Game.instance.message('GAME OVER', -> Game.instance.stop())
         return
+      Game.lives -= 1
+      Game.instance.text()
+      Game.sound.play('miss')
+      @remove()
     super
+
+  remove: ->
+    super
+    Game.instance.spawn_ball('GET READY') unless Game.lives < 0
+    return
 
   reaction: (n) ->  
     @v.normalize(@speed)
     @flash()
+    Game.sound.play('bong')
     super
     
   flash: ->
     # N    = 240 # random color parameter
-    dur  = 210 # color effect transition duration parameter
-    fill = "#00F" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    dur  = 200 # color effect transition duration parameter
+    fill = "#FF0" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)
@@ -60,8 +72,8 @@ class @Ball extends Circle
       .attr('fill', fill)
       .transition()
       .duration(dur)
-      .ease('sqrt')
-      .attr("opacity", 0.5)
+      .ease('poly(0.5)')
+      .attr("opacity", 1)
       .transition()
       .duration(dur)
       .ease('linear')

@@ -5,95 +5,76 @@ class @Dronewar extends Game
   constructor: ->
     Game.image_list = ['space_background.jpg', 'drone_1.png', 'sidewinder_1.png', 'fang_1.png', 'viper_1.png']
     super
-
-  init: =>
+    Game.initialLives = 100 
+    Game.lives = Game.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
-    @initialN = @config.initialN || 2
+    @initialN = @config.initialN || 1
     @N        = @initialN
-    @root     = new Root() # root element i.e. under user control  
+    @maxN     = 36 # limit the max number of ships
+    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "18")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "40")
+      .attr("y", "30")
       .attr('font-family', 'arial bold')
     @lives    = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "18")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "20")
+      .attr("y", "55")
       .attr('font-family', 'arial bold')
     @leveltxt = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "18")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "60")
+      .attr("y", "80")
       .attr('font-family', 'arial bold')
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
-    Game.sound = new Howl({
-      urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
-      sprite: {
-        music:[0, 10782],
-        boom: [10782, 856],
-        shot: [11639, 234]
-      }
-    })
-    Game.sound.play('music')
-    @start()
-
+    # load audio:
+    Game.audioSwitch = true
+    if Game.audioSwitch
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+        volume: 0.5,
+        sprite: {
+          music:[0, 10782],
+          boom: [10782, 856],
+          shot: [11639, 234]
+        }
+      })
 
   level: ->
+    return if Game.lives < 0 # do nothing if the game is over/ending
+    drone_increment = 1
+    @N += drone_increment unless @N >= @maxN
+    @charge *= 20
+    @text()
     @svg.style("cursor", "none")
-    @element = [] # reinitialize element list
-    Nlevel = (@N - @initialN + 1)
-    multiplier = 10
-    offset     = 50
-    for i in [0..@N - 1] # create element list
-      newAttacker = new Drone({energy: Nlevel * multiplier + offset})
+    @element   = [] # reinitialize element list
+    multiplier = 20
+    offset     = 200
+    Drone.max_speed += 0.1
+    drone_config = {energy: @N * multiplier + offset, root: @root}
+    for i in [0...@N] # create element list
+      newAttacker = Factory.spawn(Drone, drone_config)
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-      @element[i].r.y = Game.height * 0.25 + Math.random() * 0.25 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
-      @element[i].draw()
+      @element[i].r.y = Game.height * 0.1 + Math.random() * 0.1 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].start()
+
     n = @element.length * 2
-    @speed = .04 + Game.score / 1000000
     dur = 300 + 200 / (100 + Game.score)
-    d3.selectAll(".drone")
-      .data(@element)
-      .style("opacity", 0)
-      .transition()
-      .delay( (d, i) -> i * dur )
-      .duration(dur * 4)
-      .style("opacity", 1)
-      .each('end', (d) => 
-        dx = @root.r.x - d.r.x
-        dy = @root.r.y - d.r.y
-        d1  = Math.sqrt(dx * dx + dy * dy)
-        dx /= d1
-        dy /= d1
-        d.v.x = @N * dx * @speed
-        d.v.y = @N * dy * @speed        
-        d.start()
-      )
     return
 
-  update_drone: ->
-    return unless @element.length > 0
-    @param = 
-      type: 'charge'
-      cx: @root.r.x
-      cy: @root.r.y
-      q:  @root.charge * 500 * @speed * @speed # charge
-    drone.force_param[0] = @param for drone in @element
-    return
-
-  keydown: () =>
+  keydown: =>
     switch d3.event.keyCode 
       # when 70 then @root.fire() # f key fires bullets
       when 39 then @root.angle += @root.angleStep  ; @root.draw([@root.r.x, @root.r.y]) # right arrow changes firing angle by default
@@ -109,22 +90,20 @@ class @Dronewar extends Game
     return
 
   stop: -> # stop the game
-    super
-    @root.stop()
-    callback = => @lives.text("GAME OVER, PRESS 'R' OR CLICK/TOUCH HERE TO RESTART").on('click', @reset) ; return true
-    @end(callback)
+    @root.remove()
+    @lives.text("GAME OVER")
+    @message('GAME OVER', => super())
     return
 
   start: -> # start new game
     @root.draw()
-    @root.stop()
     title = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", 90)
+      .attr("x", Game.width / 2 - 150)
+      .attr("y", 60)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     title.text("DRONEWAR")
@@ -132,21 +111,21 @@ class @Dronewar extends Game
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "36")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", Game.height / 4 + 40)
+      .attr("font-size", "24")
+      .attr("x", Game.width / 2 - 350)
+      .attr("y", Game.height / 4 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
-    prompt.text("SELECT SHIP")
+    prompt.text("SELECT SHIP:")
     root = @root # copy local reference to @root for access inside other objects without using @ 
     sidewinder = @g
       .append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", Game.height / 4 + 80)
+      .attr("font-size", "32")
+      .attr("x", Game.width / 2 - 350)
+      .attr("y", Game.height / 4 + 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -163,9 +142,9 @@ class @Dronewar extends Game
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", Game.height / 4 + 110)
+      .attr("font-size", "32")
+      .attr("x", Game.width / 2 - 350)
+      .attr("y", Game.height / 4 + 200)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
@@ -180,9 +159,9 @@ class @Dronewar extends Game
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", Game.height / 4 + 140)
+      .attr("font-size", "32")
+      .attr("x", Game.width / 2 - 350)
+      .attr("y", Game.height / 4 + 300)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -198,8 +177,8 @@ class @Dronewar extends Game
       .text("")
       .attr("stroke", "none")
       .attr("fill", "#FF2")
-      .attr("font-size", "36")
-      .attr("x", @root.r.x - 60)
+      .attr("font-size", "42")
+      .attr("x", @root.r.x - 70)
       .attr("y", @root.r.y + 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -217,50 +196,24 @@ class @Dronewar extends Game
       @root.start()
       Game.score = 0
       Gameprez?.start(@max_score_increment) # start score tracking 
-      d3.timer(@progress)
+      @level()
     )
     how = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", @root.r.y + 130)
+      .attr("x", Game.width / 2 - 350)
+      .attr("y", @root.r.y + 140)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    how.text("Use mouse or touch for controlling movement, scrollwheel/drag for rotation")
-    Game.sound.play('music')
+    how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation")
+    Game.sound?.play('music') if Game.musicSwitch
     super
     return
-    
-  progress: =>  # timer callback to monitor game progress
-    @update_drone()
+
+  text: ->
     @scoretxt.text('SCORE: ' + Game.score)
-    @leveltxt.text('LEVEL: ' + (@N - @initialN))
-    if Game.lives >= 0
-      @lives.text('LIVES: ' + Game.lives) 
-    else 
-      dur = 420
-      @root.game_over(dur)
-      @stop()
-      return true
-    all_is_destroyed = @element.every (element) -> element.is_destroyed
-    if all_is_destroyed # i.e. went offscreen or hit by bullet
-      @N++
-      @charge *= 10
-      @level()
-    return
-            
-  reset: =>
-    @cleanup()
-    @g.selectAll("g").remove()
-    @lives.text("")
-    @scoretxt.text("")
-    @leveltxt.text("")
-    @svg.style("cursor", "auto")
-    @N = @initialN
-    @root = new Root()
-    Game.lives = Game.initialLives
-    @start()
-    return
+    @leveltxt.text('LEVEL: ' + (@N - @initialN))  
+    @lives.text('ENERGY: ' + Game.lives) 

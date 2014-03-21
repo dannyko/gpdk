@@ -1,6 +1,18 @@
 class @Utils
+  @index_pop: (array, index) ->
+    length = array.length
+    if index < array.length - 1
+      swap = array[index]
+      array[index] = array[length - 1]
+      array[length - 1] = swap
+    array.pop()
+
+  @set: (obj, config) ->
+    for x of config # set the new configuration values for the object to prepare it for its new role
+      obj[x] = config[x] # set configuration value
+
   @clone: (obj) ->
-    return obj  if obj is null or typeof (obj) isnt "object"
+    return obj if obj is null or typeof (obj) isnt "object"
     temp = new obj.constructor()
     for key of obj
       temp[key] = Utils.clone(obj[key])
@@ -16,7 +28,8 @@ class @Utils
         obj        
 
   @timestamp = ->
-    new Date().getTime() # e(new Date()).getTime()-Date.UTC(1970,0,1)
+    Date.now() # (new Date()).getTime()-Date.UTC(1970,0,1) 
+
 
   @angle     = (a) -> 2 * Math.PI * a / 360
 
