@@ -5,6 +5,8 @@ class @Dronewar extends Game
   constructor: ->
     Game.image_list = ['space_background.jpg', 'drone_1.png', 'sidewinder_1.png', 'fang_1.png', 'viper_1.png']
     super
+
+  init: =>
     Game.initialLives = 100 
     Game.lives = Game.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')

@@ -1945,8 +1945,12 @@
 
     function Dronewar() {
       this.keydown = __bind(this.keydown, this);
+      this.init = __bind(this.init, this);
       Game.image_list = ['space_background.jpg', 'drone_1.png', 'sidewinder_1.png', 'fang_1.png', 'viper_1.png'];
       Dronewar.__super__.constructor.apply(this, arguments);
+    }
+
+    Dronewar.prototype.init = function() {
       Game.initialLives = 100;
       Game.lives = Game.initialLives;
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
@@ -1964,7 +1968,7 @@
       }
       Game.audioSwitch = true;
       if (Game.audioSwitch) {
-        Game.sound = new Howl({
+        return Game.sound = new Howl({
           urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
           volume: 0.5,
           sprite: {
@@ -1974,7 +1978,7 @@
           }
         });
       }
-    }
+    };
 
     Dronewar.prototype.level = function() {
       var drone_config, drone_increment, dur, i, multiplier, n, newAttacker, offset, _i, _ref;
