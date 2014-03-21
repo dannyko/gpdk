@@ -2,7 +2,7 @@ class @Ship extends Polygon
   @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
   @speed = [4, 5, 6]
-  @size  = [50, 45, 40]
+  @size  = [50, 45, 40] # half width/height
 
   set_ship = (w, h) ->
     [ 
@@ -59,7 +59,7 @@ class @Ship extends Polygon
     return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
     @is_removed = true
     if @offscreen() # penalize score for missing a ship
-     Gamescore.decrement_value()
+     Gamescore.decrement_value() unless Gamescore.lives < 0
      Game.sound.play('loss')
      Game.instance.text()
     fill = '#FFF' 
@@ -85,7 +85,8 @@ class @Ship extends Polygon
         when 2 then element.v.x =  Math.abs(element.v.x)
         when 3 then element.v.y =  Math.abs(element.v.y)
       old_count = Spacepong.ball_count()        
-      Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
+      if Gamescore.lives >= 0 
+        Gamescore.increment_value() for i in [0...Ship.increment_count[@difficulty]]
       Game.instance.text()
       Game.instance.spawn_ball('MULTIBALL UP') if old_count < Spacepong.ball_count()
       @remove()

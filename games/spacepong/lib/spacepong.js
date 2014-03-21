@@ -1842,7 +1842,9 @@
       }
       this.is_removed = true;
       if (this.offscreen()) {
-        Gamescore.decrement_value();
+        if (!(Gamescore.lives < 0)) {
+          Gamescore.decrement_value();
+        }
         Game.sound.play('loss');
         Game.instance.text();
       }
@@ -1881,8 +1883,10 @@
             element.v.y = Math.abs(element.v.y);
         }
         old_count = Spacepong.ball_count();
-        for (i = _i = 0, _ref = Ship.increment_count[this.difficulty]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-          Gamescore.increment_value();
+        if (Gamescore.lives >= 0) {
+          for (i = _i = 0, _ref = Ship.increment_count[this.difficulty]; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+            Gamescore.increment_value();
+          }
         }
         Game.instance.text();
         if (old_count < Spacepong.ball_count()) {
