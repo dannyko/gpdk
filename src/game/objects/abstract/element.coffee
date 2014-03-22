@@ -1,6 +1,6 @@
 class @Element
   constructor: (@config = {}) ->      
-    @dt           = @config.dt          || 0.4 # controls displacement of Physics engine relative to the framerate
+    @dt           = @config.dt          || 0.25 # controls displacement of Physics engine relative to the framerate
     @r            = @config.r           || Factory.spawn(Vec) # position vector (rx, ry)
     @dr           = @config.dr          || Factory.spawn(Vec) # displacement vector (dx, dy)
     @v            = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
@@ -59,7 +59,7 @@ class @Element
     @top    = @r.y - 0.5 * @bb_height
     @bottom = @r.y + 0.5 * @bb_height  
 
-  draw: ->
+  draw: -> 
     @g.attr("transform", "translate(" + @r.x + "," + @r.y + ") rotate(" + (360 * 0.5 * @angle / Math.PI) + ")")
     return
     
@@ -138,8 +138,8 @@ class @Element
     Utils.set(@, config) if config?
     @ # return this element instance
     
-  update: (fps) -> # helper to combine these three operations into one loop for efficiency    
-    @tick?(@, fps) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
+  update: (elapsedTime) -> # helper to combine these three operations into one loop for efficiency    
+    @tick?(@, elapsedTime) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
     @draw()
     return
 

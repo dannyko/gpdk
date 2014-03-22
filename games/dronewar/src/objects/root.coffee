@@ -10,7 +10,7 @@ class @Root extends Polygon
     @angle         = 0
     @angleStep     = 2 * Math.PI / 40 # initialize per-step angle change magnitude 
     @lastfire      = undefined # initialize timestamp
-    @charge        = 2e4 # sets drone interaction strength
+    @charge        = 5e3 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
     @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
@@ -151,9 +151,11 @@ class @Root extends Polygon
     
   reaction: (n) -> # what happens when root gets hit by a drone
     return if n.is_bullet # bullets don't hurt the ship
+    return if Gamescore.lives < 0 # game is already over or ending
     damage = 10
     Gamescore.lives -= damage # decrement lives for this game
     if Gamescore.lives < 0
+      @charge = 0 # drones stop attacking root when it's destroyed
       Game.instance.stop()
     else
       Game.instance.text()

@@ -5,8 +5,8 @@ class @Ball extends Circle
     @config.size   ||= 12
     @config.fill   ||= '#FFF'
     super(@config)
-    @speed_factor = 0.005
-    @initial_speed = 30
+    @speed_factor = 0.002
+    @initial_speed = 5
     @speed = @initial_speed + Gamescore.value * @speed_factor
     @max_speed = 200
     @image.remove()
@@ -31,15 +31,16 @@ class @Ball extends Circle
     @v.y = -@speed
 
   draw: ->
-    @speed = Math.min(@max_speed, @initial_speed + Gamescore.value * @speed_factor)
     min_y = Game.instance.wall.r.y + Game.height * 0.5 + @size + @tol
     if @r.y < min_y # don't allow ball to get behind the wall
       @v.y = Math.abs(@v.y) # Make sure the ball is moving away from the wall
       @r.y = Game.instance.wall.r.y + Game.height * 0.5 + @size + @tol # resolve the collision event
       @reaction() # trigger ball reaction effect
       Gamescore.increment_value() # increment game score value
+      @speed = Math.min(@max_speed, @initial_speed + Gamescore.value * @speed_factor)
       Gameprez?.score(Gamescore.value)
       Game.instance.text()
+      Game.instance.wall.speed += 1 / 16 # increment wall speed
     if @r.x < @tol + @size # don't allow it to go beyond left sidewall
       @r.x = @tol + @size 
       @v.x = Math.abs(@v.x)

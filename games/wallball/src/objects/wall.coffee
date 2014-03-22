@@ -33,7 +33,7 @@ class @Wall extends Polygon
     @start()
 
   draw: ->
-    @r.y += @dt * @v.y # update wall position with constant speed and variable direction
+    @r.y += @dt * @v.y * @speed # update wall position with constant speed and variable direction
     if @r.y > (Game.height * 0.5 - @padding)
       on_edge   = true
       @r.y = Game.height * 0.5 - @padding

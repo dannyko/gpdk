@@ -1,7 +1,8 @@
 class @Physics # numerical integration module for solving differential equations e.g. physical simulations
 
   # class variables for convenient global access:
-  @fps: 60 # ideal framerate according to the requestAnimFrame spec
+  @fps: 240 # set physics framerate to be 4x the standard requestAnimationFrame rate (60 fps) to reduce the likelihood large per-frame displacements (jumps) 
+  @elapsedTime: 0 # keeps track of how much time has elapsed since the last animation frame was called
   @tick: 1000 / Physics.fps # the natural/target frame length/duration for this game/visualization (per web animation standards)
   @off: false # a boolean switch determining whether or not to run the physics engine
   @game: null # initialize reference to game instance associated with the physics engine
@@ -34,32 +35,29 @@ class @Physics # numerical integration module for solving differential equations
     element.v.add(element.fcopy.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
     return
 
-  @verlet: (element, fps) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm
-    if Physics.fps > fps # check if game is running slow and handle the remainder
-      Nstep = Math.floor(Physics.fps / fps)
-      step  = 0
-      while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
-        Physics.verlet_step(element)
-        ++step
-    else
-      diff = fps - Physics.fps # compute excess in framerate
-      scale = diff / Physics.fps # relative error
-      dt = element.dt / (1 + scale) # (make timestep smaller since we're running fast)
-      Physics.verlet_step(element) 
+  @verlet: (element, elapsedTime) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm 
+    # integral time step(s):
+    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer => more physics steps per frame)
+    step  = 0 # initialize step counter
+    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
+      Physics.verlet_step(element)
+      ++step
+    # fractional time step:
+    error  = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
+    dt     = element.dt * error # scale timestep of physics to compensate for noise in framerate
+    Physics.verlet_step(element, dt) # substep to compensate for slop in timing
     return
 
   @integrate: (t) ->
     return true if Physics.off
     # requestAnimFrame(Physics.integrate) # keep running the loop
-    if t > Physics.timestamp
-      dt = t - Physics.timestamp
-    else 
-      dt = Physics.tick
-    fps = 1000 / dt # instantaneous frames per second (noisy)
+    elapsedTime = t - Physics.timestamp
+    Physics.elapsedTime = elapsedTime
     if Physics.debug
-      console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
+      fps = 1000 / elapsedTime # instantaneous frames per second (noisy)
+      console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
     Physics.timestamp = t
-    Physics.update(fps)
+    Physics.update(elapsedTime)
     Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
     index = Physics.callbacks.length 
     while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
@@ -68,13 +66,14 @@ class @Physics # numerical integration module for solving differential equations
       Utils.index_pop(Physics.callbacks, index) if bool # returning a value of true means we can remove this callback
     @off
   
-  @update: (fps = Physics.fps) ->
+  @update: (elapsedTime = Physics.elapsedTime) ->
     index = Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
     while (index--) # iterate backwards to avoid indexing/variable array length issues, caused by removing elements from the array as we go
       if Collision.list[index].is_removed
         Utils.index_pop(Collision.list, index).sleep() # place this element into the object pool for potential reuse later
       else
-        Collision.list[index].update(fps)  
+        Collision.list[index].update(elapsedTime)
+        console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y) if Physics.debug
 
   @start: -> 
     @off = false 

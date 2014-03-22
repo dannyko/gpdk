@@ -235,7 +235,7 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.4;
+      this.dt = this.config.dt || 0.25;
       this.r = this.config.r || Factory.spawn(Vec);
       this.dr = this.config.dr || Factory.spawn(Vec);
       this.v = this.config.v || Factory.spawn(Vec);
@@ -411,9 +411,9 @@
       return this;
     };
 
-    Element.prototype.update = function(fps) {
+    Element.prototype.update = function(elapsedTime) {
       if (typeof this.tick === "function") {
-        this.tick(this, fps);
+        this.tick(this, elapsedTime);
       }
       this.draw();
     };
@@ -1163,7 +1163,9 @@
   this.Physics = (function() {
     function Physics() {}
 
-    Physics.fps = 60;
+    Physics.fps = 240;
+
+    Physics.elapsedTime = 0;
 
     Physics.tick = 1000 / Physics.fps;
 
@@ -1198,39 +1200,32 @@
       element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
-    Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step;
-      if (Physics.fps > fps) {
-        Nstep = Math.floor(Physics.fps / fps);
-        step = 0;
-        while (step < Nstep) {
-          Physics.verlet_step(element);
-          ++step;
-        }
-      } else {
-        diff = fps - Physics.fps;
-        scale = diff / Physics.fps;
-        dt = element.dt / (1 + scale);
+    Physics.verlet = function(element, elapsedTime) {
+      var Nstep, dt, error, step;
+      Nstep = Math.floor(elapsedTime / Physics.tick);
+      step = 0;
+      while (step < Nstep) {
         Physics.verlet_step(element);
+        ++step;
       }
+      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
+      dt = element.dt * error;
+      Physics.verlet_step(element, dt);
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index;
+      var bool, elapsedTime, fps, index;
       if (Physics.off) {
         return true;
       }
-      if (t > Physics.timestamp) {
-        dt = t - Physics.timestamp;
-      } else {
-        dt = Physics.tick;
-      }
-      fps = 1000 / dt;
+      elapsedTime = t - Physics.timestamp;
+      Physics.elapsedTime = elapsedTime;
       if (Physics.debug) {
-        console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
+        fps = 1000 / elapsedTime;
+        console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      Physics.update(fps);
+      Physics.update(elapsedTime);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1245,10 +1240,10 @@
       return this.off;
     };
 
-    Physics.update = function(fps) {
+    Physics.update = function(elapsedTime) {
       var index, _results;
-      if (fps == null) {
-        fps = Physics.fps;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.elapsedTime;
       }
       index = Collision.list.length;
       _results = [];
@@ -1256,7 +1251,12 @@
         if (Collision.list[index].is_removed) {
           _results.push(Utils.index_pop(Collision.list, index).sleep());
         } else {
-          _results.push(Collision.list[index].update(fps));
+          Collision.list[index].update(elapsedTime);
+          if (Physics.debug) {
+            _results.push(console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y));
+          } else {
+            _results.push(void 0);
+          }
         }
       }
       return _results;
@@ -1488,8 +1488,8 @@
       (_base = this.config).size || (_base.size = 12);
       (_base1 = this.config).fill || (_base1.fill = '#FFF');
       Ball.__super__.constructor.call(this, this.config);
-      this.speed_factor = 0.005;
-      this.initial_speed = 30;
+      this.speed_factor = 0.002;
+      this.initial_speed = 5;
       this.speed = this.initial_speed + Gamescore.value * this.speed_factor;
       this.max_speed = 200;
       this.image.remove();
@@ -1517,17 +1517,18 @@
 
     Ball.prototype.draw = function() {
       var min_y;
-      this.speed = Math.min(this.max_speed, this.initial_speed + Gamescore.value * this.speed_factor);
       min_y = Game.instance.wall.r.y + Game.height * 0.5 + this.size + this.tol;
       if (this.r.y < min_y) {
         this.v.y = Math.abs(this.v.y);
         this.r.y = Game.instance.wall.r.y + Game.height * 0.5 + this.size + this.tol;
         this.reaction();
         Gamescore.increment_value();
+        this.speed = Math.min(this.max_speed, this.initial_speed + Gamescore.value * this.speed_factor);
         if (typeof Gameprez !== "undefined" && Gameprez !== null) {
           Gameprez.score(Gamescore.value);
         }
         Game.instance.text();
+        Game.instance.wall.speed += 1 / 16;
       }
       if (this.r.x < this.tol + this.size) {
         this.r.x = this.tol + this.size;
@@ -1856,7 +1857,7 @@
 
     Wall.prototype.draw = function() {
       var on_edge;
-      this.r.y += this.dt * this.v.y;
+      this.r.y += this.dt * this.v.y * this.speed;
       if (this.r.y > (Game.height * 0.5 - this.padding)) {
         on_edge = true;
         this.r.y = Game.height * 0.5 - this.padding;

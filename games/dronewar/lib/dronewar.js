@@ -235,7 +235,7 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.4;
+      this.dt = this.config.dt || 0.25;
       this.r = this.config.r || Factory.spawn(Vec);
       this.dr = this.config.dr || Factory.spawn(Vec);
       this.v = this.config.v || Factory.spawn(Vec);
@@ -411,9 +411,9 @@
       return this;
     };
 
-    Element.prototype.update = function(fps) {
+    Element.prototype.update = function(elapsedTime) {
       if (typeof this.tick === "function") {
-        this.tick(this, fps);
+        this.tick(this, elapsedTime);
       }
       this.draw();
     };
@@ -1287,7 +1287,9 @@
   this.Physics = (function() {
     function Physics() {}
 
-    Physics.fps = 60;
+    Physics.fps = 240;
+
+    Physics.elapsedTime = 0;
 
     Physics.tick = 1000 / Physics.fps;
 
@@ -1322,39 +1324,32 @@
       element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
-    Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step;
-      if (Physics.fps > fps) {
-        Nstep = Math.floor(Physics.fps / fps);
-        step = 0;
-        while (step < Nstep) {
-          Physics.verlet_step(element);
-          ++step;
-        }
-      } else {
-        diff = fps - Physics.fps;
-        scale = diff / Physics.fps;
-        dt = element.dt / (1 + scale);
+    Physics.verlet = function(element, elapsedTime) {
+      var Nstep, dt, error, step;
+      Nstep = Math.floor(elapsedTime / Physics.tick);
+      step = 0;
+      while (step < Nstep) {
         Physics.verlet_step(element);
+        ++step;
       }
+      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
+      dt = element.dt * error;
+      Physics.verlet_step(element, dt);
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index;
+      var bool, elapsedTime, fps, index;
       if (Physics.off) {
         return true;
       }
-      if (t > Physics.timestamp) {
-        dt = t - Physics.timestamp;
-      } else {
-        dt = Physics.tick;
-      }
-      fps = 1000 / dt;
+      elapsedTime = t - Physics.timestamp;
+      Physics.elapsedTime = elapsedTime;
       if (Physics.debug) {
-        console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
+        fps = 1000 / elapsedTime;
+        console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      Physics.update(fps);
+      Physics.update(elapsedTime);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1369,10 +1364,10 @@
       return this.off;
     };
 
-    Physics.update = function(fps) {
+    Physics.update = function(elapsedTime) {
       var index, _results;
-      if (fps == null) {
-        fps = Physics.fps;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.elapsedTime;
       }
       index = Collision.list.length;
       _results = [];
@@ -1380,7 +1375,12 @@
         if (Collision.list[index].is_removed) {
           _results.push(Utils.index_pop(Collision.list, index).sleep());
         } else {
-          _results.push(Collision.list[index].update(fps));
+          Collision.list[index].update(elapsedTime);
+          if (Physics.debug) {
+            _results.push(console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y));
+          } else {
+            _results.push(void 0);
+          }
         }
       }
       return _results;
@@ -1530,7 +1530,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 4,
-        bullet_speed: 25,
+        bullet_speed: 5,
         bullet_tick: 60
       };
     };
@@ -1631,7 +1631,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 6,
-        bullet_speed: 15,
+        bullet_speed: 4,
         bullet_tick: 90
       };
     };
@@ -1711,7 +1711,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#099',
         bullet_size: 5,
-        bullet_speed: 20,
+        bullet_speed: 4.5,
         bullet_tick: 100
       };
     };
@@ -1761,7 +1761,7 @@
 
     Drone.url = GameAssetsUrl + "drone_1.png";
 
-    Drone.max_speed = 12;
+    Drone.max_speed = 4;
 
     function Drone(config) {
       this.config = config != null ? config : {};
@@ -1802,7 +1802,7 @@
 
     Drone.prototype.start = function() {
       var dur, v0;
-      v0 = 5 + Gamescore.value * 0.0001 * Drone.max_speed;
+      v0 = 1 + Gamescore.value * 0.0001 * Drone.max_speed;
       this.max_speed = 0;
       dur = 1000;
       this.invincible = true;
@@ -1895,7 +1895,7 @@
       dx = this.r.x - Game.width * 0.5;
       dy = this.r.y - Game.height * 0.5;
       dr2 = dx * dx + dy * dy;
-      scale = .8;
+      scale = Game.width / Game.height;
       if (dr2 > Game.height * Game.height * 0.25 * scale * scale) {
         scale = .01;
         Force["eval"](this, this.force_param[0], this.f);
@@ -1966,7 +1966,9 @@
         root: this.root
       };
       for (i = _i = 0, _ref = this.N; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        newAttacker = Factory.spawn(Drone, drone_config);
+        if (!(Gamescore.lives < 0)) {
+          newAttacker = Factory.spawn(Drone, drone_config);
+        }
         this.element.push(newAttacker);
         this.element[i].r.x = Game.width * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width;
         this.element[i].r.y = Game.height * 0.1 + Math.random() * 0.1 * Game.height;
@@ -2115,7 +2117,7 @@
       this.angle = 0;
       this.angleStep = 2 * Math.PI / 40;
       this.lastfire = void 0;
-      this.charge = 2e4;
+      this.charge = 5e3;
       this.stroke("none");
       this.fill("#000");
       this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
@@ -2294,9 +2296,13 @@
       if (n.is_bullet) {
         return;
       }
+      if (Gamescore.lives < 0) {
+        return;
+      }
       damage = 10;
       Gamescore.lives -= damage;
       if (Gamescore.lives < 0) {
+        this.charge = 0;
         Game.instance.stop();
       } else {
         Game.instance.text();

@@ -1,6 +1,6 @@
 class @Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
-  @max_speed = 12
+  @max_speed = 4
 
   constructor: (@config = {}) ->
     @config.size = 25
@@ -33,7 +33,7 @@ class @Drone extends Circle
     super
     
   start: ->
-    v0           = 5 + Gamescore.value * 0.0001 * Drone.max_speed 
+    v0           = 1 + Gamescore.value * 0.0001 * Drone.max_speed 
     @max_speed   = 0
     dur          = 1000
     @invincible  = true
@@ -113,7 +113,7 @@ class @Drone extends Circle
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 
     dr2 = dx * dx + dy * dy 
-    scale = .8
+    scale = Game.width / Game.height
     if dr2 > Game.height * Game.height * 0.25 * scale * scale
       scale = .01
       Force.eval(@, @force_param[0], @f)

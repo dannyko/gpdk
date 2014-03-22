@@ -6,13 +6,12 @@ class @Spacepong extends Game
     count = 1 if Gamescore.value < 1000
     count = 2 if 1000 <= Gamescore.value < 5000
     count = 3 if 5000 <= Gamescore.value < 10000
-    count = 4 if 10000 <= Gamescore.value < 20000
-    count = 5 if Gamescore >= 20000
+    count = 4 if 10000 <= Gamescore.value
     count
 
   constructor: (@config = {}) ->
     super
-    @initialN = 4
+    @initialN = 1
     @svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%')
 
     @setup()

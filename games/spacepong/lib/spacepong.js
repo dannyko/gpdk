@@ -235,7 +235,7 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.4;
+      this.dt = this.config.dt || 0.25;
       this.r = this.config.r || Factory.spawn(Vec);
       this.dr = this.config.dr || Factory.spawn(Vec);
       this.v = this.config.v || Factory.spawn(Vec);
@@ -411,9 +411,9 @@
       return this;
     };
 
-    Element.prototype.update = function(fps) {
+    Element.prototype.update = function(elapsedTime) {
       if (typeof this.tick === "function") {
-        this.tick(this, fps);
+        this.tick(this, elapsedTime);
       }
       this.draw();
     };
@@ -1163,7 +1163,9 @@
   this.Physics = (function() {
     function Physics() {}
 
-    Physics.fps = 60;
+    Physics.fps = 240;
+
+    Physics.elapsedTime = 0;
 
     Physics.tick = 1000 / Physics.fps;
 
@@ -1198,39 +1200,32 @@
       element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
-    Physics.verlet = function(element, fps) {
-      var Nstep, diff, dt, scale, step;
-      if (Physics.fps > fps) {
-        Nstep = Math.floor(Physics.fps / fps);
-        step = 0;
-        while (step < Nstep) {
-          Physics.verlet_step(element);
-          ++step;
-        }
-      } else {
-        diff = fps - Physics.fps;
-        scale = diff / Physics.fps;
-        dt = element.dt / (1 + scale);
+    Physics.verlet = function(element, elapsedTime) {
+      var Nstep, dt, error, step;
+      Nstep = Math.floor(elapsedTime / Physics.tick);
+      step = 0;
+      while (step < Nstep) {
         Physics.verlet_step(element);
+        ++step;
       }
+      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
+      dt = element.dt * error;
+      Physics.verlet_step(element, dt);
     };
 
     Physics.integrate = function(t) {
-      var bool, dt, fps, index;
+      var bool, elapsedTime, fps, index;
       if (Physics.off) {
         return true;
       }
-      if (t > Physics.timestamp) {
-        dt = t - Physics.timestamp;
-      } else {
-        dt = Physics.tick;
-      }
-      fps = 1000 / dt;
+      elapsedTime = t - Physics.timestamp;
+      Physics.elapsedTime = elapsedTime;
       if (Physics.debug) {
-        console.log('integrate:', 'dt: ', dt, 't: ', t, 'Physics.timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
+        fps = 1000 / elapsedTime;
+        console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
       Physics.timestamp = t;
-      Physics.update(fps);
+      Physics.update(elapsedTime);
       Collision.detect();
       index = Physics.callbacks.length;
       while (index--) {
@@ -1245,10 +1240,10 @@
       return this.off;
     };
 
-    Physics.update = function(fps) {
+    Physics.update = function(elapsedTime) {
       var index, _results;
-      if (fps == null) {
-        fps = Physics.fps;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.elapsedTime;
       }
       index = Collision.list.length;
       _results = [];
@@ -1256,7 +1251,12 @@
         if (Collision.list[index].is_removed) {
           _results.push(Utils.index_pop(Collision.list, index).sleep());
         } else {
-          _results.push(Collision.list[index].update(fps));
+          Collision.list[index].update(elapsedTime);
+          if (Physics.debug) {
+            _results.push(console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y));
+          } else {
+            _results.push(void 0);
+          }
         }
       }
       return _results;
@@ -1487,7 +1487,7 @@
       Ball.__super__.constructor.apply(this, arguments);
       this.size = 12;
       this.name = 'Ball';
-      this.initial_speed = 25;
+      this.initial_speed = 7;
       this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.image.remove();
@@ -1556,8 +1556,8 @@
     Ball.prototype.flash = function() {
       var dur, fill;
       dur = 200;
-      fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", 1).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      fill = "#FFF";
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .8).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
     };
 
     return Ball;
@@ -1742,7 +1742,7 @@
 
     Ship.increment_count = [1, 2, 4];
 
-    Ship.speed = [4, 5, 6];
+    Ship.speed = [1.5, 2, 3];
 
     Ship.size = [50, 45, 40];
 
@@ -1909,7 +1909,7 @@
     Spacepong.bg_img = GameAssetsUrl + 'earth_background.jpg';
 
     Spacepong.ball_count = function() {
-      var count, _ref, _ref1, _ref2;
+      var count, _ref, _ref1;
       if (Gamescore.value < 1000) {
         count = 1;
       }
@@ -1919,11 +1919,8 @@
       if ((5000 <= (_ref1 = Gamescore.value) && _ref1 < 10000)) {
         count = 3;
       }
-      if ((10000 <= (_ref2 = Gamescore.value) && _ref2 < 20000)) {
+      if (10000 <= Gamescore.value) {
         count = 4;
-      }
-      if (Gamescore >= 20000) {
-        count = 5;
       }
       return count;
     };
@@ -1934,7 +1931,7 @@
       this.spawn_ball_callback = __bind(this.spawn_ball_callback, this);
       this.keydown = __bind(this.keydown, this);
       Spacepong.__super__.constructor.apply(this, arguments);
-      this.initialN = 4;
+      this.initialN = 1;
       this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');

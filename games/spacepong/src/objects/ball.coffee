@@ -5,7 +5,7 @@ class @Ball extends Circle
     super
     @size          = 12
     @name          = 'Ball'
-    @initial_speed = 25
+    @initial_speed = 7
     @speed         = @initial_speed
     @max_speed     = @size * 10
     @image.remove()
@@ -63,7 +63,7 @@ class @Ball extends Circle
   flash: ->
     # N    = 240 # random color parameter
     dur  = 200 # color effect transition duration parameter
-    fill = "#FF0" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
+    fill = "#FFF" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
       .attr("r", @size)
       .attr("x", 0)
@@ -73,7 +73,7 @@ class @Ball extends Circle
       .transition()
       .duration(dur)
       .ease('poly(0.5)')
-      .attr("opacity", 1)
+      .attr("opacity", .8)
       .transition()
       .duration(dur)
       .ease('linear')
