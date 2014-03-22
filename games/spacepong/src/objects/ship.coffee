@@ -2,9 +2,9 @@ class @Ship extends Polygon
   @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
   @speed = [1.5, 2, 3]
-  @size  = [50, 45, 40] # half width/height
+  @size  = [45, 40, 35] # half width/height
 
-  set_ship = (w, h) ->
+  ship_path = (w, h) ->
     [ 
      {pathSegTypeAsLetter: 'M', x: -w,  y:  h, react: true},
      {pathSegTypeAsLetter: 'L', x: -w,  y: -h, react: true},
@@ -14,37 +14,44 @@ class @Ship extends Polygon
      ]
 
   constructor: (@config = {}) ->
-    @difficulty = Math.floor(3 * (Math.random() - 1e-6))
-    @config.fill ||= 'darkblue'
-    @config.size ||= Ship.size[@difficulty] # half the sidelength of the square ship
-    w = @config.size
-    h = @config.size
-    @config.path ||= set_ship(w, h)
-    super(@config)
+    super
     @name = 'Ship'
     @g.attr("class", "ship")
+    @init()
+
+  start: ->
+    dur = 300 # fade-in duration
+    super(dur)
+
+  init: ->
+    if Gamescore.value > 0
+      maxDifficulty = Math.min(3, Math.floor(Gamescore.value / 500 + Math.random()))
+    else
+      maxDifficulty = 0 # always start with a green ship
+    @difficulty = Math.floor(maxDifficulty * (Math.random() - 1e-6))
+    @speed = Ship.speed[@difficulty] # initial ship speed
+    @size = Ship.size[@difficulty] # half the sidelength of the square ship
     @image.remove() # don't display default SVG image, instead replace by custom bitmap defined below via an SVG <image> tag
+    w = @size
+    h = @size
+    @set_path(ship_path(w, h))
     @image = @g.append("image")
      .attr("xlink:href", Ship.image_url[@difficulty])
      .attr("x", -w).attr("y", -h)
      .attr("width", 2 * w)
      .attr("height", 2 * h)
-    @init()
-
-  init: ->
+    dur = 1 # ms duration, too fast to see (i.e. "instantaneous")
+    @scale(1, dur)
+    @v.y = 0
     @r.x = Game.width * 0.8 * Math.random()
     @r.y = 0.05 * Game.height * Math.random()
-    @r.x = 2 * @config.size if @r.x < 2 * @config.size
-    @r.x = Game.width - 2 * @config.size if @r.x > (Game.width - 2 * @config.size)
-    @speed = Ship.speed[@difficulty] # initial ship speed
-    @v.y   = @speed # initial ship velocity
-    @scale(1, 1)
+    @r.x = 2 * @size if @r.x < 2 * @size
+    @r.x = Game.width - 2 * @size if @r.x > (Game.width - 2 * @size)
 
   draw: ->
-    if @v.y < Ship.speed[@difficulty] - 0.1 then @v.y *= 1.05
-    if @v.y > Ship.speed[@difficulty] + 0.1 then @v.y *= 0.95
-    @r.x = @config.size if @r.x < @config.size
-    @r.x = (Game.width - @config.size) if @r.x > (Game.width - @config.size)
+    if Math.abs(@v.y - Ship.speed[@difficulty]) > 0.1 * Ship.speed[@difficulty] then @v.y += .1 * (Ship.speed[@difficulty] - @v.y) # adjust wspeed towards its natural value
+    @r.x = @size if @r.x < @size # keep ships in viewport
+    @r.x = (Game.width - @size) if @r.x > (Game.width - @size) # keep ship in viewport
     super
 
   reaction: (n) ->
@@ -58,10 +65,10 @@ class @Ship extends Polygon
   remove: (quietSwitch = Gamescore.lives < 0) ->
     return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
     @is_removed = true
-    if @offscreen() # penalize score for missing a ship
-     Gamescore.decrement_value() unless Gamescore.lives < 0
-     Game.sound.play('loss')
-     Game.instance.text()
+    if @offscreen() and Gamescore.lives >= 0 # penalize score for missing a ship unless game is over or ending
+      Gamescore.decrement_value()
+      Game.sound.play('loss')
+      Game.instance.text()
     fill = '#FFF' 
     dur  = 420 # color effect transition duration parameter
     @image.attr('opacity', 1)

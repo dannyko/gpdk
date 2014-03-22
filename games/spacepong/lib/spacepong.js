@@ -1487,7 +1487,7 @@
       Ball.__super__.constructor.apply(this, arguments);
       this.size = 12;
       this.name = 'Ball';
-      this.initial_speed = 7;
+      this.initial_speed = 8;
       this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.image.remove();
@@ -1500,7 +1500,8 @@
       this.v.x = 0;
       this.v.y = -this.speed;
       this.r.x = Game.paddle.r.x + 2 * Math.random() - 1;
-      return this.r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - this.config.size - this.tol;
+      this.r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - this.config.size - this.tol;
+      return this.flashing = false;
     };
 
     Ball.prototype.draw = function() {
@@ -1540,7 +1541,10 @@
     };
 
     Ball.prototype.remove = function() {
-      Ball.__super__.remove.apply(this, arguments);
+      var dur, fadeOutSwitch;
+      dur = 500;
+      fadeOutSwitch = true;
+      Ball.__super__.remove.call(this, fadeOutSwitch, dur);
       if (!(Gamescore.lives < 0)) {
         Game.instance.spawn_ball('GET READY');
       }
@@ -1555,9 +1559,17 @@
 
     Ball.prototype.flash = function() {
       var dur, fill;
+      if (this.flashing) {
+        return;
+      }
+      this.flashing = true;
       dur = 200;
       fill = "#FFF";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .8).transition().duration(dur).ease('linear').attr("opacity", 0).remove();
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .5).transition().duration(dur).ease('linear').attr("opacity", 0).each('end', (function(_this) {
+        return function() {
+          return _this.flashing = false;
+        };
+      })(this)).remove();
     };
 
     return Ball;
@@ -1734,7 +1746,7 @@
   })(Polygon);
 
   this.Ship = (function(_super) {
-    var set_ship;
+    var ship_path;
 
     __extends(Ship, _super);
 
@@ -1744,9 +1756,9 @@
 
     Ship.speed = [1.5, 2, 3];
 
-    Ship.size = [50, 45, 40];
+    Ship.size = [45, 40, 35];
 
-    set_ship = function(w, h) {
+    ship_path = function(w, h) {
       return [
         {
           pathSegTypeAsLetter: 'M',
@@ -1775,48 +1787,56 @@
     };
 
     function Ship(config) {
-      var h, w, _base, _base1, _base2;
       this.config = config != null ? config : {};
-      this.difficulty = Math.floor(3 * (Math.random() - 1e-6));
-      (_base = this.config).fill || (_base.fill = 'darkblue');
-      (_base1 = this.config).size || (_base1.size = Ship.size[this.difficulty]);
-      w = this.config.size;
-      h = this.config.size;
-      (_base2 = this.config).path || (_base2.path = set_ship(w, h));
-      Ship.__super__.constructor.call(this, this.config);
+      Ship.__super__.constructor.apply(this, arguments);
       this.name = 'Ship';
       this.g.attr("class", "ship");
-      this.image.remove();
-      this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
       this.init();
     }
 
+    Ship.prototype.start = function() {
+      var dur;
+      dur = 300;
+      return Ship.__super__.start.call(this, dur);
+    };
+
     Ship.prototype.init = function() {
+      var dur, h, maxDifficulty, w;
+      if (Gamescore.value > 0) {
+        maxDifficulty = Math.min(3, Math.floor(Gamescore.value / 500 + Math.random()));
+      } else {
+        maxDifficulty = 0;
+      }
+      this.difficulty = Math.floor(maxDifficulty * (Math.random() - 1e-6));
+      this.speed = Ship.speed[this.difficulty];
+      this.size = Ship.size[this.difficulty];
+      this.image.remove();
+      w = this.size;
+      h = this.size;
+      this.set_path(ship_path(w, h));
+      this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
+      dur = 1;
+      this.scale(1, dur);
+      this.v.y = 0;
       this.r.x = Game.width * 0.8 * Math.random();
       this.r.y = 0.05 * Game.height * Math.random();
-      if (this.r.x < 2 * this.config.size) {
-        this.r.x = 2 * this.config.size;
+      if (this.r.x < 2 * this.size) {
+        this.r.x = 2 * this.size;
       }
-      if (this.r.x > (Game.width - 2 * this.config.size)) {
-        this.r.x = Game.width - 2 * this.config.size;
+      if (this.r.x > (Game.width - 2 * this.size)) {
+        return this.r.x = Game.width - 2 * this.size;
       }
-      this.speed = Ship.speed[this.difficulty];
-      this.v.y = this.speed;
-      return this.scale(1, 1);
     };
 
     Ship.prototype.draw = function() {
-      if (this.v.y < Ship.speed[this.difficulty] - 0.1) {
-        this.v.y *= 1.05;
+      if (Math.abs(this.v.y - Ship.speed[this.difficulty]) > 0.1 * Ship.speed[this.difficulty]) {
+        this.v.y += .1 * (Ship.speed[this.difficulty] - this.v.y);
       }
-      if (this.v.y > Ship.speed[this.difficulty] + 0.1) {
-        this.v.y *= 0.95;
+      if (this.r.x < this.size) {
+        this.r.x = this.size;
       }
-      if (this.r.x < this.config.size) {
-        this.r.x = this.config.size;
-      }
-      if (this.r.x > (Game.width - this.config.size)) {
-        this.r.x = Game.width - this.config.size;
+      if (this.r.x > (Game.width - this.size)) {
+        this.r.x = Game.width - this.size;
       }
       return Ship.__super__.draw.apply(this, arguments);
     };
@@ -1841,10 +1861,8 @@
         return;
       }
       this.is_removed = true;
-      if (this.offscreen()) {
-        if (!(Gamescore.lives < 0)) {
-          Gamescore.decrement_value();
-        }
+      if (this.offscreen() && Gamescore.lives >= 0) {
+        Gamescore.decrement_value();
         Game.sound.play('loss');
         Game.instance.text();
       }
@@ -1942,7 +1960,7 @@
       }
       Game.sound = new Howl({
         urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
-        volume: 0.25,
+        volume: 0.15,
         sprite: {
           whoosh: [0, 1060],
           boom: [1060, 557],
@@ -1987,7 +2005,11 @@
 
     Spacepong.prototype.spawn_ships = function() {
       var index, ship;
-      this.new_ship_count = Math.max(1, this.initialN + Math.floor(Gamescore.value / 1000));
+      if (Gamescore.value > 0) {
+        this.new_ship_count = Math.max(2, this.initialN + Math.floor(Gamescore.value / 1000 + Math.random() * 2));
+      } else {
+        this.new_ship_count = 1;
+      }
       index = this.new_ship_count;
       while (index--) {
         ship = Factory.spawn(Ship);
@@ -2024,7 +2046,6 @@
           how.transition().duration(dur).style("opacity", 0).remove();
           Gamescore.value = 0;
           Spacepong.__super__.start.call(_this);
-          Game.sound.play('whoosh');
           _this.text();
           _this.spawn_ball('GET READY');
           return _this.spawn_ships();

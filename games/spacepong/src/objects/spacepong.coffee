@@ -40,7 +40,7 @@ class @Spacepong extends Game
 
     Game.sound = new Howl({
       urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
-      volume: 0.25,
+      volume: 0.15,
       sprite: {
         whoosh:[0, 1060],
         boom:[1060, 557],
@@ -74,7 +74,10 @@ class @Spacepong extends Game
     Physics.start() # unpause the physics engine
 
   spawn_ships: ->
-    @new_ship_count = Math.max(1, @initialN + Math.floor(Gamescore.value / 1000)) # (Math.random() * 4) + 1    
+    if Gamescore.value > 0
+      @new_ship_count = Math.max(2, @initialN + Math.floor(Gamescore.value / 1000 + Math.random() * 2)) # (Math.random() * 4) + 1    
+    else 
+      @new_ship_count = 1 # always start with one ship
     index = @new_ship_count
     while index--
       ship = Factory.spawn(Ship)
@@ -134,7 +137,6 @@ class @Spacepong extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       Gamescore.value = 0
       super()
-      Game.sound.play('whoosh')
       @text()
       @spawn_ball('GET READY')
       @spawn_ships()

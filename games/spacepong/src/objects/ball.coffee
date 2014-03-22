@@ -5,7 +5,7 @@ class @Ball extends Circle
     super
     @size          = 12
     @name          = 'Ball'
-    @initial_speed = 7
+    @initial_speed = 8
     @speed         = @initial_speed
     @max_speed     = @size * 10
     @image.remove()
@@ -22,6 +22,7 @@ class @Ball extends Circle
     @v.y = -@speed
     @r.x = Game.paddle.r.x + 2 * Math.random() - 1
     @r.y = Game.height - Game.paddle.padding - Game.paddle.bb_height - @config.size - @tol
+    @flashing = false
 
   draw: ->
     return if Gamescore.lives < 0 # do nothing if game is over / ending
@@ -50,7 +51,9 @@ class @Ball extends Circle
     super
 
   remove: ->
-    super
+    dur = 500
+    fadeOutSwitch = true
+    super(fadeOutSwitch, dur)
     Game.instance.spawn_ball('GET READY') unless Gamescore.lives < 0
     return
 
@@ -61,6 +64,8 @@ class @Ball extends Circle
     super
     
   flash: ->
+    return if @flashing
+    @flashing = true
     # N    = 240 # random color parameter
     dur  = 200 # color effect transition duration parameter
     fill = "#FFF" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
@@ -73,9 +78,10 @@ class @Ball extends Circle
       .transition()
       .duration(dur)
       .ease('poly(0.5)')
-      .attr("opacity", .8)
+      .attr("opacity", .5)
       .transition()
       .duration(dur)
       .ease('linear')
       .attr("opacity", 0)
+      .each('end', => @flashing = false)
       .remove()
