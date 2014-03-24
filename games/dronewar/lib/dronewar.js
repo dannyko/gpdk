@@ -332,6 +332,16 @@
       })(this));
     };
 
+    Element.prototype.flash = function(dur, color) {
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (color == null) {
+        color = '#FFF';
+      }
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(3)').style('opacity', 0).ease('linear').remove();
+    };
+
     Element.prototype.start = function(duration, callback) {
       var index;
       if (duration == null) {
@@ -1821,7 +1831,7 @@
     };
 
     Drone.prototype.deplete = function(power) {
-      var dur, fill, fill0, _ref;
+      var dur, fill, flashColor, _ref;
       if (power == null) {
         power = 1;
       }
@@ -1830,8 +1840,9 @@
       }
       this.energy = this.energy - power;
       dur = 50;
-      fill0 = '#300';
+      flashColor = '#FF8';
       fill = "#FF0";
+      this.flash(dur, flashColor);
       this.g.select("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
       if (Game.audioSwitch) {
         if ((_ref = Game.sound) != null) {
@@ -1854,12 +1865,13 @@
         effects = Gamescore.lives >= 0;
       }
       this.is_removed = true;
+      this.g.selectAll('circle').style('opacity', 0);
       if (Game.audioSwitch && effects) {
         Game.sound.play('boom');
       }
       dur = 800;
       if (effects) {
-        this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#800').style('opacity', .7).transition().duration(dur).attr('transform', 'scale(5)').ease('linear').each('end', (function(_this) {
+        this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#600').style('opacity', .9).transition().duration(dur).attr('transform', 'scale(5)').ease('linear').each('end', (function(_this) {
           return function() {
             return _this.overlay.attr('transform', 'scale(1)');
           };

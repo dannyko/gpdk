@@ -85,6 +85,20 @@ class @Element
     .style("opacity", 0)
     .each('end', => callback?(@))
 
+  flash: (dur = 300, color = '#FFF', scaleFactor = 3) ->
+    @g.append("circle")
+      .attr("r", @size)
+      .attr("x", 0)
+      .attr("y", 0)
+      .style('fill', color)
+      .style('opacity', .2)
+      .transition()
+      .duration(dur * 5)
+      .attr('transform', 'scale(' + scaleFactor + ')')
+      .style('opacity', 0)
+      .ease('linear')
+      .remove()
+
   start: (duration = undefined, callback = undefined) ->
     if @is_sleeping
       console.log('element.start: is_sleeping... bug?')

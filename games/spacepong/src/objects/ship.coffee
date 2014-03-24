@@ -2,7 +2,7 @@ class @Ship extends Polygon
   @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
   @speed = [1.5, 2, 3]
-  @size  = [45, 40, 35] # half width/height
+  @size  = [50, 45, 40] # half width/height
 
   ship_path = (w, h) ->
     [ 
@@ -69,15 +69,16 @@ class @Ship extends Polygon
       Gamescore.decrement_value()
       Game.sound.play('loss')
       Game.instance.text()
-    fill = '#FFF' 
-    dur  = 420 # color effect transition duration parameter
-    @image.attr('opacity', 1)
-    @scale(0.2)
-    @g.transition()
-      .duration(dur)
+    @scale(0.2) # shrink the image via a d3 transition
+    dur = 500
+    switch @difficulty # tint the hue of the flash towards the color of the ship-type (green, blue, red)
+      when 0 then color = '#CFC'
+      when 1 then color = '#CCF'
+      when 2 then color = '#FCC'
+    @flash(0.25 * dur, color)
+    @g.transition().duration(dur)
       .ease('poly(0.5)')
       .style("opacity", 0)
-
     Game.sound.play('boom') unless quietSwitch
     Nship = Collision.list.filter((d) -> d.constructor is Ship and not d.is_removed).length
     Game.instance.spawn_ships() if Nship is 0 and Gamescore.lives >= 0

@@ -53,8 +53,9 @@ class @Drone extends Circle
     return if @invincible
     @energy = @energy - power
     dur = 50
-    fill0 = '#300'
+    flashColor = '#FF8'
     fill = "#FF0"
+    @flash(dur, flashColor)
     @g.select("circle")
       .attr("r", @size * .9)
       .attr("x", 0)
@@ -69,6 +70,7 @@ class @Drone extends Circle
 
   remove: (effects = Gamescore.lives >= 0) ->
     @is_removed = true
+    @g.selectAll('circle').style('opacity', 0)
     Game.sound.play('boom') if Game.audioSwitch and effects
     dur = 800
     if effects
@@ -76,8 +78,8 @@ class @Drone extends Circle
         .attr("r", @size * .9)
         .attr("x", 0)
         .attr("y", 0)
-        .style('fill', '#800')
-        .style('opacity', .7)
+        .style('fill', '#600')
+        .style('opacity', .9)
         .transition()
         .duration(dur)
         .attr('transform', 'scale(5)')

@@ -332,6 +332,19 @@
       })(this));
     };
 
+    Element.prototype.flash = function(dur, color, scaleFactor) {
+      if (dur == null) {
+        dur = 300;
+      }
+      if (color == null) {
+        color = '#FFF';
+      }
+      if (scaleFactor == null) {
+        scaleFactor = 3;
+      }
+      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').remove();
+    };
+
     Element.prototype.start = function(duration, callback) {
       var index;
       if (duration == null) {
@@ -1565,7 +1578,7 @@
       this.flashing = true;
       dur = 200;
       fill = "#FFF";
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .5).transition().duration(dur).ease('linear').attr("opacity", 0).each('end', (function(_this) {
+      return this.g.append("circle").attr("r", this.size * 1.05).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .5).transition().duration(dur).ease('linear').attr("opacity", 0).each('end', (function(_this) {
         return function() {
           return _this.flashing = false;
         };
@@ -1756,7 +1769,7 @@
 
     Ship.speed = [1.5, 2, 3];
 
-    Ship.size = [45, 40, 35];
+    Ship.size = [50, 45, 40];
 
     ship_path = function(w, h) {
       return [
@@ -1853,7 +1866,7 @@
     };
 
     Ship.prototype.remove = function(quietSwitch) {
-      var Nship, dur, fill;
+      var Nship, color, dur;
       if (quietSwitch == null) {
         quietSwitch = Gamescore.lives < 0;
       }
@@ -1866,10 +1879,19 @@
         Game.sound.play('loss');
         Game.instance.text();
       }
-      fill = '#FFF';
-      dur = 420;
-      this.image.attr('opacity', 1);
       this.scale(0.2);
+      dur = 500;
+      switch (this.difficulty) {
+        case 0:
+          color = '#CFC';
+          break;
+        case 1:
+          color = '#CCF';
+          break;
+        case 2:
+          color = '#FCC';
+      }
+      this.flash(0.25 * dur, color);
       this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0);
       if (!quietSwitch) {
         Game.sound.play('boom');

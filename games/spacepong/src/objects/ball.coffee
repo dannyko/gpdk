@@ -70,7 +70,7 @@ class @Ball extends Circle
     dur  = 200 # color effect transition duration parameter
     fill = "#FFF" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
     @g.append("circle")
-      .attr("r", @size)
+      .attr("r", @size*1.05)
       .attr("x", 0)
       .attr("y", 0)
       .attr('opacity', 0)
