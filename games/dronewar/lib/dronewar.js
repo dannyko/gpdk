@@ -270,6 +270,7 @@
       this.is_bullet = this.config.is_bullet || false;
       this.type = this.config.type || null;
       this.image = this.config.image || null;
+      this.overlay = this.config.overlay || null;
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
@@ -332,14 +333,20 @@
       })(this));
     };
 
-    Element.prototype.flash = function(dur, color) {
+    Element.prototype.flash = function(dur, color, scaleFactor, initialOpacity) {
       if (dur == null) {
         dur = 1000;
       }
       if (color == null) {
         color = '#FFF';
       }
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(3)').style('opacity', 0).ease('linear').remove();
+      if (scaleFactor == null) {
+        scaleFactor = 3;
+      }
+      if (initialOpacity == null) {
+        initialOpacity = 0.4;
+      }
+      return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear');
     };
 
     Element.prototype.start = function(duration, callback) {
@@ -599,6 +606,7 @@
       this.type = 'Circle';
       this.BB();
       this.image = this.g.append("circle");
+      this.overlay = this.g.append("circle").style('opacity', 0).attr("r", this.size).attr("x", 0).attr("y", 0);
       this.stroke(this._stroke);
       this.fill(this._fill);
     }
@@ -628,6 +636,7 @@
       this.type = 'Polygon';
       this.path = this.config.path || this.default_path();
       this.image = this.g.append("path");
+      this.overlay = this.g.append("path").style('opacity', 0).attr("x", 0).attr("y", 0);
       this.fill(this._fill);
       this.stroke(this._stroke);
       this.set_path();
@@ -693,7 +702,8 @@
       }
       this.maxnode = Factory.spawn(Vec, maxnode);
       this.size = this.maxnode.length();
-      return this.image.attr("d", this.d_attr());
+      this.image.attr("d", this.d_attr());
+      return this.overlay.attr("d", this.d_attr());
     };
 
     Polygon.prototype.BB = function() {
@@ -1791,7 +1801,8 @@
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
-      this.overlay = this.g.append('circle');
+      this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#600');
+      this.overlay2 = this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FF0').style('opacity', 0);
     }
 
     Drone.prototype.set_param = function() {
@@ -1830,8 +1841,20 @@
       });
     };
 
+    Drone.prototype.flash = function() {
+      var dur, fill, flashColor;
+      dur = 50;
+      flashColor = '#FF8';
+      fill = "#FF0";
+      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(3)').style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
+        return function() {
+          return _this.overlay2.style('opacity', (1 - _this.energy / _this.config.energy) * .4);
+        };
+      })(this));
+    };
+
     Drone.prototype.deplete = function(power) {
-      var dur, fill, flashColor, _ref;
+      var _ref;
       if (power == null) {
         power = 1;
       }
@@ -1839,11 +1862,7 @@
         return;
       }
       this.energy = this.energy - power;
-      dur = 50;
-      flashColor = '#FF8';
-      fill = "#FF0";
-      this.flash(dur, flashColor);
-      this.g.select("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', fill).style('opacity', (1 - this.energy / this.config.energy) * .4);
+      this.flash();
       if (Game.audioSwitch) {
         if ((_ref = Game.sound) != null) {
           _ref.play('shot');
@@ -1865,17 +1884,13 @@
         effects = Gamescore.lives >= 0;
       }
       this.is_removed = true;
-      this.g.selectAll('circle').style('opacity', 0);
       if (Game.audioSwitch && effects) {
         Game.sound.play('boom');
       }
       dur = 800;
       if (effects) {
-        this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#600').style('opacity', .9).transition().duration(dur).attr('transform', 'scale(5)').ease('linear').each('end', (function(_this) {
-          return function() {
-            return _this.overlay.attr('transform', 'scale(1)');
-          };
-        })(this));
+        this.overlay2.style('opacity', 0.6);
+        this.overlay.style('opacity', .9).transition().duration(dur).attr('transform', 'scale(5)').ease('linear');
         this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', (function(_this) {
           return function() {
             return Drone.__super__.remove.call(_this);
@@ -1898,8 +1913,9 @@
 
     Drone.prototype.init = function() {
       Drone.__super__.init.apply(this, arguments);
-      this.image.attr('transform', 'scale(1)');
-      return this.overlay.style('opacity', 0);
+      this.overlay.attr('transform', 'scale(1)');
+      this.overlay.style('opacity', 0);
+      return this.overlay2.style('opacity', 0);
     };
 
     Drone.prototype.offscreen = function() {

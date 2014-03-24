@@ -270,6 +270,7 @@
       this.is_bullet = this.config.is_bullet || false;
       this.type = this.config.type || null;
       this.image = this.config.image || null;
+      this.overlay = this.config.overlay || null;
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
@@ -278,6 +279,7 @@
       this.tick = this.config.tick || Physics.verlet;
       this.is_removed = false;
       this.is_sleeping = false;
+      this.is_flashing = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -332,9 +334,9 @@
       })(this));
     };
 
-    Element.prototype.flash = function(dur, color, scaleFactor) {
+    Element.prototype.flash = function(dur, color, scaleFactor, initialOpacity) {
       if (dur == null) {
-        dur = 300;
+        dur = 1000;
       }
       if (color == null) {
         color = '#FFF';
@@ -342,7 +344,16 @@
       if (scaleFactor == null) {
         scaleFactor = 3;
       }
-      return this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').remove();
+      if (initialOpacity == null) {
+        initialOpacity = 0.4;
+      }
+      this.is_flashing = true;
+      return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').each('end', (function(_this) {
+        return function() {
+          _this.overlay.attr('transform', 'scale(1)');
+          return _this.is_flashing = false;
+        };
+      })(this));
     };
 
     Element.prototype.start = function(duration, callback) {
@@ -602,6 +613,7 @@
       this.type = 'Circle';
       this.BB();
       this.image = this.g.append("circle");
+      this.overlay = this.g.append("circle").style('opacity', 0).attr("r", this.size).attr("x", 0).attr("y", 0);
       this.stroke(this._stroke);
       this.fill(this._fill);
     }
@@ -631,6 +643,7 @@
       this.type = 'Polygon';
       this.path = this.config.path || this.default_path();
       this.image = this.g.append("path");
+      this.overlay = this.g.append("path").style('opacity', 0).attr("x", 0).attr("y", 0);
       this.fill(this._fill);
       this.stroke(this._stroke);
       this.set_path();
@@ -696,7 +709,8 @@
       }
       this.maxnode = Factory.spawn(Vec, maxnode);
       this.size = this.maxnode.length();
-      return this.image.attr("d", this.d_attr());
+      this.image.attr("d", this.d_attr());
+      return this.overlay.attr("d", this.d_attr());
     };
 
     Polygon.prototype.BB = function() {
@@ -1828,6 +1842,8 @@
       h = this.size;
       this.set_path(ship_path(w, h));
       this.image = this.g.append("image").attr("xlink:href", Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
+      this.overlay.remove();
+      this.overlay = this.g.append('circle').attr('r', this.size).attr('x', 0).attr('y', 0).style('opacity', 0);
       dur = 1;
       this.scale(1, dur);
       this.v.y = 0;
@@ -1866,11 +1882,11 @@
     };
 
     Ship.prototype.remove = function(quietSwitch) {
-      var Nship, color, dur;
+      var Nship, color, dur, initialOpacity, scaleFactor;
       if (quietSwitch == null) {
         quietSwitch = Gamescore.lives < 0;
       }
-      if (this.is_removed) {
+      if (this.is_removed || this.is_flashing) {
         return;
       }
       this.is_removed = true;
@@ -1880,18 +1896,18 @@
         Game.instance.text();
       }
       this.scale(0.2);
-      dur = 500;
+      dur = 420;
       switch (this.difficulty) {
         case 0:
-          color = '#CFC';
+          color = '#484';
           break;
         case 1:
-          color = '#CCF';
+          color = '#448';
           break;
         case 2:
-          color = '#FCC';
+          color = '#844';
       }
-      this.flash(0.25 * dur, color);
+      this.flash(dur, color, scaleFactor = 2.5, initialOpacity = 0.6);
       this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0);
       if (!quietSwitch) {
         Game.sound.play('boom');

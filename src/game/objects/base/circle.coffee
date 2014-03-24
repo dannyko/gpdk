@@ -5,6 +5,11 @@ class @Circle extends Element
     @type  = 'Circle'
     @BB() # reset bounding box
     @image = @g.append("circle")
+    @overlay = @g.append("circle")
+      .style('opacity', 0)
+      .attr("r", @size)
+      .attr("x", 0)
+      .attr("y", 0)      
     @stroke(@_stroke)
     @fill(@_fill)
 

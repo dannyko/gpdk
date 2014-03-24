@@ -27,9 +27,13 @@ class @Wall extends Polygon
     @g.attr("class", "wall")
     @image = @g.append("image")
      .attr("xlink:href", Wall.image_url)
-     .attr("x", -w).attr("y", -h)
-     .attr("width", Game.width)
+     .attr("x", -w - 1).attr("y", -h)
+     .attr("width", Game.width + 2)
      .attr("height", Game.height)
+    @overlay = @g.append("path")
+     .attr("d", @d_attr())
+     .attr("x", -w).attr("y", -h)
+     .style('opacity', 0)
     @start()
 
   draw: ->

@@ -3,7 +3,11 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     super(@config)
     @type = 'Polygon'
     @path  = @config.path || @default_path() # use an equilateral triangle as the default polygonal shape
-    @image = @g.append("path") # render default polygon image   
+    @image = @g.append("path") # render default polygon image
+    @overlay = @g.append("path")
+      .style('opacity', 0)
+      .attr("x", 0)
+      .attr("y", 0)      
     @fill(@_fill)
     @stroke(@_stroke)
     @set_path()
@@ -40,6 +44,7 @@ class @Polygon extends Element # simplest path-based shape by default involving 
     @maxnode  = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size     = @maxnode.length()
     @image.attr("d", @d_attr())
+    @overlay.attr("d", @d_attr())
   
   BB: ->
     xmax = @path[0].x # initialize

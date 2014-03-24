@@ -270,6 +270,7 @@
       this.is_bullet = this.config.is_bullet || false;
       this.type = this.config.type || null;
       this.image = this.config.image || null;
+      this.overlay = this.config.overlay || null;
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
@@ -330,6 +331,22 @@
           return typeof callback === "function" ? callback(_this) : void 0;
         };
       })(this));
+    };
+
+    Element.prototype.flash = function(dur, color, scaleFactor, initialOpacity) {
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (color == null) {
+        color = '#FFF';
+      }
+      if (scaleFactor == null) {
+        scaleFactor = 3;
+      }
+      if (initialOpacity == null) {
+        initialOpacity = 0.4;
+      }
+      return this.overlay.attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear');
     };
 
     Element.prototype.start = function(duration, callback) {
@@ -589,6 +606,7 @@
       this.type = 'Circle';
       this.BB();
       this.image = this.g.append("circle");
+      this.overlay = this.g.append("circle").style('opacity', 0);
       this.stroke(this._stroke);
       this.fill(this._fill);
     }
@@ -618,6 +636,7 @@
       this.type = 'Polygon';
       this.path = this.config.path || this.default_path();
       this.image = this.g.append("path");
+      this.overlay = this.g.append("path").style('opacity', 0);
       this.fill(this._fill);
       this.stroke(this._stroke);
       this.set_path();
@@ -683,7 +702,8 @@
       }
       this.maxnode = Factory.spawn(Vec, maxnode);
       this.size = this.maxnode.length();
-      return this.image.attr("d", this.d_attr());
+      this.image.attr("d", this.d_attr());
+      return this.overlay.attr("d", this.d_attr());
     };
 
     Polygon.prototype.BB = function() {
@@ -1516,7 +1536,7 @@
     };
 
     Ball.prototype.draw = function() {
-      var min_y;
+      var color, dur, min_y, scaleFactor;
       min_y = Game.instance.wall.r.y + Game.height * 0.5 + this.size + this.tol;
       if (this.r.y < min_y) {
         this.v.y = Math.abs(this.v.y);
@@ -1529,6 +1549,10 @@
         }
         Game.instance.text();
         Game.instance.wall.speed += 1 / 16;
+        dur = 300;
+        color = '#FFF';
+        scaleFactor = 1;
+        Game.instance.wall.flash(dur, color, scaleFactor);
       }
       if (this.r.x < this.tol + this.size) {
         this.r.x = this.tol + this.size;
@@ -1851,7 +1875,8 @@
       this.g.remove();
       this.g = d3.select('#game_g').insert("g", ":first-child");
       this.g.attr("class", "wall");
-      this.image = this.g.append("image").attr("xlink:href", Wall.image_url).attr("x", -w).attr("y", -h).attr("width", Game.width).attr("height", Game.height);
+      this.image = this.g.append("image").attr("xlink:href", Wall.image_url).attr("x", -w - 1).attr("y", -h).attr("width", Game.width + 2).attr("height", Game.height);
+      this.overlay = this.g.append("path").attr("d", this.d_attr()).attr("x", -w).attr("y", -h).style('opacity', 0);
       this.start();
     }
 

@@ -18,7 +18,16 @@ class @Drone extends Circle
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
-    @overlay = @g.append('circle')
+    @overlay.attr("r", @size * .9)
+        .attr("x", 0)
+        .attr("y", 0)
+        .style('fill', '#600')
+    @overlay2 = @g.append('circle')
+          .attr("r", @size * .9)
+          .attr("x", 0)
+          .attr("y", 0)
+          .style('fill', '#FF0')
+          .style('opacity', 0)
 
   set_param: ->
     @param.cx       = @root.r.x
@@ -49,19 +58,31 @@ class @Drone extends Circle
       d.invincible = false
     )
 
-  deplete: (power = 1) ->
-    return if @invincible
-    @energy = @energy - power
+  flash: () ->
     dur = 50
     flashColor = '#FF8'
     fill = "#FF0"
-    @flash(dur, flashColor)
-    @g.select("circle")
+    @g.append("circle")
       .attr("r", @size * .9)
       .attr("x", 0)
       .attr("y", 0)
-      .style('fill', fill)
-      .style('opacity', (1 - @energy / @config.energy) * .4)
+      .style('fill', '#FFF')
+      .style('opacity', .2)
+      .transition()
+      .duration(dur * 5)
+      .attr('transform', 'scale(3)')
+      .style('opacity', 0)
+      .ease('linear')
+      .remove()
+      .each('end', =>
+        @overlay2
+          .style('opacity', (1 - @energy / @config.energy) * .4)
+      )
+
+  deplete: (power = 1) ->
+    return if @invincible
+    @energy = @energy - power
+    @flash()
     Game.sound?.play('shot') if Game.audioSwitch
     return
 
@@ -70,21 +91,16 @@ class @Drone extends Circle
 
   remove: (effects = Gamescore.lives >= 0) ->
     @is_removed = true
-    @g.selectAll('circle').style('opacity', 0)
     Game.sound.play('boom') if Game.audioSwitch and effects
     dur = 800
     if effects
+      @overlay2.style('opacity', 0.6)
       @overlay
-        .attr("r", @size * .9)
-        .attr("x", 0)
-        .attr("y", 0)
-        .style('fill', '#600')
         .style('opacity', .9)
         .transition()
         .duration(dur)
         .attr('transform', 'scale(5)')
         .ease('linear')
-        .each('end', => @overlay.attr('transform', 'scale(1)'))
       @g.transition()
        .duration(dur)
        .ease('linear')
@@ -108,8 +124,9 @@ class @Drone extends Circle
     
   init: ->
      super
-     @image.attr('transform', 'scale(1)')
+     @overlay.attr('transform', 'scale(1)')
      @overlay.style('opacity', 0)
+     @overlay2.style('opacity', 0)
 
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5

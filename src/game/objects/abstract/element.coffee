@@ -35,6 +35,7 @@ class @Element
     @is_bullet    = @config.is_bullet   || false # default boolean for bullet effects
     @type         = @config.type        || null # default type is null for abstract class
     @image        = @config.image       || null # no image by default for generic element: user must specify
+    @overlay      = @config.overlay     || null
     @g            = d3.select("#game_g")
                     .append("g")
                     .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
@@ -44,8 +45,9 @@ class @Element
     @game_g       = @config.game_g      || d3.select("#game_g") # the container's main group
     @quadtree     = @config.quadtree    || null
     @tick         = @config.tick        || Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
-    @is_removed = false
+    @is_removed   = false
     @is_sleeping  = false
+    @is_flashing  = false
     @_cleanup     = true # call remove() when element goes offscreen by default
     Utils.addChainedAttributeAccessor(@, 'fill')
     Utils.addChainedAttributeAccessor(@, 'stroke')
@@ -85,19 +87,20 @@ class @Element
     .style("opacity", 0)
     .each('end', => callback?(@))
 
-  flash: (dur = 300, color = '#FFF', scaleFactor = 3) ->
-    @g.append("circle")
-      .attr("r", @size)
-      .attr("x", 0)
-      .attr("y", 0)
+  flash: (dur = 1000, color = '#FFF', scaleFactor = 3, initialOpacity = 0.4) ->
+    @is_flashing = true
+    @overlay
       .style('fill', color)
-      .style('opacity', .2)
+      .style('opacity', initialOpacity)
       .transition()
-      .duration(dur * 5)
+      .duration(dur)
       .attr('transform', 'scale(' + scaleFactor + ')')
       .style('opacity', 0)
       .ease('linear')
-      .remove()
+      .each('end', => 
+        @overlay.attr('transform', 'scale(1)')
+        @is_flashing = false
+      )
 
   start: (duration = undefined, callback = undefined) ->
     if @is_sleeping

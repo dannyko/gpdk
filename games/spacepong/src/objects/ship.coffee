@@ -40,6 +40,12 @@ class @Ship extends Polygon
      .attr("x", -w).attr("y", -h)
      .attr("width", 2 * w)
      .attr("height", 2 * h)
+    @overlay.remove() # remove default overlay
+    @overlay = @g.append('circle')
+      .attr('r', @size)
+      .attr('x', 0)
+      .attr('y', 0)
+      .style('opacity', 0)
     dur = 1 # ms duration, too fast to see (i.e. "instantaneous")
     @scale(1, dur)
     @v.y = 0
@@ -63,19 +69,19 @@ class @Ship extends Polygon
     super
 
   remove: (quietSwitch = Gamescore.lives < 0) ->
-    return if @is_removed # don't allow destruction twice (i.e. before transition finishes)
+    return if @is_removed or @is_flashing # don't allow destruction twice (i.e. before transition finishes)
     @is_removed = true
     if @offscreen() and Gamescore.lives >= 0 # penalize score for missing a ship unless game is over or ending
       Gamescore.decrement_value()
       Game.sound.play('loss')
       Game.instance.text()
     @scale(0.2) # shrink the image via a d3 transition
-    dur = 500
+    dur = 420
     switch @difficulty # tint the hue of the flash towards the color of the ship-type (green, blue, red)
-      when 0 then color = '#CFC'
-      when 1 then color = '#CCF'
-      when 2 then color = '#FCC'
-    @flash(0.25 * dur, color)
+      when 0 then color = '#484'
+      when 1 then color = '#448'
+      when 2 then color = '#844'
+    @flash(dur, color, scaleFactor = 2.5, initialOpacity = 0.6)
     @g.transition().duration(dur)
       .ease('poly(0.5)')
       .style("opacity", 0)

@@ -41,6 +41,10 @@ class @Ball extends Circle
       Gameprez?.score(Gamescore.value)
       Game.instance.text()
       Game.instance.wall.speed += 1 / 16 # increment wall speed
+      dur = 300
+      color = '#FFF'
+      scaleFactor = 1
+      Game.instance.wall.flash(dur, color, scaleFactor)
     if @r.x < @tol + @size # don't allow it to go beyond left sidewall
       @r.x = @tol + @size 
       @v.x = Math.abs(@v.x)
