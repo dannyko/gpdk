@@ -279,6 +279,7 @@
       this.tick = this.config.tick || Physics.verlet;
       this.is_removed = false;
       this.is_sleeping = false;
+      this.is_flashing = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -346,7 +347,13 @@
       if (initialOpacity == null) {
         initialOpacity = 0.4;
       }
-      return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear');
+      this.is_flashing = true;
+      return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').each('end', (function(_this) {
+        return function() {
+          _this.overlay.attr('transform', 'scale(1)');
+          return _this.is_flashing = false;
+        };
+      })(this));
     };
 
     Element.prototype.start = function(duration, callback) {
