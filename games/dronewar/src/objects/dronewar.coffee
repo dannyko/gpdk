@@ -51,7 +51,7 @@ class @Dronewar extends Game
       })
 
   level: ->
-    return if Gamescore.lives < 0 # do nothing if the game is over/ending
+    return if Gamescore.lives < 0 or Physics.off # do nothing if the game is over/ending
     drone_increment = 1
     @N += drone_increment unless @N >= @maxN
     @charge *= 20
@@ -63,7 +63,7 @@ class @Dronewar extends Game
     Drone.max_speed += 0.1
     drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
-      newAttacker = Factory.spawn(Drone, drone_config) unless Gamescore.lives < 0 # spawn if game is over or ending
+      newAttacker = Factory.spawn(Drone, drone_config) unless Gamescore.lives < 0 or Physics.off # spawn if game is over or ending
       @element.push(newAttacker) # extend the array of all elements in this game
       @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
       @element[i].r.y = Game.height * 0.1 + Math.random() * 0.1 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol

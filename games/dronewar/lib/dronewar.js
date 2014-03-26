@@ -374,6 +374,7 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
+      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -1808,14 +1809,13 @@
       this.image.remove();
       this.g.attr("class", "drone");
       this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
-      this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#600');
-      this.overlay2 = this.g.append('circle').attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FF0').style('opacity', 0);
+      this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FF0').style('opacity', 0);
     }
 
     Drone.prototype.set_param = function() {
       this.param.cx = this.root.r.x;
       this.param.cy = this.root.r.y;
-      this.param.q = this.root.charge * (1 + Gamescore.value / 1000);
+      this.param.q = this.collision ? this.root.charge * (1 + Gamescore.value / 1000) : 1e-6;
       return this.force_param[0] = this.param;
     };
 
@@ -1853,9 +1853,9 @@
       dur = 50;
       flashColor = '#FF8';
       fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(3)').style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
+      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(4)').style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
         return function() {
-          return _this.overlay2.style('opacity', (1 - _this.energy / _this.config.energy) * .4);
+          return _this.overlay.style('opacity', (1 - _this.energy / _this.config.energy) * .4);
         };
       })(this));
     };
@@ -1885,44 +1885,38 @@
       }
     };
 
-    Drone.prototype.remove = function(effects) {
+    Drone.prototype.remove = function() {
       var dur, scaleSwitch;
-      if (effects == null) {
-        effects = Gamescore.lives >= 0;
+      if (this.is_removed || !this.collision) {
+        return;
       }
-      this.is_removed = true;
-      if (Game.audioSwitch && effects) {
-        Game.sound.play('boom');
-      }
-      dur = 800;
-      if (effects) {
-        this.overlay2.style('opacity', 0.6);
-        this.overlay.style('opacity', .9).transition().duration(dur).attr('transform', 'scale(5)').ease('linear');
-        this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', (function(_this) {
-          return function() {
-            return Drone.__super__.remove.call(_this);
-          };
-        })(this));
+      this.collision = false;
+      this.force_param = [];
+      dur = 200;
+      if (Gamescore.lives >= 0) {
+        if (Game.audioSwitch) {
+          Game.sound.play('boom');
+        }
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', .8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.4).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)').remove();
+        this.g.transition().duration(dur).ease('linear').style("opacity", "0");
         scaleSwitch = false;
         if (scaleSwitch) {
           this.image.attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)');
         }
       } else {
         this.fadeOut(dur);
-        Drone.__super__.remove.apply(this, arguments);
       }
+      setTimeout(((function(_this) {
+        return function() {
+          return _this.is_removed = true;
+        };
+      })(this)), dur);
       if (Game.instance.element.every(function(d) {
-        return d.is_removed;
+        return !d.collision;
       })) {
         Game.instance.level();
       }
-    };
-
-    Drone.prototype.init = function() {
-      Drone.__super__.init.apply(this, arguments);
-      this.overlay.attr('transform', 'scale(1)');
-      this.overlay.style('opacity', 0);
-      return this.overlay2.style('opacity', 0);
     };
 
     Drone.prototype.offscreen = function() {
@@ -1982,7 +1976,7 @@
 
     Dronewar.prototype.level = function() {
       var drone_config, drone_increment, dur, i, multiplier, n, newAttacker, offset, _i, _ref;
-      if (Gamescore.lives < 0) {
+      if (Gamescore.lives < 0 || Physics.off) {
         return;
       }
       drone_increment = 1;
@@ -2001,7 +1995,7 @@
         root: this.root
       };
       for (i = _i = 0, _ref = this.N; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
-        if (!(Gamescore.lives < 0)) {
+        if (!(Gamescore.lives < 0 || Physics.off)) {
           newAttacker = Factory.spawn(Drone, drone_config);
         }
         this.element.push(newAttacker);

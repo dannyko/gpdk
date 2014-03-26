@@ -111,6 +111,7 @@ class @Element
       Collision.list.push(@) # tell physics module that this element wants to join
     else
       console.log('element.start: this element is already on the physics list! bug?')
+    @collision  = true
     @is_removed = false  # mark the element as removed
     @draw()
     @fadeIn(duration, callback)

@@ -21,18 +21,13 @@ class @Drone extends Circle
     @overlay.attr("r", @size * .9)
         .attr("x", 0)
         .attr("y", 0)
-        .style('fill', '#600')
-    @overlay2 = @g.append('circle')
-          .attr("r", @size * .9)
-          .attr("x", 0)
-          .attr("y", 0)
-          .style('fill', '#FF0')
-          .style('opacity', 0)
+        .style('fill', '#FF0')
+        .style('opacity', 0)
 
   set_param: ->
     @param.cx       = @root.r.x
     @param.cy       = @root.r.y
-    @param.q        = @root.charge * (1 + Gamescore.value / 1000) # charge 
+    @param.q        = if @collision then @root.charge * (1 + Gamescore.value / 1000) else 1e-6 # charge, avoid hard zero to preserver angle / rotation of drone (no NaN)
     @force_param[0] = @param
 
   draw: ->
@@ -70,13 +65,12 @@ class @Drone extends Circle
       .style('opacity', .2)
       .transition()
       .duration(dur * 5)
-      .attr('transform', 'scale(3)')
+      .attr('transform', 'scale(4)')
       .style('opacity', 0)
       .ease('linear')
       .remove()
       .each('end', =>
-        @overlay2
-          .style('opacity', (1 - @energy / @config.energy) * .4)
+        @overlay.style('opacity', (1 - @energy / @config.energy) * .4)
       )
 
   deplete: (power = 1) ->
@@ -89,25 +83,40 @@ class @Drone extends Circle
   depleted: ->
     if @energy <= 0 then true else false
 
-  remove: (effects = Gamescore.lives >= 0) ->
-    @is_removed = true
-    Game.sound.play('boom') if Game.audioSwitch and effects
+  remove: ->
+    return if @is_removed or not @collision
+    @collision = false # prevent additional reactions from occuring while transition lasts
+    @force_param = [] # remove charge forces
     dur = 800
-    if effects
-      @overlay2.style('opacity', 0.6)
-      @overlay
-        .style('opacity', .9)
+    if Gamescore.lives >= 0
+      Game.sound.play('boom') if Game.audioSwitch
+      @g.append('circle') # red overlay fading to black
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("r", @size * 0.85)
+        .style('fill', '#FF0')
+        .style('opacity', .8)
         .transition()
         .duration(dur)
-        .attr('transform', 'scale(5)')
         .ease('linear')
+        .style('opacity', 0)
+        .remove()
+      @g.append('circle') # expanding red overlay
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("r", @size)
+        .style('fill', '#600')
+        .style('opacity', 0.4)
+        .attr('transform', 'scale(1)') 
+        .transition()
+        .duration(dur)
+        .ease('linear')
+        .attr('transform', 'scale(5)')
+        .remove()
       @g.transition()
        .duration(dur)
        .ease('linear')
        .style("opacity", "0")
-       .each('end', =>
-          super()
-        )
       scaleSwitch = false
       if scaleSwitch
         @image
@@ -118,16 +127,10 @@ class @Drone extends Circle
          .attr('transform', 'scale(5)')
     else
       @fadeOut(dur)
-      super
-    Game.instance.level() if Game.instance.element.every (d) -> d.is_removed
+    setTimeout( (=> @is_removed = true), dur )
+    Game.instance.level() if Game.instance.element.every (d) -> not d.collision
     return
     
-  init: ->
-     super
-     @overlay.attr('transform', 'scale(1)')
-     @overlay.style('opacity', 0)
-     @overlay2.style('opacity', 0)
-
   offscreen: -> 
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 
