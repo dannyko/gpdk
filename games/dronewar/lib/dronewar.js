@@ -1853,7 +1853,7 @@
       dur = 50;
       flashColor = '#FF8';
       fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .2).transition().duration(dur * 5).attr('transform', 'scale(4)').style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
+      return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .4).transition().duration(dur * 5).style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
         return function() {
           return _this.overlay.style('opacity', (1 - _this.energy / _this.config.energy) * .4);
         };
@@ -1892,14 +1892,18 @@
       }
       this.collision = false;
       this.force_param = [];
-      dur = 200;
+      dur = 800;
       if (Gamescore.lives >= 0) {
         if (Game.audioSwitch) {
           Game.sound.play('boom');
         }
-        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', .8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
-        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.4).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)').remove();
-        this.g.transition().duration(dur).ease('linear').style("opacity", "0");
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.8).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)').remove();
+        this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', (function(_this) {
+          return function() {
+            return _this.is_removed = true;
+          };
+        })(this));
         scaleSwitch = false;
         if (scaleSwitch) {
           this.image.attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)');
@@ -1907,11 +1911,6 @@
       } else {
         this.fadeOut(dur);
       }
-      setTimeout(((function(_this) {
-        return function() {
-          return _this.is_removed = true;
-        };
-      })(this)), dur);
       if (Game.instance.element.every(function(d) {
         return !d.collision;
       })) {

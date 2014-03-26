@@ -58,14 +58,13 @@ class @Drone extends Circle
     flashColor = '#FF8'
     fill = "#FF0"
     @g.append("circle")
-      .attr("r", @size * .9)
+      .attr("r", @size * .85)
       .attr("x", 0)
       .attr("y", 0)
       .style('fill', '#FFF')
-      .style('opacity', .2)
+      .style('opacity', .4)
       .transition()
       .duration(dur * 5)
-      .attr('transform', 'scale(4)')
       .style('opacity', 0)
       .ease('linear')
       .remove()
@@ -90,12 +89,12 @@ class @Drone extends Circle
     dur = 800
     if Gamescore.lives >= 0
       Game.sound.play('boom') if Game.audioSwitch
-      @g.append('circle') # red overlay fading to black
+      @g.append('circle') # overlay
         .attr("x", 0)
         .attr("y", 0)
         .attr("r", @size * 0.85)
         .style('fill', '#FF0')
-        .style('opacity', .8)
+        .style('opacity', 0.8)
         .transition()
         .duration(dur)
         .ease('linear')
@@ -106,7 +105,7 @@ class @Drone extends Circle
         .attr("y", 0)
         .attr("r", @size)
         .style('fill', '#600')
-        .style('opacity', 0.4)
+        .style('opacity', 0.8)
         .attr('transform', 'scale(1)') 
         .transition()
         .duration(dur)
@@ -117,6 +116,9 @@ class @Drone extends Circle
        .duration(dur)
        .ease('linear')
        .style("opacity", "0")
+       .each('end', => 
+         @is_removed = true
+       )
       scaleSwitch = false
       if scaleSwitch
         @image
@@ -127,7 +129,6 @@ class @Drone extends Circle
          .attr('transform', 'scale(5)')
     else
       @fadeOut(dur)
-    setTimeout( (=> @is_removed = true), dur )
     Game.instance.level() if Game.instance.element.every (d) -> not d.collision
     return
     
