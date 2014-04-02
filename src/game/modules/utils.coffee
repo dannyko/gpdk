@@ -30,7 +30,6 @@ class @Utils
   @timestamp = ->
     Date.now() # (new Date()).getTime()-Date.UTC(1970,0,1) 
 
-
   @angle     = (a) -> 2 * Math.PI * a / 360
 
   @path_seg  = (p) -> # helper function for generating "d" attributes of SVG path elements

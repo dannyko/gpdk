@@ -1,4 +1,7 @@
 class @ImageLoader # module for managing image assets
+  
+  @loading = false # initialize boolean to prevent duplicate preload() calls
+
 	@cache = {} # class variable; initialize cache dictionary object
 
 	@loadingStats = {}  # class variable, initialize loading statistics object
@@ -16,12 +19,16 @@ class @ImageLoader # module for managing image assets
 	@callbackHandler: (callback) ->
 	  if @loadingStats.count is @loadingStats.total
 	    callback()
+	    @loading = false
 	  else
 	    @loadingStats.count++
+	  return
 
 	@preload: (imageList, callback) -> # class method; cache dictionary builder
+	  return if @loading # prevent duplicate calls
+	  @loading = true
 	  @loadingStats.total = imageList.length
-	  @loadingStats.count = 0
+	  @loadingStats.count = 0 # initialize
 	  @loadingStats.cb    = callback
-	  for url in imageList
-	    @load(url)
+	  @load(url) for url in imageList
+	  return

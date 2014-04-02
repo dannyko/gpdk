@@ -1,50 +1,49 @@
 class @Element
   constructor: (@config = {}) ->      
-    @dt           = @config.dt          || 0.25 # controls displacement of Physics engine relative to the framerate
-    @r            = @config.r           || Factory.spawn(Vec) # position vector (rx, ry)
-    @dr           = @config.dr          || Factory.spawn(Vec) # displacement vector (dx, dy)
-    @v            = @config.v           || Factory.spawn(Vec) # velocity vector (vx, vy)
-    @f            = @config.f           || Factory.spawn(Vec) # force vector (fx, fy)
-    @fcopy        = @config.f           || Factory.spawn(Vec) # copy of force vector (fx, fy) to speed up physics computations
-    @d            = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @ri           = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @rj           = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @r_temp       = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @dr_temp      = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @line         = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @normal       = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @lshift       = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @vPar         = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @vPerp        = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @uPar         = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @uPerp        = Factory.spawn(Vec) # temporary vector used by the Physics engine
-    @force_param  = @config.force_param || [] # array of objects for computing net force vectors 
-    @size         = @config.size        || 0 # zero default size in units of pixels for abstract class
-    @bb_width     = @config.bb_width    || 0 # bounding box width
-    @bb_height    = @config.bb_height   || 0 # bounding box height
-    @left         = @config.bb_width    || 0 # bounding box left
-    @right        = @config.bb_height   || 0 # bounding box right
-    @top          = @config.top         || 0 # bounding box top
-    @bottom       = @config.bottom      || 0 # bounding box bottom
-    @collision    = @config.collision   || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
-    @tol          = @config.tol         || 0.25 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
-    @_stroke      = @config.stroke      || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
-    @_fill        = @config.fill        || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
-    @angle        = @config.angle       || 0 # angle for rigid body rotation
-    @is_root      = @config.is_root     || false # default boolean for root element control
-    @is_bullet    = @config.is_bullet   || false # default boolean for bullet effects
-    @type         = @config.type        || null # default type is null for abstract class
-    @image        = @config.image       || null # no image by default for generic element: user must specify
-    @overlay      = @config.overlay     || null
+    @d            = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @ri           = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @rj           = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @r_temp       = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @dr_temp      = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @line         = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @normal       = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @lshift       = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @vPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @vPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @uPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
+    @uPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine    @dt           = @config.dt          || 0.25 # controls displacement of physics engine relative to the framerate
+    @r            = @config.r              || Factory.spawn(Vec) # position vector (rx, ry)
+    @dr           = @config.dr             || Factory.spawn(Vec) # displacement vector (dx, dy)
+    @v            = @config.v              || Factory.spawn(Vec) # velocity vector (vx, vy)
+    @f            = @config.f              || Factory.spawn(Vec) # force vector (fx, fy)
+    @fcopy        = Utils.clone(@config.f) || Factory.spawn(Vec) # copy of force vector (fx, fy) to speed up physics computations
+    @force_param  = @config.force_param    || [] # array of objects for computing net force vectors 
+    @size         = @config.size           || 0 # zero default size in units of pixels for abstract class
+    @bb_width     = @config.bb_width       || 0 # bounding box width
+    @bb_height    = @config.bb_height      || 0 # bounding box height
+    @left         = @config.bb_width       || 0 # bounding box left
+    @right        = @config.bb_height      || 0 # bounding box right
+    @top          = @config.top            || 0 # bounding box top
+    @bottom       = @config.bottom         || 0 # bounding box bottom
+    @collision    = @config.collision      || true # element is created and exists in memory but is not part of the game (i.e. staged to enter or exit)
+    @tol          = @config.tol            || 0.25 # default tolerance for collision resolution i.e. padding when updating positions to resolve conflicts
+    @_stroke      = @config.stroke         || "none" # use underscore to avoid namespace collision with getter/setter method @stroke()
+    @_fill        = @config.fill           || "black" # use underscore to avoid namespace collision with getter/setter method @fill()
+    @angle        = @config.angle          || 0 # angle for rigid body rotation
+    @is_root      = @config.is_root        || false # default boolean for root element control
+    @is_bullet    = @config.is_bullet      || false # default boolean for bullet effects
+    @type         = @config.type           || null # default type is null for abstract class
+    @image        = @config.image          || null # no image by default for generic element: user must specify
+    @overlay      = @config.overlay        || null
     @g            = d3.select("#game_g")
                     .append("g")
                     .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
                     .style('opacity', 0)
-    @g            = @config.g           || @g
-    @svg          = @config.svg         || d3.select("#game_svg") # the container
-    @game_g       = @config.game_g      || d3.select("#game_g") # the container's main group
-    @quadtree     = @config.quadtree    || null
-    @tick         = @config.tick        || Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
+    @g            = @config.g              || @g
+    @svg          = @config.svg            || d3.select("#game_svg") # the container
+    @game_g       = @config.game_g         || d3.select("#game_g") # the container's main group
+    @quadtree     = @config.quadtree       || null
+    @tick         = @config.tick           || Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @is_removed   = false
     @is_sleeping  = false
     @is_flashing  = false
@@ -129,7 +128,7 @@ class @Element
 
   remove: (fadeOutSwitch = true, dur) -> # fade out element (opacity = 0) by default 
     return if @is_removed
-    @is_removed = true # important detail: mark the element instance as removed but let the Physics engine call sleep() to avoid inconsistent data!
+    @is_removed = true # important detail: mark the element instance as removed but let the physics engine call sleep() to avoid inconsistent data!
     @fadeOut(dur) if fadeOutSwitch
     return
 
