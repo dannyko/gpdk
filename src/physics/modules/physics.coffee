@@ -62,7 +62,7 @@ class @Physics # numerical integration module for solving differential equations
     index = Physics.callbacks.length 
     while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
       break if Physics.callbacks.length is 0
-      bool = Physics.callbacks[index](t)
+      bool = Physics.callbacks[index](t) # execute the callback
       Utils.index_pop(Physics.callbacks, index) if bool # returning a value of true means we can remove this callback
     @off
   

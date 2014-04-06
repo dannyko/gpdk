@@ -107,7 +107,6 @@
     ImageLoader.callbackHandler = function() {
       ImageLoader.loadingStats.count++;
       if (ImageLoader.loadingStats.count === ImageLoader.loadingStats.total) {
-        console.log('ImageLoader.callbackHandler', ImageLoader.loadingStats);
         ImageLoader.loadingStats.finalCallback();
         ImageLoader.loading = false;
       }
@@ -301,6 +300,7 @@
       this.vPerp = Factory.spawn(Vec);
       this.uPar = Factory.spawn(Vec);
       this.uPerp = Factory.spawn(Vec);
+      this.dt = this.config.dt || 0.25;
       this.r = this.config.r || Factory.spawn(Vec);
       this.dr = this.config.dr || Factory.spawn(Vec);
       this.v = this.config.v || Factory.spawn(Vec);
@@ -550,7 +550,6 @@
       $(window).on('resize', this.update_window);
       ImageLoader.preload(Game.instance.image_list, (function(_this) {
         return function() {
-          console.log('Game.constructor:', Game.instance);
           Game.instance.is_loaded = true;
           return Game.instance.start();
         };
@@ -620,6 +619,7 @@
     };
 
     Game.prototype.start = function() {
+      console.log('Game.start');
       Physics.start();
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
@@ -2169,7 +2169,8 @@
           _ref.play('music');
         }
       }
-      Dronewar.__super__.start.apply(this, arguments);
+      console.log('Dronewar.start');
+      return Dronewar.__super__.start.apply(this, arguments);
     };
 
     Dronewar.prototype.text = function() {
@@ -2354,6 +2355,7 @@
       this.bullet_speed = ship.bullet_speed / this.dt;
       this.wait = ship.bullet_tick;
       this.path = ship.path;
+      console.log('root.ship', this.bullet_speed, this.dt, ship);
       this.BB();
       endPath = this.d_attr();
       this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();

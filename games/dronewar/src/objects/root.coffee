@@ -96,6 +96,7 @@ class @Root extends Polygon
     bullet.v.y = @bullet_speed * y
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
+    # console.log('root.shoot', x, y, bullet.r.x, bullet.r.y, bullet.v.x, bullet.v.y)
     bullet.start()
     return
 
@@ -107,6 +108,7 @@ class @Root extends Polygon
     @bullet_speed  = ship.bullet_speed / @dt
     @wait          = ship.bullet_tick # ms between bullets
     @path          = ship.path
+    console.log('root.ship', @bullet_speed, @dt, ship)
     @BB() # set the rectangular bounding box for this path
     endPath  = @d_attr() # new end-path to morph to
     @bitmap.attr('opacity', 1)

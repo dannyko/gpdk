@@ -27,7 +27,6 @@ class @Game
     @update_window(force = true)
     $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     ImageLoader.preload(Game.instance.image_list, => 
-      console.log('Game.constructor:', Game.instance)
       Game.instance.is_loaded = true
       Game.instance.start()
     )
@@ -70,6 +69,7 @@ class @Game
     return
 
   start: -> 
+    console.log('Game.start')
     Physics.start() # start all elements and associate physics engine with this game instance
     Gameprez?.start()
     return

@@ -6,13 +6,13 @@ class @Dronewar extends Game
     @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png']    
     Game.instance = @ # associate class variable with this instance for global accessibility from any context
     super
-    Gamescore.initialLives = 100 
+    Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
     Gamescore.lives = Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
     @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 1
     @N        = @initialN
-    @maxN     = 36 # limit the max number of ships
+    @maxN     = 36 # limit the max number of drones
     @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
@@ -222,8 +222,8 @@ class @Dronewar extends Game
       .style("cursor", "pointer")
     how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation")
     Game.sound?.play('music') if Game.musicSwitch
+    console.log('Dronewar.start')
     super
-    return
 
   text: ->
     @scoretxt.text('SCORE: ' + Gamescore.value)

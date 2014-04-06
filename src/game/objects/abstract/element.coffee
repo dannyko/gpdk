@@ -11,7 +11,8 @@ class @Element
     @vPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
     @vPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine
     @uPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @uPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine    @dt           = @config.dt          || 0.25 # controls displacement of physics engine relative to the framerate
+    @uPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine    
+    @dt           = @config.dt             || 0.25 # controls displacement of physics engine relative to the framerate
     @r            = @config.r              || Factory.spawn(Vec) # position vector (rx, ry)
     @dr           = @config.dr             || Factory.spawn(Vec) # displacement vector (dx, dy)
     @v            = @config.v              || Factory.spawn(Vec) # velocity vector (vx, vy)
