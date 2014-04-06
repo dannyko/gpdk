@@ -400,6 +400,9 @@
       if (initialOpacity == null) {
         initialOpacity = 0.4;
       }
+      if (this.is_flashing) {
+        return;
+      }
       this.is_flashing = true;
       return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').each('end', (function(_this) {
         return function() {
@@ -531,7 +534,7 @@
       var force;
       this.config = config != null ? config : {};
       this.update_window = __bind(this.update_window, this);
-      this.is_loaded = false;
+      this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
@@ -548,13 +551,26 @@
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
-      ImageLoader.preload(Game.instance.image_list, (function(_this) {
-        return function() {
-          Game.instance.is_loaded = true;
-          return Game.instance.start();
-        };
-      })(this));
+      Game.instance = this;
+      this.preload_images();
     }
+
+    Game.prototype.preload_images = function(image_list, image_preload_callback) {
+      if (image_list == null) {
+        image_list = Game.instance.image_list;
+      }
+      if (image_preload_callback == null) {
+        image_preload_callback = (function(_this) {
+          return function() {
+            Game.instance.images_loaded = true;
+            return Game.instance.start();
+          };
+        })(this);
+      }
+      if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
+        return ImageLoader.preload(image_list, image_preload_callback);
+      }
+    };
 
     current_width = function(padding) {
       var element, x;
@@ -1868,8 +1884,8 @@
       this.energy = this.config.energy || 10;
       this.image.remove();
       this.g.attr("class", "drone");
-      this.image = this.g.append("image").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
-      this.overlay.attr("r", this.size * .9).attr("x", 0).attr("y", 0).style('fill', '#FF0').style('opacity', 0);
+      this.image = this.g.insert("image", ":first-child").attr("xlink:href", Drone.url).attr("x", -this.size).attr("y", -this.size).attr("width", this.size * 2).attr("height", this.size * 2);
+      this.overlay.attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', '#FF0').style('opacity', 0);
     }
 
     Drone.prototype.set_param = function() {
@@ -1909,13 +1925,19 @@
     };
 
     Drone.prototype.flash = function() {
-      var dur, fill, flashColor;
-      dur = 50;
+      var depletion, dur, flashColor;
+      if (this.is_flashing) {
+        return;
+      }
+      this.is_flashing = true;
+      dur = 100;
       flashColor = '#FF8';
-      fill = "#FF0";
-      return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .4).transition().duration(dur * 5).style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
+      depletion = 1 - this.energy / this.config.energy;
+      this.overlay.style('fill', d3.interpolateRgb('#600', '#FF0')(depletion));
+      return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .4).transition().delay(dur).duration(dur).style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
         return function() {
-          return _this.overlay.style('opacity', (1 - _this.energy / _this.config.energy) * .4);
+          _this.overlay.style('opacity', depletion * 0.4);
+          return _this.is_flashing = false;
         };
       })(this));
     };
@@ -1957,11 +1979,13 @@
         if (Game.audioSwitch) {
           Game.sound.play('boom');
         }
+        this.overlay.style('opacity', 0.8);
         this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
         this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.8).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)').remove();
         this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', (function(_this) {
           return function() {
-            return _this.is_removed = true;
+            _this.is_removed = true;
+            return _this.overlay.style('opacity', 0);
           };
         })(this));
         scaleSwitch = false;
@@ -2004,7 +2028,6 @@
     function Dronewar() {
       this.keydown = __bind(this.keydown, this);
       this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png'];
-      Game.instance = this;
       Dronewar.__super__.constructor.apply(this, arguments);
       Gamescore.initialLives = 100;
       Gamescore.lives = Gamescore.initialLives;

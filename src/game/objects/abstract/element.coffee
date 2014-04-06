@@ -88,6 +88,7 @@ class @Element
     .each('end', => callback?(@))
 
   flash: (dur = 1000, color = '#FFF', scaleFactor = 3, initialOpacity = 0.4) ->
+    return if @is_flashing # wait until previous flash finishes
     @is_flashing = true
     @overlay
       .style('fill', color)

@@ -13,12 +13,12 @@ class @Drone extends Circle
     @energy = @config.energy || 10
     @image.remove()
     @g.attr("class", "drone")
-    @image = @g.append("image")
+    @image = @g.insert("image", ":first-child")
       .attr("xlink:href", Drone.url)
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
-    @overlay.attr("r", @size * .9)
+    @overlay.attr("r", @size * .85)
         .attr("x", 0)
         .attr("y", 0)
         .style('fill', '#FF0')
@@ -54,9 +54,12 @@ class @Drone extends Circle
     )
 
   flash: () ->
-    dur = 50
+    return if @is_flashing # wait until previous flash finishes
+    @is_flashing = true
+    dur = 100
     flashColor = '#FF8'
-    fill = "#FF0"
+    depletion = 1 - @energy / @config.energy
+    @overlay.style('fill', d3.interpolateRgb('#600', '#FF0')(depletion)) # update fill color
     @g.append("circle")
       .attr("r", @size * .85)
       .attr("x", 0)
@@ -64,12 +67,14 @@ class @Drone extends Circle
       .style('fill', '#FFF')
       .style('opacity', .4)
       .transition()
-      .duration(dur * 5)
+      .delay(dur)
+      .duration(dur)
       .style('opacity', 0)
       .ease('linear')
       .remove()
       .each('end', =>
-        @overlay.style('opacity', (1 - @energy / @config.energy) * .4)
+        @overlay.style('opacity', depletion * 0.4)
+        @is_flashing = false
       )
 
   deplete: (power = 1) ->
@@ -89,7 +94,8 @@ class @Drone extends Circle
     dur = 800
     if Gamescore.lives >= 0
       Game.sound.play('boom') if Game.audioSwitch
-      @g.append('circle') # overlay
+      @overlay.style('opacity', 0.8)
+      @g.append('circle') # overlay #2
         .attr("x", 0)
         .attr("y", 0)
         .attr("r", @size * 0.85)
@@ -118,6 +124,7 @@ class @Drone extends Circle
        .style("opacity", "0")
        .each('end', => 
          @is_removed = true
+         @overlay.style('opacity', 0)
        )
       scaleSwitch = false
       if scaleSwitch
