@@ -1,8 +1,9 @@
 class @Wallball extends Game
   constructor: (@config = {}) ->
+    @image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png']
     super
     @setup()
-    @div.style('background-color', '#111')
+    @div.style('background-color', '#000')
 
     @scoretxt = @g.append("text")
       .text("")

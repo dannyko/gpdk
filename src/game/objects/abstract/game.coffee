@@ -29,7 +29,7 @@ class @Game
     Game.instance = @ # associate class variable with this instance for global accessibility from any context
     @preload_images()
 
-  preload_images: (image_list = Game.instance.image_list, image_preload_callback = =>
+  preload_images: (image_list = Game.instance.image_list, image_preload_callback = ->
     Game.instance.images_loaded = true
     Game.instance.start()
   ) -> ImageLoader.preload(image_list, image_preload_callback) if image_list? and image_list.length? and image_list.length > 0
@@ -72,7 +72,6 @@ class @Game
     return
 
   start: -> 
-    console.log('Game.start')
     Physics.start() # start all elements and associate physics engine with this game instance
     Gameprez?.start()
     return

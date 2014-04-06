@@ -78,6 +78,59 @@
 
   })();
 
+  this.ImageLoader = (function() {
+    function ImageLoader() {}
+
+    ImageLoader.loading = false;
+
+    ImageLoader.cache = {};
+
+    ImageLoader.loadingStats = {
+      total: null,
+      count: null,
+      finalCallback: null
+    };
+
+    ImageLoader.load = function(url) {
+      var img;
+      if (this.cache[url] != null) {
+        this.callbackHandler();
+      } else {
+        img = new Image();
+        img.onload = ImageLoader.callbackHandler;
+        img.src = url;
+        this.cache[url] = img;
+      }
+      return img;
+    };
+
+    ImageLoader.callbackHandler = function() {
+      ImageLoader.loadingStats.count++;
+      if (ImageLoader.loadingStats.count === ImageLoader.loadingStats.total) {
+        ImageLoader.loadingStats.finalCallback();
+        ImageLoader.loading = false;
+      }
+    };
+
+    ImageLoader.preload = function(imageList, callback) {
+      var url, _i, _len;
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+      this.loadingStats.total = imageList.length;
+      this.loadingStats.count = 0;
+      this.loadingStats.finalCallback = callback;
+      for (_i = 0, _len = imageList.length; _i < _len; _i++) {
+        url = imageList[_i];
+        this.load(url);
+      }
+    };
+
+    return ImageLoader;
+
+  })();
+
   this.Utils = (function() {
     function Utils() {}
 
@@ -235,12 +288,6 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.25;
-      this.r = this.config.r || Factory.spawn(Vec);
-      this.dr = this.config.dr || Factory.spawn(Vec);
-      this.v = this.config.v || Factory.spawn(Vec);
-      this.f = this.config.f || Factory.spawn(Vec);
-      this.fcopy = this.config.f || Factory.spawn(Vec);
       this.d = Factory.spawn(Vec);
       this.ri = Factory.spawn(Vec);
       this.rj = Factory.spawn(Vec);
@@ -253,6 +300,12 @@
       this.vPerp = Factory.spawn(Vec);
       this.uPar = Factory.spawn(Vec);
       this.uPerp = Factory.spawn(Vec);
+      this.dt = this.config.dt || 0.25;
+      this.r = this.config.r || Factory.spawn(Vec);
+      this.dr = this.config.dr || Factory.spawn(Vec);
+      this.v = this.config.v || Factory.spawn(Vec);
+      this.f = this.config.f || Factory.spawn(Vec);
+      this.fcopy = Utils.clone(this.config.f) || Factory.spawn(Vec);
       this.force_param = this.config.force_param || [];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
@@ -347,6 +400,9 @@
       if (initialOpacity == null) {
         initialOpacity = 0.4;
       }
+      if (this.is_flashing) {
+        return;
+      }
       this.is_flashing = true;
       return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').each('end', (function(_this) {
         return function() {
@@ -374,6 +430,7 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
+      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -477,6 +534,7 @@
       var force;
       this.config = config != null ? config : {};
       this.update_window = __bind(this.update_window, this);
+      this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
@@ -493,7 +551,24 @@
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
+      Game.instance = this;
+      this.preload_images();
     }
+
+    Game.prototype.preload_images = function(image_list, image_preload_callback) {
+      if (image_list == null) {
+        image_list = Game.instance.image_list;
+      }
+      if (image_preload_callback == null) {
+        image_preload_callback = function() {
+          Game.instance.images_loaded = true;
+          return Game.instance.start();
+        };
+      }
+      if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
+        return ImageLoader.preload(image_list, image_preload_callback);
+      }
+    };
 
     current_width = function(padding) {
       var element, x;
@@ -558,8 +633,8 @@
     };
 
     Game.prototype.start = function() {
+      console.log('Game.start');
       Physics.start();
-      Game.instance = this;
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
       }
@@ -1907,7 +1982,7 @@
         case 2:
           color = '#844';
       }
-      this.flash(dur, color, scaleFactor = 2.5, initialOpacity = 0.6);
+      this.flash(dur, color, scaleFactor = 2, initialOpacity = 0.6);
       this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0);
       if (!quietSwitch) {
         Game.sound.play('boom');
@@ -1986,6 +2061,7 @@
       this.stop = __bind(this.stop, this);
       this.spawn_ball_callback = __bind(this.spawn_ball_callback, this);
       this.keydown = __bind(this.keydown, this);
+      this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
       this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%');
@@ -2069,8 +2145,7 @@
 
     Spacepong.prototype.start = function() {
       var go, how, title;
-      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold');
-      title.text("SPACEPONG");
+      title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold').text("SPACEPONG");
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", Game.height / 2 + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("Use the mouse for controlling movement.");
       go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", Game.width * 0.5 - 60).attr("y", Game.height - 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("START");
       return go.on("click", (function(_this) {

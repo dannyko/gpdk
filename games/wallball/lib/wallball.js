@@ -78,6 +78,59 @@
 
   })();
 
+  this.ImageLoader = (function() {
+    function ImageLoader() {}
+
+    ImageLoader.loading = false;
+
+    ImageLoader.cache = {};
+
+    ImageLoader.loadingStats = {
+      total: null,
+      count: null,
+      finalCallback: null
+    };
+
+    ImageLoader.load = function(url) {
+      var img;
+      if (this.cache[url] != null) {
+        this.callbackHandler();
+      } else {
+        img = new Image();
+        img.onload = ImageLoader.callbackHandler;
+        img.src = url;
+        this.cache[url] = img;
+      }
+      return img;
+    };
+
+    ImageLoader.callbackHandler = function() {
+      ImageLoader.loadingStats.count++;
+      if (ImageLoader.loadingStats.count === ImageLoader.loadingStats.total) {
+        ImageLoader.loadingStats.finalCallback();
+        ImageLoader.loading = false;
+      }
+    };
+
+    ImageLoader.preload = function(imageList, callback) {
+      var url, _i, _len;
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+      this.loadingStats.total = imageList.length;
+      this.loadingStats.count = 0;
+      this.loadingStats.finalCallback = callback;
+      for (_i = 0, _len = imageList.length; _i < _len; _i++) {
+        url = imageList[_i];
+        this.load(url);
+      }
+    };
+
+    return ImageLoader;
+
+  })();
+
   this.Utils = (function() {
     function Utils() {}
 
@@ -235,12 +288,6 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.25;
-      this.r = this.config.r || Factory.spawn(Vec);
-      this.dr = this.config.dr || Factory.spawn(Vec);
-      this.v = this.config.v || Factory.spawn(Vec);
-      this.f = this.config.f || Factory.spawn(Vec);
-      this.fcopy = this.config.f || Factory.spawn(Vec);
       this.d = Factory.spawn(Vec);
       this.ri = Factory.spawn(Vec);
       this.rj = Factory.spawn(Vec);
@@ -253,6 +300,12 @@
       this.vPerp = Factory.spawn(Vec);
       this.uPar = Factory.spawn(Vec);
       this.uPerp = Factory.spawn(Vec);
+      this.dt = this.config.dt || 0.25;
+      this.r = this.config.r || Factory.spawn(Vec);
+      this.dr = this.config.dr || Factory.spawn(Vec);
+      this.v = this.config.v || Factory.spawn(Vec);
+      this.f = this.config.f || Factory.spawn(Vec);
+      this.fcopy = Utils.clone(this.config.f) || Factory.spawn(Vec);
       this.force_param = this.config.force_param || [];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
@@ -279,6 +332,7 @@
       this.tick = this.config.tick || Physics.verlet;
       this.is_removed = false;
       this.is_sleeping = false;
+      this.is_flashing = false;
       this._cleanup = true;
       Utils.addChainedAttributeAccessor(this, 'fill');
       Utils.addChainedAttributeAccessor(this, 'stroke');
@@ -346,7 +400,16 @@
       if (initialOpacity == null) {
         initialOpacity = 0.4;
       }
-      return this.overlay.attr("r", this.size).attr("x", 0).attr("y", 0).style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear');
+      if (this.is_flashing) {
+        return;
+      }
+      this.is_flashing = true;
+      return this.overlay.style('fill', color).style('opacity', initialOpacity).transition().duration(dur).attr('transform', 'scale(' + scaleFactor + ')').style('opacity', 0).ease('linear').each('end', (function(_this) {
+        return function() {
+          _this.overlay.attr('transform', 'scale(1)');
+          return _this.is_flashing = false;
+        };
+      })(this));
     };
 
     Element.prototype.start = function(duration, callback) {
@@ -367,6 +430,7 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
+      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -470,6 +534,7 @@
       var force;
       this.config = config != null ? config : {};
       this.update_window = __bind(this.update_window, this);
+      this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
@@ -486,7 +551,24 @@
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
+      Game.instance = this;
+      this.preload_images();
     }
+
+    Game.prototype.preload_images = function(image_list, image_preload_callback) {
+      if (image_list == null) {
+        image_list = Game.instance.image_list;
+      }
+      if (image_preload_callback == null) {
+        image_preload_callback = function() {
+          Game.instance.images_loaded = true;
+          return Game.instance.start();
+        };
+      }
+      if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
+        return ImageLoader.preload(image_list, image_preload_callback);
+      }
+    };
 
     current_width = function(padding) {
       var element, x;
@@ -552,7 +634,6 @@
 
     Game.prototype.start = function() {
       Physics.start();
-      Game.instance = this;
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
       }
@@ -606,7 +687,7 @@
       this.type = 'Circle';
       this.BB();
       this.image = this.g.append("circle");
-      this.overlay = this.g.append("circle").style('opacity', 0);
+      this.overlay = this.g.append("circle").style('opacity', 0).attr("r", this.size).attr("x", 0).attr("y", 0);
       this.stroke(this._stroke);
       this.fill(this._fill);
     }
@@ -636,7 +717,7 @@
       this.type = 'Polygon';
       this.path = this.config.path || this.default_path();
       this.image = this.g.append("path");
-      this.overlay = this.g.append("path").style('opacity', 0);
+      this.overlay = this.g.append("path").style('opacity', 0).attr("x", 0).attr("y", 0);
       this.fill(this._fill);
       this.stroke(this._stroke);
       this.set_path();
@@ -1922,9 +2003,10 @@
     function Wallball(config) {
       this.config = config != null ? config : {};
       this.keydown = __bind(this.keydown, this);
+      this.image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png'];
       Wallball.__super__.constructor.apply(this, arguments);
       this.setup();
-      this.div.style('background-color', '#111');
+      this.div.style('background-color', '#000');
       this.scoretxt = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '3px').attr("fill", "#F90").attr("font-size", "40px").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
       this.lives = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '3px').attr("fill", "#F90").attr("font-size", "40px").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
       d3.select(window.top).on("keydown", this.keydown);

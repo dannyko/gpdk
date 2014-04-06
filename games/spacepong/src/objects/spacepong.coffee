@@ -10,6 +10,7 @@ class @Spacepong extends Game
     count
 
   constructor: (@config = {}) ->
+    @image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png']    
     super
     @initialN = 1
     @svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%')
@@ -102,7 +103,7 @@ class @Spacepong extends Game
       .attr("x", Game.width / 2 - 320)
       .attr("y", 90).attr('font-family', 'arial')
       .attr('font-weight', 'bold')
-    title.text("SPACEPONG")
+      .text("SPACEPONG")
 
     how = @g.append("text")
       .text("")

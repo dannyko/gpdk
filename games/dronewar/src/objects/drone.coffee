@@ -57,14 +57,14 @@ class @Drone extends Circle
     return if @is_flashing # wait until previous flash finishes
     @is_flashing = true
     dur = 100
-    flashColor = '#FF8'
-    depletion = 1 - @energy / @config.energy
+    flashColor = '#FFF'
+    depletion = 1 - @energy / @config.energy # a number between 0 and 1 signifying the degree of depletion
     @overlay.style('fill', d3.interpolateRgb('#600', '#FF0')(depletion)) # update fill color
     @g.append("circle")
       .attr("r", @size * .85)
       .attr("x", 0)
       .attr("y", 0)
-      .style('fill', '#FFF')
+      .style('fill', flashColor)
       .style('opacity', .4)
       .transition()
       .delay(dur)
@@ -73,7 +73,7 @@ class @Drone extends Circle
       .ease('linear')
       .remove()
       .each('end', =>
-        @overlay.style('opacity', depletion * 0.4)
+        @overlay.style('opacity', depletion * 0.5)
         @is_flashing = false
       )
 
@@ -94,11 +94,11 @@ class @Drone extends Circle
     dur = 800
     if Gamescore.lives >= 0
       Game.sound.play('boom') if Game.audioSwitch
-      @overlay.style('opacity', 0.8)
+      @overlay.style('opacity', 0.6)
       @g.append('circle') # overlay #2
         .attr("x", 0)
         .attr("y", 0)
-        .attr("r", @size * 0.85)
+        .attr("r", @size * 0.86)
         .style('fill', '#FF0')
         .style('opacity', 0.8)
         .transition()
@@ -116,11 +116,11 @@ class @Drone extends Circle
         .transition()
         .duration(dur)
         .ease('linear')
-        .attr('transform', 'scale(5)')
+        .attr('transform', 'scale(5.5)')
         .remove()
       @g.transition()
        .duration(dur)
-       .ease('linear')
+       .ease('poly(0.5)')
        .style("opacity", "0")
        .each('end', => 
          @is_removed = true

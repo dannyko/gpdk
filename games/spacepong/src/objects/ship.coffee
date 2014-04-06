@@ -81,7 +81,7 @@ class @Ship extends Polygon
       when 0 then color = '#484'
       when 1 then color = '#448'
       when 2 then color = '#844'
-    @flash(dur, color, scaleFactor = 2.5, initialOpacity = 0.6)
+    @flash(dur, color, scaleFactor = 2, initialOpacity = 0.6)
     @g.transition().duration(dur)
       .ease('poly(0.5)')
       .style("opacity", 0)

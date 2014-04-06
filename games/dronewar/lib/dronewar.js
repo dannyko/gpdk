@@ -560,12 +560,10 @@
         image_list = Game.instance.image_list;
       }
       if (image_preload_callback == null) {
-        image_preload_callback = (function(_this) {
-          return function() {
-            Game.instance.images_loaded = true;
-            return Game.instance.start();
-          };
-        })(this);
+        image_preload_callback = function() {
+          Game.instance.images_loaded = true;
+          return Game.instance.start();
+        };
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
         return ImageLoader.preload(image_list, image_preload_callback);
@@ -1931,12 +1929,12 @@
       }
       this.is_flashing = true;
       dur = 100;
-      flashColor = '#FF8';
+      flashColor = '#FFF';
       depletion = 1 - this.energy / this.config.energy;
       this.overlay.style('fill', d3.interpolateRgb('#600', '#FF0')(depletion));
-      return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', '#FFF').style('opacity', .4).transition().delay(dur).duration(dur).style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
+      return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', flashColor).style('opacity', .4).transition().delay(dur).duration(dur).style('opacity', 0).ease('linear').remove().each('end', (function(_this) {
         return function() {
-          _this.overlay.style('opacity', depletion * 0.4);
+          _this.overlay.style('opacity', depletion * 0.5);
           return _this.is_flashing = false;
         };
       })(this));
@@ -1979,10 +1977,10 @@
         if (Game.audioSwitch) {
           Game.sound.play('boom');
         }
-        this.overlay.style('opacity', 0.8);
-        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
-        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.8).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)').remove();
-        this.g.transition().duration(dur).ease('linear').style("opacity", "0").each('end', (function(_this) {
+        this.overlay.style('opacity', 0.6);
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.86).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.8).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5.5)').remove();
+        this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", "0").each('end', (function(_this) {
           return function() {
             _this.is_removed = true;
             return _this.overlay.style('opacity', 0);
