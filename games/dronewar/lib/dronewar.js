@@ -78,6 +78,60 @@
 
   })();
 
+  this.ImageLoader = (function() {
+    function ImageLoader() {}
+
+    ImageLoader.loading = false;
+
+    ImageLoader.cache = {};
+
+    ImageLoader.loadingStats = {
+      total: null,
+      count: null,
+      finalCallback: null
+    };
+
+    ImageLoader.load = function(url) {
+      var img;
+      if (this.cache[url] != null) {
+        this.callbackHandler();
+      } else {
+        img = new Image();
+        img.onload = ImageLoader.callbackHandler;
+        img.src = url;
+        this.cache[url] = img;
+      }
+      return img;
+    };
+
+    ImageLoader.callbackHandler = function() {
+      ImageLoader.loadingStats.count++;
+      if (ImageLoader.loadingStats.count === ImageLoader.loadingStats.total) {
+        console.log('ImageLoader.callbackHandler', ImageLoader.loadingStats);
+        ImageLoader.loadingStats.finalCallback();
+        ImageLoader.loading = false;
+      }
+    };
+
+    ImageLoader.preload = function(imageList, callback) {
+      var url, _i, _len;
+      if (this.loading) {
+        return;
+      }
+      this.loading = true;
+      this.loadingStats.total = imageList.length;
+      this.loadingStats.count = 0;
+      this.loadingStats.finalCallback = callback;
+      for (_i = 0, _len = imageList.length; _i < _len; _i++) {
+        url = imageList[_i];
+        this.load(url);
+      }
+    };
+
+    return ImageLoader;
+
+  })();
+
   this.Utils = (function() {
     function Utils() {}
 
@@ -235,12 +289,6 @@
   this.Element = (function() {
     function Element(config) {
       this.config = config != null ? config : {};
-      this.dt = this.config.dt || 0.25;
-      this.r = this.config.r || Factory.spawn(Vec);
-      this.dr = this.config.dr || Factory.spawn(Vec);
-      this.v = this.config.v || Factory.spawn(Vec);
-      this.f = this.config.f || Factory.spawn(Vec);
-      this.fcopy = this.config.f || Factory.spawn(Vec);
       this.d = Factory.spawn(Vec);
       this.ri = Factory.spawn(Vec);
       this.rj = Factory.spawn(Vec);
@@ -253,6 +301,11 @@
       this.vPerp = Factory.spawn(Vec);
       this.uPar = Factory.spawn(Vec);
       this.uPerp = Factory.spawn(Vec);
+      this.r = this.config.r || Factory.spawn(Vec);
+      this.dr = this.config.dr || Factory.spawn(Vec);
+      this.v = this.config.v || Factory.spawn(Vec);
+      this.f = this.config.f || Factory.spawn(Vec);
+      this.fcopy = Utils.clone(this.config.f) || Factory.spawn(Vec);
       this.force_param = this.config.force_param || [];
       this.size = this.config.size || 0;
       this.bb_width = this.config.bb_width || 0;
@@ -478,6 +531,7 @@
       var force;
       this.config = config != null ? config : {};
       this.update_window = __bind(this.update_window, this);
+      this.is_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
@@ -494,6 +548,13 @@
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
+      ImageLoader.preload(Game.instance.image_list, (function(_this) {
+        return function() {
+          console.log('Game.constructor:', Game.instance);
+          Game.instance.is_loaded = true;
+          return Game.instance.start();
+        };
+      })(this));
     }
 
     current_width = function(padding) {
@@ -560,7 +621,6 @@
 
     Game.prototype.start = function() {
       Physics.start();
-      Game.instance = this;
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
       }
@@ -1943,6 +2003,8 @@
 
     function Dronewar() {
       this.keydown = __bind(this.keydown, this);
+      this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png'];
+      Game.instance = this;
       Dronewar.__super__.constructor.apply(this, arguments);
       Gamescore.initialLives = 100;
       Gamescore.lives = Gamescore.initialLives;

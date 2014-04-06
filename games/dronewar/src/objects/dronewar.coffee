@@ -3,6 +3,8 @@ class @Dronewar extends Game
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
   constructor: ->
+    @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png']    
+    Game.instance = @ # associate class variable with this instance for global accessibility from any context
     super
     Gamescore.initialLives = 100 
     Gamescore.lives = Gamescore.initialLives

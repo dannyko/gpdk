@@ -9,6 +9,7 @@ class @Game
   @message_color: "#FFF"
   
   constructor: (@config = {}) ->
+    @is_loaded  = false # initialize
     @element    = [] # initialize
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
@@ -25,6 +26,11 @@ class @Game
       .style('height', '')
     @update_window(force = true)
     $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
+    ImageLoader.preload(Game.instance.image_list, => 
+      console.log('Game.constructor:', Game.instance)
+      Game.instance.is_loaded = true
+      Game.instance.start()
+    )
 
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]
@@ -65,7 +71,6 @@ class @Game
 
   start: -> 
     Physics.start() # start all elements and associate physics engine with this game instance
-    Game.instance = @ # associate class variable with this instance for global accessibility from any context
     Gameprez?.start()
     return
     
