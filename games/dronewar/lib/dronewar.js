@@ -633,7 +633,6 @@
     };
 
     Game.prototype.start = function() {
-      console.log('Game.start');
       Physics.start();
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
@@ -2030,7 +2029,6 @@
       Gamescore.initialLives = 100;
       Gamescore.lives = Gamescore.initialLives;
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
-      this.max_score_increment = 500000;
       this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;
@@ -2177,9 +2175,6 @@
           how.transition().duration(dur).style("opacity", 0).remove();
           _this.root.start();
           Gamescore.value = 0;
-          if (typeof Gameprez !== "undefined" && Gameprez !== null) {
-            Gameprez.start(_this.max_score_increment);
-          }
           return _this.level();
         };
       })(this));
@@ -2190,7 +2185,6 @@
           _ref.play('music');
         }
       }
-      console.log('Dronewar.start');
       return Dronewar.__super__.start.apply(this, arguments);
     };
 

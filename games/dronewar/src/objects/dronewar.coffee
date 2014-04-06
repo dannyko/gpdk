@@ -8,7 +8,6 @@ class @Dronewar extends Game
     Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
     Gamescore.lives = Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
-    @max_score_increment = 500000 # optional max score per update for accurate Gameprez secure-tracking
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones
@@ -206,7 +205,6 @@ class @Dronewar extends Game
       how.transition().duration(dur).style("opacity", 0).remove()
       @root.start()
       Gamescore.value = 0
-      Gameprez?.start(@max_score_increment) # start score tracking 
       @level()
     )
     how = @g.append("text")
@@ -221,7 +219,6 @@ class @Dronewar extends Game
       .style("cursor", "pointer")
     how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation")
     Game.sound?.play('music') if Game.musicSwitch
-    console.log('Dronewar.start')
     super
 
   text: ->
