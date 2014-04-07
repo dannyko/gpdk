@@ -633,7 +633,6 @@
     };
 
     Game.prototype.start = function() {
-      console.log('Game.start');
       Physics.start();
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
         Gameprez.start();
