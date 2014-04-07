@@ -2370,7 +2370,6 @@
       this.bullet_speed = ship.bullet_speed / this.dt;
       this.wait = ship.bullet_tick;
       this.path = ship.path;
-      console.log('root.ship', this.bullet_speed, this.dt, ship);
       this.BB();
       endPath = this.d_attr();
       this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();
