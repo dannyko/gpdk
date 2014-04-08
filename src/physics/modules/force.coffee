@@ -5,6 +5,9 @@ class @Force # this simple object does one job: return the value of the force f(
   @rpy = {x: 0, y: 0}
   @rmy = {x: 0, y: 0}
   @eval: (element, param, f, accumulateSwitch = false) -> 
+    unless param.type?
+      console.log('Force.eval: undefined param type, param:', param)
+      return
     switch param.type
       when 'constant'          then fx = param.fx ; fy = param.fy
       when 'friction'          then (

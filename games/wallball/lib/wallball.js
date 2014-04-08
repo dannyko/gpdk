@@ -1184,6 +1184,10 @@
       if (accumulateSwitch == null) {
         accumulateSwitch = false;
       }
+      if (param.type == null) {
+        console.log('Force.eval: undefined param type, param:', param);
+        return;
+      }
       switch (param.type) {
         case 'constant':
           fx = param.fx;
