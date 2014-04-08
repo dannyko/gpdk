@@ -1810,7 +1810,7 @@
           y: 0
         },
         bullet_stroke: 'none',
-        bullet_fill: '#099',
+        bullet_fill: '#d3bc5f',
         bullet_size: 5,
         bullet_speed: 4.5,
         bullet_tick: 100

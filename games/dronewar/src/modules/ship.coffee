@@ -43,4 +43,4 @@ class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirds
                         {pathSegTypeAsLetter: 'L', x: -8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'L', x:  8,  y: -14, react: true},
                         {pathSegTypeAsLetter: 'Z'}
-		   	        ], url: GameAssetsUrl + "sidewinder_1.png", offset: {x: 0, y: 0}, bullet_stroke: 'none', bullet_fill: '#099', bullet_size: 5, bullet_speed: 4.5, bullet_tick: 100}
+		   	        ], url: GameAssetsUrl + "sidewinder_1.png", offset: {x: 0, y: 0}, bullet_stroke: 'none', bullet_fill: '#d3bc5f', bullet_size: 5, bullet_speed: 4.5, bullet_tick: 100}
