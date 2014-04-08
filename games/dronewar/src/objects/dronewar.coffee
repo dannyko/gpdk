@@ -5,50 +5,6 @@ class @Dronewar extends Game
   constructor: ->
     @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png']    
     super
-    Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
-    Gamescore.lives = Gamescore.initialLives
-    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
-    @initialN = @config.initialN || 1
-    @N        = @initialN
-    @maxN     = 36 # limit the max number of drones
-    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
-    @scoretxt = @g.append("text").text("")
-      .attr("stroke", "none")
-      .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", "20")
-      .attr("y", "30")
-      .attr('font-family', 'arial bold')
-    @lives    = @g.append("text")
-      .text("")
-      .attr("stroke", "none")
-      .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", "20")
-      .attr("y", "55")
-      .attr('font-family', 'arial bold')
-    @leveltxt = @g.append("text")
-      .text("")
-      .attr("stroke", "none")
-      .attr("fill", "white")
-      .attr("font-size", "24")
-      .attr("x", "20")
-      .attr("y", "80")
-      .attr('font-family', 'arial bold')
-    d3.select(window.top).on("keydown", @keydown) # keyboard listener
-    d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
-    # load audio:
-    Game.audioSwitch = true
-    if Game.audioSwitch
-      Game.sound = new Howl({
-        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
-        volume: 0.5,
-        sprite: {
-          music:[0, 10782],
-          boom: [10782, 856],
-          shot: [11639, 234]
-        }
-      })
 
   level: ->
     return if Gamescore.lives < 0 or Physics.off # do nothing if the game is over/ending
@@ -106,6 +62,50 @@ class @Dronewar extends Game
     return
 
   start: -> # start new game
+    Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
+    Gamescore.lives = Gamescore.initialLives
+    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
+    @initialN = @config.initialN || 1
+    @N        = @initialN
+    @maxN     = 36 # limit the max number of drones
+    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
+    @scoretxt = @g.append("text").text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", "20")
+      .attr("y", "30")
+      .attr('font-family', 'arial bold')
+    @lives    = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", "20")
+      .attr("y", "55")
+      .attr('font-family', 'arial bold')
+    @leveltxt = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "white")
+      .attr("font-size", "24")
+      .attr("x", "20")
+      .attr("y", "80")
+      .attr('font-family', 'arial bold')
+    d3.select(window.top).on("keydown", @keydown) # keyboard listener
+    d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
+    # load audio:
+    Game.audioSwitch = true
+    if Game.audioSwitch
+      Game.sound = new Howl({
+        urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+        volume: 0.5,
+        sprite: {
+          music:[0, 10782],
+          boom: [10782, 856],
+          shot: [11639, 234]
+        }
+      })
     @root.draw()
     title = @g.append("text")
       .text("")

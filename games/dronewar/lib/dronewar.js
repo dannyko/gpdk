@@ -2026,32 +2026,6 @@
       this.keydown = __bind(this.keydown, this);
       this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png'];
       Dronewar.__super__.constructor.apply(this, arguments);
-      Gamescore.initialLives = 100;
-      Gamescore.lives = Gamescore.initialLives;
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
-      this.initialN = this.config.initialN || 1;
-      this.N = this.initialN;
-      this.maxN = 36;
-      this.root = Factory.spawn(Root);
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "30").attr('font-family', 'arial bold');
-      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "55").attr('font-family', 'arial bold');
-      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "80").attr('font-family', 'arial bold');
-      d3.select(window.top).on("keydown", this.keydown);
-      if (window !== window.top) {
-        d3.select(window).on("keydown", this.keydown);
-      }
-      Game.audioSwitch = true;
-      if (Game.audioSwitch) {
-        Game.sound = new Howl({
-          urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
-          volume: 0.5,
-          sprite: {
-            music: [0, 10782],
-            boom: [10782, 856],
-            shot: [11639, 234]
-          }
-        });
-      }
     }
 
     Dronewar.prototype.level = function() {
@@ -2121,6 +2095,32 @@
 
     Dronewar.prototype.start = function() {
       var dur, fang, go, how, prompt, root, sidewinder, title, viper, _ref;
+      Gamescore.initialLives = 100;
+      Gamescore.lives = Gamescore.initialLives;
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
+      this.initialN = this.config.initialN || 1;
+      this.N = this.initialN;
+      this.maxN = 36;
+      this.root = Factory.spawn(Root);
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "30").attr('font-family', 'arial bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "55").attr('font-family', 'arial bold');
+      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", "20").attr("y", "80").attr('font-family', 'arial bold');
+      d3.select(window.top).on("keydown", this.keydown);
+      if (window !== window.top) {
+        d3.select(window).on("keydown", this.keydown);
+      }
+      Game.audioSwitch = true;
+      if (Game.audioSwitch) {
+        Game.sound = new Howl({
+          urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
+          volume: 0.5,
+          sprite: {
+            music: [0, 10782],
+            boom: [10782, 856],
+            shot: [11639, 234]
+          }
+        });
+      }
       this.root.draw();
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 150).attr("y", 60).attr('font-family', 'arial').attr('font-weight', 'bold');
       title.text("DRONEWAR");
