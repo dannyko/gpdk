@@ -36,8 +36,8 @@ class @Root extends Polygon
 
   redraw_interp: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
-    return if @drawing
-    @drawing = true
+    # return if @drawing
+    # @drawing = true
     @dr.init({x: xy[0], y: xy[1]})
     step = 20 # steplength
     @dr.subtract(@r)
@@ -46,7 +46,7 @@ class @Root extends Polygon
     @dr.normalize(step) # difference vector pointing towards destination
     redraw_func = =>
       if count > Nstep
-        @drawing = false
+        # @drawing = false
         return true
       else 
         @r.add(@dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
@@ -140,13 +140,15 @@ class @Root extends Polygon
       
   start: ->
     super
-    @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    # @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    @svg.on('click', @redraw)
     @svg.on("mousewheel", @spin)  # default scroll wheel listener
     @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
     
   stop: ->
     super
-    @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
+    # @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
+    @svg.on('click', null)
     @svg.on("mousewheel", null) # default scroll wheel listener
     @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
     

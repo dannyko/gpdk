@@ -3,6 +3,7 @@ class @Ball extends Circle
 
   constructor: (@config = {}) ->
     super
+    @is_busy       = false # to prevent overlapping 'bong' sound effects from firing
     @size          = 12
     @name          = 'Ball'
     @initial_speed = 8
@@ -58,9 +59,11 @@ class @Ball extends Circle
     return
 
   reaction: (n) ->  
+    return if @is_busy
+    @is_busy = true
     @v.normalize(@speed)
     @flash()
-    Game.sound.play('bong')
+    Game.sound.play('bong') unless @is_busy
     super
     
   flash: ->

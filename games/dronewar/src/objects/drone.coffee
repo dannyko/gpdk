@@ -90,7 +90,6 @@ class @Drone extends Circle
   remove: ->
     return if @is_removed or not @collision
     @collision = false # prevent additional reactions from occuring while transition lasts
-    @force_param = [] # remove charge forces
     dur = 800
     if Gamescore.lives >= 0
       Game.sound.play('boom') if Game.audioSwitch
@@ -98,7 +97,7 @@ class @Drone extends Circle
       @g.append('circle') # overlay #2
         .attr("x", 0)
         .attr("y", 0)
-        .attr("r", @size * 0.86)
+        .attr("r", @size * 0.85)
         .style('fill', '#FF0')
         .style('opacity', 0.8)
         .transition()
@@ -135,7 +134,7 @@ class @Drone extends Circle
          .ease('linear')
          .attr('transform', 'scale(5)')
     else
-      @fadeOut(dur)
+      super
     Game.instance.level() if Game.instance.element.every (d) -> not d.collision
     return
     

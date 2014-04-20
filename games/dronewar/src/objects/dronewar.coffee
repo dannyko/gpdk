@@ -12,7 +12,7 @@ class @Dronewar extends Game
     @N += drone_increment unless @N >= @maxN
     @charge *= 20
     @text()
-    @svg.style("cursor", "none")
+    @svg.style("cursor", "pointer")
     @element   = [] # reinitialize element list
     multiplier = 20
     offset     = 200
@@ -64,7 +64,9 @@ class @Dronewar extends Game
   start: -> # start new game
     Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
     Gamescore.lives = Gamescore.initialLives
-    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%')
+    @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
+      .style('background-size', '100%')
+      .style('background-repeat', 'no-repeat')
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones

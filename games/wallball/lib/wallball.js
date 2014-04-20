@@ -552,6 +552,7 @@
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
       Game.instance = this;
+      Game.instance.div.style('opacity', 0);
       this.preload_images();
     }
 
@@ -561,8 +562,11 @@
       }
       if (image_preload_callback == null) {
         image_preload_callback = function() {
+          var dur;
           Game.instance.images_loaded = true;
-          return Game.instance.start();
+          Game.instance.start();
+          dur = 1000;
+          return Game.instance.div.transition().duration(dur).style('opacity', 1);
         };
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {

@@ -27,11 +27,16 @@ class @Game
     @update_window(force = true)
     $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     Game.instance = @ # associate class variable with this instance for global accessibility from any context
+    Game.instance.div.style('opacity', 0)
     @preload_images()
 
   preload_images: (image_list = Game.instance.image_list, image_preload_callback = ->
     Game.instance.images_loaded = true
     Game.instance.start()
+    dur = 1000
+    Game.instance.div.transition()
+      .duration(dur)
+      .style('opacity', 1)    
   ) -> ImageLoader.preload(image_list, image_preload_callback) if image_list? and image_list.length? and image_list.length > 0
 
   current_width = (padding = 8) ->

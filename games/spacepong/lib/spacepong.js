@@ -552,6 +552,7 @@
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
       Game.instance = this;
+      Game.instance.div.style('opacity', 0);
       this.preload_images();
     }
 
@@ -561,8 +562,11 @@
       }
       if (image_preload_callback == null) {
         image_preload_callback = function() {
+          var dur;
           Game.instance.images_loaded = true;
-          return Game.instance.start();
+          Game.instance.start();
+          dur = 1000;
+          return Game.instance.div.transition().duration(dur).style('opacity', 1);
         };
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
@@ -1590,6 +1594,7 @@
     function Ball(config) {
       this.config = config != null ? config : {};
       Ball.__super__.constructor.apply(this, arguments);
+      this.is_busy = false;
       this.size = 12;
       this.name = 'Ball';
       this.initial_speed = 8;
@@ -1656,9 +1661,15 @@
     };
 
     Ball.prototype.reaction = function(n) {
+      if (this.is_busy) {
+        return;
+      }
+      this.is_busy = true;
       this.v.normalize(this.speed);
       this.flash();
-      Game.sound.play('bong');
+      if (!this.is_busy) {
+        Game.sound.play('bong');
+      }
       return Ball.__super__.reaction.apply(this, arguments);
     };
 

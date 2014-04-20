@@ -552,6 +552,7 @@
       this.update_window(force = true);
       $(window).on('resize', this.update_window);
       Game.instance = this;
+      Game.instance.div.style('opacity', 0);
       this.preload_images();
     }
 
@@ -561,8 +562,11 @@
       }
       if (image_preload_callback == null) {
         image_preload_callback = function() {
+          var dur;
           Game.instance.images_loaded = true;
-          return Game.instance.start();
+          Game.instance.start();
+          dur = 1000;
+          return Game.instance.div.transition().duration(dur).style('opacity', 1);
         };
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
@@ -1308,9 +1312,11 @@
       if (accumulateSwitch == null) {
         accumulateSwitch = false;
       }
-      if (param.type == null) {
+      if ((param != null ? param.type : void 0) == null) {
         console.log('Force.eval: undefined param type, param:', param);
-        return;
+        f.x = 0;
+        f.y = 0;
+        return f;
       }
       switch (param.type) {
         case 'constant':
@@ -1974,14 +1980,13 @@
         return;
       }
       this.collision = false;
-      this.force_param = [];
       dur = 800;
       if (Gamescore.lives >= 0) {
         if (Game.audioSwitch) {
           Game.sound.play('boom');
         }
         this.overlay.style('opacity', 0.6);
-        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.86).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
+        this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size * 0.85).style('fill', '#FF0').style('opacity', 0.8).transition().duration(dur).ease('linear').style('opacity', 0).remove();
         this.g.append('circle').attr("x", 0).attr("y", 0).attr("r", this.size).style('fill', '#600').style('opacity', 0.8).attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5.5)').remove();
         this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", "0").each('end', (function(_this) {
           return function() {
@@ -2043,7 +2048,7 @@
       }
       this.charge *= 20;
       this.text();
-      this.svg.style("cursor", "none");
+      this.svg.style("cursor", "pointer");
       this.element = [];
       multiplier = 20;
       offset = 200;
@@ -2101,7 +2106,7 @@
       var dur, fang, go, how, prompt, root, sidewinder, title, viper, _ref;
       Gamescore.initialLives = 100;
       Gamescore.lives = Gamescore.initialLives;
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%').style('background-repeat', 'no-repeat');
       this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;
@@ -2268,10 +2273,6 @@
       if (!this.collision) {
         return;
       }
-      if (this.drawing) {
-        return;
-      }
-      this.drawing = true;
       this.dr.init({
         x: xy[0],
         y: xy[1]
@@ -2284,7 +2285,6 @@
       redraw_func = (function(_this) {
         return function() {
           if (count > Nstep) {
-            _this.drawing = false;
             return true;
           } else {
             if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
@@ -2389,14 +2389,14 @@
 
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
-      this.svg.on("mousemove", this.redraw);
+      this.svg.on('click', this.redraw);
       this.svg.on("mousewheel", this.spin);
       return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
-      this.svg.on("mousemove", null);
+      this.svg.on('click', null);
       this.svg.on("mousewheel", null);
       return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
     };

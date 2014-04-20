@@ -130,8 +130,10 @@ class @Element
 
   remove: (fadeOutSwitch = true, dur) -> # fade out element (opacity = 0) by default 
     return if @is_removed
-    @is_removed = true # important detail: mark the element instance as removed but let the physics engine call sleep() to avoid inconsistent data!
-    @fadeOut(dur) if fadeOutSwitch
+    if fadeOutSwitch
+      @fadeOut(dur, (=> @is_removed = true) 
+    else
+      @is_removed = true # important detail: mark the element instance as removed but let the physics engine call sleep() to avoid inconsistent data!    
     return
 
   spawn: ->
