@@ -438,13 +438,9 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
-      if (this.is_removed) {
-        return;
-      }
       if (this._cleanup && this.offscreen()) {
-        this.remove();
+        return this.remove();
       }
-      return this.is_removed;
     };
 
     Element.prototype.sleep = function() {
@@ -452,16 +448,22 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.remove = function(fadeOutSwitch, dur) {
-      if (fadeOutSwitch == null) {
-        fadeOutSwitch = true;
+    Element.prototype.remove = function(dur) {
+      if (dur == null) {
+        dur = 30;
       }
-      if (this.is_removed) {
+      if (this.is_removed || !this.collision) {
         return;
       }
-      this.is_removed = true;
-      if (fadeOutSwitch) {
-        this.fadeOut(dur);
+      this.collision = false;
+      if (dur > 0) {
+        this.fadeOut(dur, ((function(_this) {
+          return function() {
+            return _this.is_removed = true;
+          };
+        })(this)));
+      } else {
+        this.is_removed = true;
       }
     };
 
@@ -633,7 +635,6 @@
       this.div.style('width', w).style('height', h);
       this.svg.style('width', w).style('height', h);
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
-      $(document.body).css('width', w).css('height', h);
     };
 
     Game.prototype.start = function() {
@@ -1188,9 +1189,11 @@
       if (accumulateSwitch == null) {
         accumulateSwitch = false;
       }
-      if (param.type == null) {
+      if ((param != null ? param.type : void 0) == null) {
         console.log('Force.eval: undefined param type, param:', param);
-        return;
+        f.x = 0;
+        f.y = 0;
+        return f;
       }
       switch (param.type) {
         case 'constant':
@@ -1595,7 +1598,7 @@
       this.config = config != null ? config : {};
       Ball.__super__.constructor.apply(this, arguments);
       this.is_busy = false;
-      this.size = 12;
+      this.size = 10;
       this.name = 'Ball';
       this.initial_speed = 8;
       this.speed = this.initial_speed;
@@ -1797,20 +1800,20 @@
     Paddle.prototype.start = function() {
       Paddle.__super__.start.apply(this, arguments);
       this.tick = function() {};
-      d3.select(window.top).on("mousemove", this.redraw);
-      if (window !== window.top) {
-        d3.select(window).on("mousemove", this.redraw);
-      }
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
+      d3.select(window).on("mousemove", this.redraw);
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", function() {
+        return d3.select(window).on("mousemove", null);
+      }).on("drag", this.redraw).on("dragend", (function(_this) {
+        return function() {
+          return d3.select(window).on("mousemove", _this.redraw);
+        };
+      })(this)));
     };
 
     Paddle.prototype.stop = function() {
       Paddle.__super__.stop.apply(this, arguments);
-      d3.select(window.top).on("mousemove", null);
-      if (window !== window.top) {
-        d3.select(window).on("mousemove", null);
-      }
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
+      d3.select(window).on("mousemove", null);
+      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null).on("dragend", null));
     };
 
     Paddle.prototype.remove_check = function(n) {
@@ -1870,9 +1873,9 @@
 
     Ship.increment_count = [1, 2, 4];
 
-    Ship.speed = [1.5, 2, 3];
+    Ship.speed = [.5, 1, 2];
 
-    Ship.size = [50, 45, 40];
+    Ship.size = [35, 30, 25];
 
     ship_path = function(w, h) {
       return [
@@ -2078,7 +2081,7 @@
       this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
-      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%');
+      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%, auto').style('height', '100%');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -2160,7 +2163,7 @@
     Spacepong.prototype.start = function() {
       var go, how, title;
       title = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "48").attr("x", Game.width / 2 - 320).attr("y", 90).attr('font-family', 'arial').attr('font-weight', 'bold').text("SPACEPONG");
-      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", Game.height / 2 + 130).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("Use the mouse for controlling movement.");
+      how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", Game.width / 2 - 320).attr("y", Game.height / 2 + 130).attr('font-family', 'arial').attr('font-weight', 'bold').text("drag, move the mouse, or use left/right arrow-keys to control the paddle");
       go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "36").attr("x", Game.width * 0.5 - 60).attr("y", Game.height - 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer").text("START");
       return go.on("click", (function(_this) {
         return function() {

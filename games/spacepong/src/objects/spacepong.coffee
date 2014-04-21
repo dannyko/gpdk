@@ -13,7 +13,9 @@ class @Spacepong extends Game
     @image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png']    
     super
     @initialN = 1
-    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%')
+    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')')
+      .style('background-size', '100%, auto')
+      .style('height', '100%')
 
     @setup()
 
@@ -114,8 +116,7 @@ class @Spacepong extends Game
       .attr("y", Game.height / 2 + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
-      .style("cursor", "pointer")
-      .text("Use the mouse for controlling movement.")
+      .text("drag, move the mouse, or use left/right arrow-keys to control the paddle")
 
     go = @g.append("text")
       .text("")

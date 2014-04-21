@@ -438,13 +438,9 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
-      if (this.is_removed) {
-        return;
-      }
       if (this._cleanup && this.offscreen()) {
-        this.remove();
+        return this.remove();
       }
-      return this.is_removed;
     };
 
     Element.prototype.sleep = function() {
@@ -452,16 +448,22 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.remove = function(fadeOutSwitch, dur) {
-      if (fadeOutSwitch == null) {
-        fadeOutSwitch = true;
+    Element.prototype.remove = function(dur) {
+      if (dur == null) {
+        dur = 30;
       }
-      if (this.is_removed) {
+      if (this.is_removed || !this.collision) {
         return;
       }
-      this.is_removed = true;
-      if (fadeOutSwitch) {
-        this.fadeOut(dur);
+      this.collision = false;
+      if (dur > 0) {
+        this.fadeOut(dur, ((function(_this) {
+          return function() {
+            return _this.is_removed = true;
+          };
+        })(this)));
+      } else {
+        this.is_removed = true;
       }
     };
 
@@ -633,7 +635,6 @@
       this.div.style('width', w).style('height', h);
       this.svg.style('width', w).style('height', h);
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
-      $(document.body).css('width', w).css('height', h);
     };
 
     Game.prototype.start = function() {
@@ -1188,9 +1189,11 @@
       if (accumulateSwitch == null) {
         accumulateSwitch = false;
       }
-      if (param.type == null) {
+      if ((param != null ? param.type : void 0) == null) {
         console.log('Force.eval: undefined param type, param:', param);
-        return;
+        f.x = 0;
+        f.y = 0;
+        return f;
       }
       switch (param.type) {
         case 'constant':

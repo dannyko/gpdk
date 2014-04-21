@@ -22,6 +22,7 @@ class @Root extends Polygon
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
+    # return if (d3.event.defaultPrevented) # click suppressed
     maxJump = 70 # max jump size
     xy      = @apply_limits(xy)
     if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
@@ -140,20 +141,20 @@ class @Root extends Polygon
       
   start: ->
     super
-    # @svg.on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    @svg.on('click', @redraw)
-    @svg.on("mousewheel", @spin)  # default scroll wheel listener
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", @dragspin))
+    # d3.select(document.body).on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    d3.select(document.body).on("mousewheel", @spin)  # default scroll wheel listener
+    d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", @redraw).on("drag", @dragspin))
     
   stop: ->
     super
-    # @svg.on("mousemove", null)  # default mouse behavior is to control the root element position
-    @svg.on('click', null)
-    @svg.on("mousewheel", null) # default scroll wheel listener
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
+    # d3.select(document.body).on("mousemove", null)  # default mouse behavior is to control the root element position
+    d3.select(document.body).on("mousewheel", null) # default scroll wheel listener
+    d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null))
     
   reaction: (n) -> # what happens when root gets hit by a drone
-    return if n.is_bullet # bullets don't hurt the ship
+    if n.is_bullet # bullets don't hurt the ship
+      n.remove()
+      return
     return if Gamescore.lives < 0 # game is already over or ending
     damage = 10
     Gamescore.lives -= damage # decrement lives for this game
@@ -162,7 +163,7 @@ class @Root extends Polygon
       Game.instance.stop()
     else
       Game.instance.text()
-    n.remove()
+    n.remove() unless Gamescore.lives < 0 # don't remove the drone that kills the root element
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 150 # color effect transition duration parameter
@@ -185,6 +186,7 @@ class @Root extends Polygon
       .attr('opacity', 0)
       
   remove: (dur = 500) ->
+    @collision = false
     @image.transition()
       .duration(dur * 0.5)
       .attr('opacity', 1)

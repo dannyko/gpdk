@@ -1,9 +1,9 @@
 class @Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
-  @max_speed = 4
+  @max_speed = 3
 
   constructor: (@config = {}) ->
-    @config.size = 25
+    @config.size = 30
     super(@config)
     @root   = @config.root
     @param  = {type: 'charge', cx: null, cy: null, q: null}
@@ -89,9 +89,9 @@ class @Drone extends Circle
 
   remove: ->
     return if @is_removed or not @collision
-    @collision = false # prevent additional reactions from occuring while transition lasts
     dur = 800
     if Gamescore.lives >= 0
+      @collision = false # prevent additional reactions from occuring while transition lasts
       Game.sound.play('boom') if Game.audioSwitch
       @overlay.style('opacity', 0.6)
       @g.append('circle') # overlay #2
@@ -134,11 +134,12 @@ class @Drone extends Circle
          .ease('linear')
          .attr('transform', 'scale(5)')
     else
-      super
+      super(dur)
     Game.instance.level() if Game.instance.element.every (d) -> not d.collision
     return
     
   offscreen: -> 
+    return if Gamescore.lives < 0
     dx  = @r.x - Game.width * 0.5
     dy  = @r.y - Game.height * 0.5 
     dr2 = dx * dx + dy * dy 

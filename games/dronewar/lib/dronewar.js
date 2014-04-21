@@ -438,13 +438,9 @@
 
     Element.prototype.cleanup = function(_cleanup) {
       this._cleanup = _cleanup != null ? _cleanup : this._cleanup;
-      if (this.is_removed) {
-        return;
-      }
       if (this._cleanup && this.offscreen()) {
-        this.remove();
+        return this.remove();
       }
-      return this.is_removed;
     };
 
     Element.prototype.sleep = function() {
@@ -452,16 +448,22 @@
       this.is_sleeping = true;
     };
 
-    Element.prototype.remove = function(fadeOutSwitch, dur) {
-      if (fadeOutSwitch == null) {
-        fadeOutSwitch = true;
+    Element.prototype.remove = function(dur) {
+      if (dur == null) {
+        dur = 30;
       }
-      if (this.is_removed) {
+      if (this.is_removed || !this.collision) {
         return;
       }
-      this.is_removed = true;
-      if (fadeOutSwitch) {
-        this.fadeOut(dur);
+      this.collision = false;
+      if (dur > 0) {
+        this.fadeOut(dur, ((function(_this) {
+          return function() {
+            return _this.is_removed = true;
+          };
+        })(this)));
+      } else {
+        this.is_removed = true;
       }
     };
 
@@ -633,7 +635,6 @@
       this.div.style('width', w).style('height', h);
       this.svg.style('width', w).style('height', h);
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
-      $(document.body).css('width', w).css('height', h);
     };
 
     Game.prototype.start = function() {
@@ -1846,9 +1847,12 @@
         return true;
       }
       if (n.is_bullet) {
+        console.log('bullet-bullet');
         return true;
       }
-      n.deplete(this.power);
+      if (!n.invincible) {
+        n.deplete(this.power);
+      }
       if (n.depleted()) {
         Gamescore.increment_value();
         Game.instance.text();
@@ -1857,9 +1861,7 @@
         }
         n.remove();
       }
-      if (!n.invincible) {
-        this.remove();
-      }
+      this.remove();
       return true;
     };
 
@@ -1872,11 +1874,11 @@
 
     Drone.url = GameAssetsUrl + "drone_1.png";
 
-    Drone.max_speed = 4;
+    Drone.max_speed = 3;
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      this.config.size = 25;
+      this.config.size = 30;
       Drone.__super__.constructor.call(this, this.config);
       this.root = this.config.root;
       this.param = {
@@ -1979,9 +1981,9 @@
       if (this.is_removed || !this.collision) {
         return;
       }
-      this.collision = false;
       dur = 800;
       if (Gamescore.lives >= 0) {
+        this.collision = false;
         if (Game.audioSwitch) {
           Game.sound.play('boom');
         }
@@ -1999,7 +2001,7 @@
           this.image.attr('transform', 'scale(1)').transition().duration(dur).ease('linear').attr('transform', 'scale(5)');
         }
       } else {
-        this.fadeOut(dur);
+        Drone.__super__.remove.call(this, dur);
       }
       if (Game.instance.element.every(function(d) {
         return !d.collision;
@@ -2010,6 +2012,9 @@
 
     Drone.prototype.offscreen = function() {
       var dr2, dx, dy, scale;
+      if (Gamescore.lives < 0) {
+        return;
+      }
       dx = this.r.x - Game.width * 0.5;
       dy = this.r.y - Game.height * 0.5;
       dr2 = dx * dx + dy * dy;
@@ -2389,21 +2394,20 @@
 
     Root.prototype.start = function() {
       Root.__super__.start.apply(this, arguments);
-      this.svg.on('click', this.redraw);
-      this.svg.on("mousewheel", this.spin);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.dragspin));
+      d3.select(document.body).on("mousewheel", this.spin);
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", this.redraw).on("drag", this.dragspin));
     };
 
     Root.prototype.stop = function() {
       Root.__super__.stop.apply(this, arguments);
-      this.svg.on('click', null);
-      this.svg.on("mousewheel", null);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
+      d3.select(document.body).on("mousewheel", null);
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null));
     };
 
     Root.prototype.reaction = function(n) {
       var N, damage, dur, fill;
       if (n.is_bullet) {
+        n.remove();
         return;
       }
       if (Gamescore.lives < 0) {
@@ -2417,7 +2421,9 @@
       } else {
         Game.instance.text();
       }
-      n.remove();
+      if (!(Gamescore.lives < 0)) {
+        n.remove();
+      }
       N = 240;
       fill = '#ff0';
       dur = 150;
@@ -2428,6 +2434,7 @@
       if (dur == null) {
         dur = 500;
       }
+      this.collision = false;
       this.image.transition().duration(dur * 0.5).attr('opacity', 1).transition().duration(1.5 * dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
       this.bitmap.transition().duration(2 * dur).ease('linear').attr('transform', 'scale(10)').attr('opacity', 0);
       return this.g.transition().duration(dur).ease('linear').style('opacity', 0);

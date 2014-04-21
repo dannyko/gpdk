@@ -1,33 +1,11 @@
 <!DOCTYPE HTML>
-<html>
+<html style="min-height:100%;">
 	<head>
 		<script type="text/javascript" src="../../../lib/jquery-1.8.2.min.js"></script>
 		<style></style>
 	</head>
-	<body style="margin: auto;border: 0;padding: 0;overflow-y: hidden;height:645px;width:860px;">
-	  <iframe src="main.html" style="width:96%;height:96%;border:0px;padding:0px;overflow-y: hidden;overflow-x: hidden;margin: auto;display:block;"></iframe>
-  	<script type="text/javascript">
-		  var default_width  = 860 ;
-		  var default_height = 645 ;
-      var get_scale = function() {
-			  var x         = $(window).width() ;
-			  var y         = $(window).height() ;
-			  var r1        = x / default_width ;
-			  var r2        = y / default_height ;
-			  var scale     = (r1 <= r2) ? r1 : r2 ;
-			  var max_scale = 1.0 ;
-			  var min_scale = 0.4 ;
-			  scale         = Math.max(min_scale, Math.min(max_scale, scale)) ;
-			  return scale ;
-			} ;
-
-			updateWindow = function() {
-        var scale = get_scale() ;
-        $(document.body).css('width', default_width * scale + 'px') ;
-        $(document.body).css('height', default_height * scale + 'px') ;
-      } ;
-      updateWindow() ;
-      $( window ).resize(updateWindow) ;
-  	</script>
+	<body style="margin: auto;border: 0;padding: 0;overflow-y: hidden;width:100%;height:100%;">
+	  <iframe src="main.html" style="width:100%;height:100%;border:0px;padding:0px;overflow-y: hidden;overflow-x: hidden;margin: auto;display:block;">	  	
+	  </iframe>
 	</body>
 </html>

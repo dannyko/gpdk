@@ -59,15 +59,19 @@ class @Paddle extends Polygon
   start: ->
     super
     @tick = -> 
-    d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
-    d3.select(window).on("mousemove", @redraw) unless window is window.top # default mouse behavior is to control the root element position
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
+    # d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
+    d3.select(window).on("mousemove", @redraw) # unless window is window.top # default mouse behavior is to control the root element position
+    # @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
+    d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", -> d3.select(window).on("mousemove", null))
+      .on("drag", @redraw)
+      .on("dragend", => d3.select(window).on("mousemove", @redraw))
+    )
     
   stop: ->
     super
-    d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
-    d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is in iframe
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
+    # d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
+    d3.select(window).on("mousemove", null) # if window isnt window.top # default mouse behavior is to control the root element position if game is in iframe
+    @svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null).on("dragend", null))
 
   remove_check: (n) -> # what happens when paddle gets hit by a ball
     if n.type is 'Circle' # hit a ball

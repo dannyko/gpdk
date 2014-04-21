@@ -82,10 +82,10 @@ class @Element
 
   fadeOut: (dur = 30, callback) ->
     @g.transition()
-    .duration(dur)
-    .ease('linear')
-    .style("opacity", 0)
-    .each('end', => callback?(@))
+      .duration(dur)
+      .ease('linear')
+      .style("opacity", 0)
+      .each('end', => callback?(@))
 
   flash: (dur = 1000, color = '#FFF', scaleFactor = 3, initialOpacity = 0.4) ->
     return if @is_flashing # wait until previous flash finishes
@@ -119,19 +119,18 @@ class @Element
     return
 
   cleanup: (@_cleanup = @_cleanup) ->
-    return if @is_removed
     @remove() if @_cleanup and @offscreen()
-    @is_removed
 
   sleep: ->
     Factory.sleep(@) # push this element onto the inactive array
     @is_sleeping = true # mark the element instance as asleep
     return
 
-  remove: (fadeOutSwitch = true, dur) -> # fade out element (opacity = 0) by default 
-    return if @is_removed
-    if fadeOutSwitch
-      @fadeOut(dur, (=> @is_removed = true) 
+  remove: (dur = 30) -> # fade out element (opacity = 0) by default 
+    return if @is_removed or not @collision
+    @collision = false
+    if dur > 0
+      @fadeOut(dur, (=> @is_removed = true))
     else
       @is_removed = true # important detail: mark the element instance as removed but let the physics engine call sleep() to avoid inconsistent data!    
     return

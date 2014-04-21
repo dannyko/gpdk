@@ -73,7 +73,7 @@ class @Game
     @div.style('width', w).style('height', h)    
     @svg.style('width', w).style('height', h)
     @g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')')
-    $(document.body).css('width', w).css('height', h)
+    # $(document.body).css('width', w).css('height', h)
     return
 
   start: -> 

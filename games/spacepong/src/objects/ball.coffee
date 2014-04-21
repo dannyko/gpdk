@@ -4,7 +4,7 @@ class @Ball extends Circle
   constructor: (@config = {}) ->
     super
     @is_busy       = false # to prevent overlapping 'bong' sound effects from firing
-    @size          = 12
+    @size          = 10
     @name          = 'Ball'
     @initial_speed = 8
     @speed         = @initial_speed
