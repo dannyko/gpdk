@@ -2249,21 +2249,15 @@
     };
 
     Root.prototype.redraw = function(xy) {
-      var maxJump;
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
       }
       if (!this.collision) {
         return;
       }
-      maxJump = 70;
       xy = this.apply_limits(xy);
-      if (Math.abs(this.r.x - xy[0]) > maxJump || Math.abs(this.r.y - xy[1]) > maxJump) {
-        this.redraw_interp(xy);
-        return;
-      }
-      this.r.x = xy[0];
-      this.r.y = xy[1];
+      this.interrupt = true;
+      this.redraw_interp(xy);
     };
 
     Root.prototype.apply_limits = function(xy) {
@@ -2271,36 +2265,38 @@
     };
 
     Root.prototype.redraw_interp = function(xy) {
-      var Nstep, count, redraw_func, step;
+      var count, redraw_func, step;
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
       }
       if (!this.collision) {
         return;
       }
-      this.dr.init({
-        x: xy[0],
-        y: xy[1]
-      });
       step = 20;
-      this.dr.subtract(this.r);
-      Nstep = Math.floor(this.dr.length() / step);
       count = 1;
-      this.dr.normalize(step);
       redraw_func = (function(_this) {
         return function() {
-          if (count > Nstep) {
+          _this.dr.init({
+            x: xy[0],
+            y: xy[1]
+          });
+          _this.dr.subtract(_this.r);
+          if (_this.dr.length() < step || (count > 1 && _this.interrupt)) {
+            console.log('final', _this.r);
             return true;
           } else {
-            if (_this.r.x > 0 && _this.r.x < Game.width && _this.r.y > 0 && _this.r.y < Game.height) {
-              _this.r.add(_this.dr);
+            if (count === 1) {
+              _this.interrupt = false;
             }
             count++;
+            _this.dr.normalize(step);
+            console.log(xy[0], xy[1], _this.r.x, _this.r.y, _this.dr.x, _this.dr.y);
+            _this.r.add(_this.dr);
             return false;
           }
         };
       })(this);
-      Physics.callbacks.push(redraw_func);
+      d3.timer(redraw_func);
     };
 
     Root.prototype.spin = function() {

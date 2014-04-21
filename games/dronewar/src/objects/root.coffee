@@ -23,13 +23,13 @@ class @Root extends Polygon
   redraw: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
     # return if (d3.event.defaultPrevented) # click suppressed
-    maxJump = 70 # max jump size
+    # maxJump = 70 # max jump size
+    # console.log('before', xy[0], xy[1])
     xy      = @apply_limits(xy)
-    if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
-      @redraw_interp(xy)
-      return
-    @r.x = xy[0]
-    @r.y = xy[1]
+    # console.log('after', xy[0], xy[1])
+    #if Math.abs(@r.x - xy[0]) > maxJump or Math.abs(@r.y - xy[1]) > maxJump
+    @interrupt = true # in case we're still in the middle of a movement loop
+    @redraw_interp(xy)
     return
 
   apply_limits: (xy) ->
@@ -38,22 +38,22 @@ class @Root extends Polygon
   redraw_interp: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
     # return if @drawing
-    # @drawing = true
-    @dr.init({x: xy[0], y: xy[1]})
     step = 20 # steplength
-    @dr.subtract(@r)
-    Nstep = Math.floor(@dr.length() / step)
     count = 1
-    @dr.normalize(step) # difference vector pointing towards destination
     redraw_func = =>
-      if count > Nstep
-        # @drawing = false
+      @dr.init({x: xy[0], y: xy[1]})
+      @dr.subtract(@r)
+      if @dr.length() < step or (count > 1 and @interrupt)
+        console.log('final', @r)
         return true
       else 
-        @r.add(@dr) if @r.x > 0 and @r.x < Game.width and @r.y > 0 and @r.y < Game.height
+        @interrupt = false if count is 1
         count++
+        @dr.normalize(step) # difference vector pointing towards destination
+        console.log(xy[0], xy[1], @r.x, @r.y, @dr.x, @dr.y)
+        @r.add(@dr) # if @r.x > @bb_width and @r.x < (Game.width - @bb_width) and @r.y > @bb_height and @r.y < (Game.height - @bb_height)
         return false
-    Physics.callbacks.push(redraw_func)
+    d3.timer(redraw_func)
     return
  
   spin: =>
