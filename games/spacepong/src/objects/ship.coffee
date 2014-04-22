@@ -2,7 +2,7 @@ class @Ship extends Polygon
   @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
   @speed = [.5, 1, 2]
-  @size  = [35, 30, 25] # half width/height
+  @size  = [40, 35, 30] # half width/height
 
   ship_path = (w, h) ->
     [ 

@@ -44,13 +44,13 @@ class @Root extends Polygon
       @dr.init({x: xy[0], y: xy[1]})
       @dr.subtract(@r)
       if @dr.length() < step or (count > 1 and @interrupt)
-        console.log('final', @r)
+        # console.log('final', @r)
         return true
       else 
         @interrupt = false if count is 1
         count++
         @dr.normalize(step) # difference vector pointing towards destination
-        console.log(xy[0], xy[1], @r.x, @r.y, @dr.x, @dr.y)
+        # console.log(xy[0], xy[1], @r.x, @r.y, @dr.x, @dr.y)
         @r.add(@dr) # if @r.x > @bb_width and @r.x < (Game.width - @bb_width) and @r.y > @bb_height and @r.y < (Game.height - @bb_height)
         return false
     d3.timer(redraw_func)
@@ -75,7 +75,7 @@ class @Root extends Polygon
   fire: =>
     return true if @is_removed
     return if Gamescore.lives < 0 # do nothing if game is over / ending
-    if @lastfire is undefined
+    if @lastfire is undefined or @lastfire > Physics.timestamp
       @lastfire = Physics.timestamp
       return
     return unless (Physics.timestamp - @lastfire) >= @wait

@@ -2,7 +2,7 @@ class @Paddle extends Polygon
   @image_url = GameAssetsUrl + "paddle.png"
 
   constructor: (@config = {}) ->
-    @config.size ||= 90
+    @config.size ||= 114
     @height = 14
     @config.path ||= [     # Use default paddle if none defined
              {pathSegTypeAsLetter: 'M', x: -@config.size,  y: -@height, react: true},
@@ -20,8 +20,8 @@ class @Paddle extends Polygon
     super(@config)
     @is_root   = true # Make this the player controlled element
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = Game.width - @config.size - @tol - @padding * 0.5
-    @min_x     = @config.size + @tol + @padding * 0.5
+    @max_x     = Game.width - @config.size - @tol - @padding * 0.1
+    @min_x     = @config.size + @tol + @padding * 0.1
     @overshoot = @padding
     @image.remove()
     @g.attr("class", "paddle")

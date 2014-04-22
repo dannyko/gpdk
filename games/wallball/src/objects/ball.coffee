@@ -58,7 +58,7 @@ class @Ball extends Circle
       if @r.y <= (Game.instance.paddle.r.y + Game.instance.paddle.height) and Math.abs(@r.x - Game.instance.paddle.r.x) <= Game.instance.paddle.size # physics engine missed the collision with the paddle
         Game.instance.paddle.remove_check(@) 
       else 
-        Gamescore.lives -= 1
+        Gamescore.lives -= 1 if @collision
         if Gamescore.lives >= 0
           Game.instance.text()
         else 

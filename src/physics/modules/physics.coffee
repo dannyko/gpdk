@@ -4,10 +4,11 @@ class @Physics # numerical integration module for solving differential equations
   @fps: 240 # set physics framerate to be 4x the standard requestAnimationFrame rate (60 fps) to reduce the likelihood large per-frame displacements (jumps) 
   @elapsedTime: 0 # keeps track of how much time has elapsed since the last animation frame was called
   @tick: 1000 / Physics.fps # the natural/target frame length/duration for this game/visualization (per web animation standards)
-  @off: false # a boolean switch determining whether or not to run the physics engine
+  @off: true # a boolean switch determining whether or not to run the physics engine
   @game: null # initialize reference to game instance associated with the physics engine
   @callbacks: []
   @debug: false
+  @timestamp: undefined
 
 # for testing:
 #  window.requestAnimFrame =
@@ -73,15 +74,40 @@ class @Physics # numerical integration module for solving differential equations
         Utils.index_pop(Collision.list, index).sleep() # place this element into the object pool for potential reuse later
       else
         Collision.list[index].update(elapsedTime)
-        console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y) if Physics.debug
+        if Physics.debug
+          console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', Collision.list[index].r.x, 'r.y:', Collision.list[index].r.y)
 
   @start: -> 
+    return unless @off # don't start twice
     @off = false 
     @timestamp = 0 # to keep track of integration frequency
     d3.timer(@integrate)
+    blurCallback = -> # window loses focus
+      if Gameprez? # tournament mode
+        Gamescore.lives = -1
+        Game.instance.stop()
+        alert('WINDOW BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!')
+      else
+        Physics.stop()
+        console.log('physics start blur')
+    $(window, window.top.document).blur( blurCallback )
+    $(window, window.top.document).focus( -> # window regains focus
+      return unless Physics.off
+      if Gameprez? # tournament mode
+        Gamescore.lives = -1
+        Game.instance.stop()
+        alert('BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!')
+      else # local/debug mode
+        if Gamescore.lives >= 0
+          Game.instance.message('GET READY', ->
+            Physics.timestamp = 0
+            Physics.start()
+          )
+    )
     return
 
   @stop: -> 
+    return if @off
     @off = true
     setTimeout(Physics.update, 2 * Physics.tick) # flush elements waiting to be removed
     return

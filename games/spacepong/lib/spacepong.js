@@ -552,7 +552,7 @@
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
       this.update_window(force = true);
-      $(window).on('resize', this.update_window);
+      $(window.top).on('resize', this.update_window);
       Game.instance = this;
       Game.instance.div.style('opacity', 0);
       this.preload_images();
@@ -593,15 +593,14 @@
     current_height = function(padding) {
       var element, y;
       if (padding == null) {
-        padding = 8;
+        padding = 124;
       }
-      element = window.top.document.body;
+      element = window.top;
       y = $(element).height();
-      y = Math.min(y, $(window).height());
-      y = Math.min(y, $(window.top).height());
       if (y > padding && padding > 0) {
-        return y = y - padding;
+        y = y - padding;
       }
+      return y;
     };
 
     get_scale = function() {
@@ -614,27 +613,22 @@
       return scale = Math.max(min_scale, Math.min(max_scale, scale));
     };
 
-    Game.prototype.update_window = function(force) {
-      var h, scale, tol, w;
-      if (force == null) {
-        force = false;
-      }
+    Game.prototype.update_window = function() {
+      var frame, h, scale, w;
       if (Game.width === null || Game.height === null) {
         return Game.scale;
       }
       scale = get_scale();
-      tol = .001;
-      if (!force) {
-        if (Math.abs(Game.scale - scale) < tol) {
-          return;
-        }
-      }
       Game.scale = scale;
       w = Math.ceil(Game.width * scale) + 'px';
       h = Math.ceil(Game.height * scale) + 'px';
       this.div.style('width', w).style('height', h);
       this.svg.style('width', w).style('height', h);
       this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
+      frame = $('#game_iframe', window.parent.document);
+      if (frame != null) {
+        frame.height(h);
+      }
     };
 
     Game.prototype.start = function() {
@@ -1281,13 +1275,15 @@
 
     Physics.tick = 1000 / Physics.fps;
 
-    Physics.off = false;
+    Physics.off = true;
 
     Physics.game = null;
 
     Physics.callbacks = [];
 
     Physics.debug = false;
+
+    Physics.timestamp = void 0;
 
     Physics.verlet_step = function(element, dt) {
       var accumulateSwitch;
@@ -1375,12 +1371,47 @@
     };
 
     Physics.start = function() {
+      var blurCallback;
+      if (!this.off) {
+        return;
+      }
       this.off = false;
       this.timestamp = 0;
       d3.timer(this.integrate);
+      blurCallback = function() {
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gamescore.lives = -1;
+          Game.instance.stop();
+          return alert('WINDOW BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!');
+        } else {
+          Physics.stop();
+          return console.log('physics start blur');
+        }
+      };
+      $(window, window.top.document).blur(blurCallback);
+      $(window, window.top.document).focus(function() {
+        if (!Physics.off) {
+          return;
+        }
+        if (typeof Gameprez !== "undefined" && Gameprez !== null) {
+          Gamescore.lives = -1;
+          Game.instance.stop();
+          return alert('BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!');
+        } else {
+          if (Gamescore.lives >= 0) {
+            return Game.instance.message('GET READY', function() {
+              Physics.timestamp = 0;
+              return Physics.start();
+            });
+          }
+        }
+      });
     };
 
     Physics.stop = function() {
+      if (this.off) {
+        return;
+      }
       this.off = true;
       setTimeout(Physics.update, 2 * Physics.tick);
     };
@@ -1704,7 +1735,7 @@
       var _base, _base1;
       this.config = config != null ? config : {};
       this.redraw = __bind(this.redraw, this);
-      (_base = this.config).size || (_base.size = 90);
+      (_base = this.config).size || (_base.size = 114);
       this.height = 14;
       (_base1 = this.config).path || (_base1.path = [
         {
@@ -1740,8 +1771,8 @@
       Paddle.__super__.constructor.call(this, this.config);
       this.is_root = true;
       this.min_y_speed = this.config.min_y_speed || 8;
-      this.max_x = Game.width - this.config.size - this.tol - this.padding * 0.5;
-      this.min_x = this.config.size + this.tol + this.padding * 0.5;
+      this.max_x = Game.width - this.config.size - this.tol - this.padding * 0.1;
+      this.min_x = this.config.size + this.tol + this.padding * 0.1;
       this.overshoot = this.padding;
       this.image.remove();
       this.g.attr("class", "paddle");
@@ -1875,7 +1906,7 @@
 
     Ship.speed = [.5, 1, 2];
 
-    Ship.size = [35, 30, 25];
+    Ship.size = [40, 35, 30];
 
     ship_path = function(w, h) {
       return [

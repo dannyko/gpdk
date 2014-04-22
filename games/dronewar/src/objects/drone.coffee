@@ -32,6 +32,7 @@ class @Drone extends Circle
 
   draw: ->
     @angle = -Math.atan2(@f.x, @f.y) # spin the image so that it faces the root element at all times
+    # console.log(@v.x, @v.y)
     @v.normalize(@max_speed) if @v.length() > @max_speed
     @set_param()
     super

@@ -25,7 +25,7 @@ class @Game
       .style('width', '')
       .style('height', '')
     @update_window(force = true)
-    $(window).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
+    $(window.top).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     Game.instance = @ # associate class variable with this instance for global accessibility from any context
     Game.instance.div.style('opacity', 0)
     @preload_images()
@@ -46,12 +46,11 @@ class @Game
     x = Math.min(x, $(window.top).width())
     x = (x - padding) if x > padding and padding > 0  
 
-  current_height = (padding = 8) ->
-    element   = window.top.document.body # .getElementsByTagName('iframe')[0]
+  current_height = (padding = 124) ->
+    element = window.top # .getElementsByTagName('iframe')[0]
     y = $(element).height()
-    y = Math.min(y, $(window).height())
-    y = Math.min(y, $(window.top).height())
-    y = (y - padding) if y > padding and padding > 0
+    y = (y - padding) if y > padding and padding > 0 # account for top bar, footer, and spacing
+    y
 
   get_scale = -> # minimal padding to prevent browser scrollbar issues 
     r1        = current_width() / Game.width
@@ -61,18 +60,20 @@ class @Game
     min_scale = 0.39
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
-  update_window: (force = false) =>
+  update_window:  =>
     return Game.scale if Game.width is null or Game.height is null
     scale = get_scale()
-    tol   = .001
-    unless force
-      return if Math.abs(Game.scale - scale) < tol # don't update after very small changes
+    # tol   = .001
+    # unless force
+    # return if Math.abs(Game.scale - scale) < tol # don't update after very small changes
     Game.scale = scale 
     w          = Math.ceil(Game.width * scale) + 'px'
     h          = Math.ceil(Game.height * scale) + 'px'
     @div.style('width', w).style('height', h)    
     @svg.style('width', w).style('height', h)
     @g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')')
+    frame = $('#game_iframe', window.parent.document)
+    frame?.height(h)
     # $(document.body).css('width', w).css('height', h)
     return
 

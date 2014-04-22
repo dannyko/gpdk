@@ -27,17 +27,6 @@ class @Dronewar extends Game
 
     n = @element.length * 2
     dur = 300 + 200 / (100 + Gamescore.value)
-
-    # d3.selectAll(".drone")
-     # .data(@element)
-      # .style("opacity", 0)
-      # .transition()
-      # .delay( (d, i) -> i * dur )
-      # .duration(dur * 4)
-      # .style("opacity", 1)
-      # .each('end', (d) => 
-      #   @launch_drone(d)
-     #  )
     return
 
   keydown: =>

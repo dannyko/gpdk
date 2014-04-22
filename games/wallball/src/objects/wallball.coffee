@@ -38,6 +38,7 @@ class @Wallball extends Game
         ball:[2131, 110]
       }
     })
+    @spawning_ball = false
 
   setup: ->
     @paddle = Factory.spawn(Paddle) # paddle element i.e. under user control
@@ -57,8 +58,8 @@ class @Wallball extends Game
   spawn_ball: ->
     return if Gamescore.lives < 0 # game has ended or is loading "game over" outro sequence, so do nothing
     return if Physics.off
-    return unless @ball is null or @ball?.is_removed
-    @ball = null
+    return if @spawning_ball # @ball?.collision
+    @spawning_ball = true
     @svg.style("cursor", "none")
     ready = @g.append("text")
       .text("GET READY")
@@ -81,6 +82,7 @@ class @Wallball extends Game
       .each('end', => 
         @ball = Factory.spawn(Ball)
         @ball.start()
+        @spawning_ball = false
       )
     return    
 
