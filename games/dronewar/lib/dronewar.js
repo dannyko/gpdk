@@ -1410,6 +1410,8 @@
 
     Physics.timestamp = void 0;
 
+    Physics.paused = false;
+
     Physics.verlet_step = function(element, dt) {
       var accumulateSwitch;
       if (dt == null) {
@@ -1504,28 +1506,21 @@
       this.timestamp = 0;
       d3.timer(this.integrate);
       blurCallback = function() {
-        if ((typeof Gameprez !== "undefined" && Gameprez !== null) && Gamescore.lives >= 0) {
-          Gamescore.lives = -1;
-          Game.instance.stop();
-          return alert('window must stay in focus during game');
-        } else {
-          return Physics.stop();
-        }
+        Physics.paused = true;
+        return Physics.stop();
       };
       $(window).blur(null);
       $(window).focus(null);
       $(window).blur(blurCallback);
       $(window).focus(function() {
-        if (!Physics.off) {
+        if (!Physics.paused) {
           return;
         }
-        console.log('physics start focus callback', Physics.off, Gamescore.lives);
-        console.log('Game.instance', Game.instance);
         if (Gamescore.lives >= 0) {
-          console.log('Gamescore.lives', Gamescore.lives);
           return Game.instance.message('GET READY', function() {
             Physics.timestamp = 0;
-            return Physics.start();
+            Physics.start();
+            return Physics.paused = false;
           });
         }
       });

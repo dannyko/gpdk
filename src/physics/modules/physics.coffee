@@ -84,16 +84,8 @@ class Physics # numerical integration module for solving differential equations 
     @timestamp = 0 # to keep track of integration frequency
     d3.timer(@integrate)
     blurCallback = -> # window loses focus
-      #if $('#gameFrame').length is 0
-      #  $(window).off('blur')
-      #  return
-      if Gameprez? and Gamescore.lives >= 0 # tournament mode
-        Gamescore.lives = -1
-        Game.instance.stop()
-        alert('window must stay in focus during game')
-      else
-        Physics.paused = true
-        Physics.stop()
+      Physics.paused = true
+      Physics.stop()
     $(window).blur( null )
     $(window).focus( null )
     $(window).blur( blurCallback )

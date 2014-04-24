@@ -1382,14 +1382,8 @@
       this.timestamp = 0;
       d3.timer(this.integrate);
       blurCallback = function() {
-        if ((typeof Gameprez !== "undefined" && Gameprez !== null) && Gamescore.lives >= 0) {
-          Gamescore.lives = -1;
-          Game.instance.stop();
-          return alert('window must stay in focus during game');
-        } else {
-          Physics.paused = true;
-          return Physics.stop();
-        }
+        Physics.paused = true;
+        return Physics.stop();
       };
       $(window).blur(null);
       $(window).focus(null);
