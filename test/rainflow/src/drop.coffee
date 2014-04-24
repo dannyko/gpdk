@@ -1,4 +1,4 @@
-class @Drop extends Circle
+class Drop extends Circle
   constructor: (@config = {}) ->
     super
     @dt = 1

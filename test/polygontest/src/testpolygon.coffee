@@ -1,4 +1,4 @@
-class @TestPolygon extends Polygon
+class TestPolygon extends Polygon
   reaction: (n) ->  
     N    = 240 # random color parameter
     fill = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"

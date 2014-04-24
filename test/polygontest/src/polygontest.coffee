@@ -1,4 +1,4 @@
-class @Polygontest extends Game
+class Polygontest extends Game
   constructor: (@config = {}) ->
     super
     @numel    = @config.numel || 64

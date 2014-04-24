@@ -1,4 +1,4 @@
-class @Collision
+class Collision
   @use_bb   = false # don't use bounding box for all collisions and reactions by default
   @list     = [] # initialize list of elements
 

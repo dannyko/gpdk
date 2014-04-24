@@ -1,4 +1,4 @@
-class @Physics # numerical integration module for solving differential equations e.g. physical simulations
+class Physics # numerical integration module for solving differential equations e.g. physical simulations
 
   # class variables for convenient global access:
   @fps: 240 # set physics framerate to be 4x the standard requestAnimationFrame rate (60 fps) to reduce the likelihood large per-frame displacements (jumps) 
@@ -9,6 +9,7 @@ class @Physics # numerical integration module for solving differential equations
   @callbacks: []
   @debug: false
   @timestamp: undefined
+  @paused: false
 
 # for testing:
 #  window.requestAnimFrame =
@@ -83,26 +84,27 @@ class @Physics # numerical integration module for solving differential equations
     @timestamp = 0 # to keep track of integration frequency
     d3.timer(@integrate)
     blurCallback = -> # window loses focus
-      if Gameprez? # tournament mode
+      #if $('#gameFrame').length is 0
+      #  $(window).off('blur')
+      #  return
+      if Gameprez? and Gamescore.lives >= 0 # tournament mode
         Gamescore.lives = -1
         Game.instance.stop()
-        alert('WINDOW BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!')
+        alert('window must stay in focus during game')
       else
+        Physics.paused = true
         Physics.stop()
-        console.log('physics start blur')
-    $(window, window.top.document).blur( blurCallback )
-    $(window, window.top.document).focus( -> # window regains focus
-      return unless Physics.off
-      if Gameprez? # tournament mode
-        Gamescore.lives = -1
-        Game.instance.stop()
-        alert('BLUR ERROR: Sorry, window must stay in focus during Tournament Mode!')
-      else # local/debug mode
-        if Gamescore.lives >= 0
-          Game.instance.message('GET READY', ->
-            Physics.timestamp = 0
-            Physics.start()
-          )
+    $(window).blur( null )
+    $(window).focus( null )
+    $(window).blur( blurCallback )
+    $(window).focus( -> # window regains focus
+      return unless Physics.paused
+      if Gamescore.lives >= 0
+        Game.instance.message('GET READY', ->
+          Physics.timestamp = 0
+          Physics.start()
+          Physics.paused = false
+        )
     )
     return
 

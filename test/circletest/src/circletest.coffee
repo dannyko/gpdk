@@ -1,4 +1,4 @@
-class @Circletest extends Game
+class Circletest extends Game
   constructor: (@config = {}) ->
     super
     @numel    = @config.numel || 64

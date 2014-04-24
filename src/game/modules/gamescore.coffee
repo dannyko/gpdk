@@ -1,4 +1,4 @@
-class @Gamescore # gamescore module 
+class Gamescore # gamescore module 
 
   ## class variables:
   @value = 0 # default initial game score

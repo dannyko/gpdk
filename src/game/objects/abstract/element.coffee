@@ -1,4 +1,4 @@
-class @Element
+class Element
   constructor: (@config = {}) ->      
     @d            = Factory.spawn(Vec) # temporary vector used by the physics engine
     @ri           = Factory.spawn(Vec) # temporary vector used by the physics engine

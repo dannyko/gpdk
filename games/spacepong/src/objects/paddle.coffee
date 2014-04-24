@@ -1,4 +1,4 @@
-class @Paddle extends Polygon
+class Paddle extends Polygon
   @image_url = GameAssetsUrl + "paddle.png"
 
   constructor: (@config = {}) ->

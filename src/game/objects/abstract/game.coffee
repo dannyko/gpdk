@@ -1,4 +1,4 @@
-class @Game
+class Game
   
   @width:  null # class variable for easy access from other objects
   @height: null # class variable for easy access from other objects

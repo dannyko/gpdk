@@ -1,4 +1,4 @@
-class @Wall extends Polygon
+class Wall extends Polygon
   @image_url = GameAssetsUrl + "wall.png"
 
   set_wall = (w, h) ->

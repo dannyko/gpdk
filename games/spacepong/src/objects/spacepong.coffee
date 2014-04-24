@@ -1,4 +1,4 @@
-class @Spacepong extends Game
+class Spacepong extends Game
 
   @bg_img = GameAssetsUrl + 'earth_background.jpg'
   
@@ -143,3 +143,7 @@ class @Spacepong extends Game
       @spawn_ball('GET READY')
       @spawn_ships()
     )
+
+$(document).ready(
+  => new Spacepong() # create the game instance
+)

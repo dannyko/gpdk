@@ -1,4 +1,4 @@
-class @ImageLoader # module for managing image assets
+class ImageLoader # module for managing image assets
   
   @loading: false # initialize boolean to prevent duplicate preload() calls
   @cache: {} # class variable; initialize cache dictionary object

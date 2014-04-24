@@ -1,4 +1,4 @@
-class @Frame extends Polygon
+class Frame extends Polygon
   constructor: (@config = {}) ->
     @config.fill ||= 'none'
     super

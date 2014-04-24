@@ -1,4 +1,4 @@
-class @Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirdsey
+class Ship # designed for Gameprez by Thomas Birdsey, http://twitter.com/Tbirdsey
   @viper: -> {path: [
              {pathSegTypeAsLetter: 'M', x: 0,  y: -24, react: true},
              {pathSegTypeAsLetter: 'L', x: 24,  y: 38, react: true},

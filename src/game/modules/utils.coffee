@@ -1,4 +1,4 @@
-class @Utils
+class Utils
   @index_pop: (array, index) ->
     length = array.length
     if index < array.length - 1

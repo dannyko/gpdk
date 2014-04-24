@@ -1,4 +1,4 @@
-class @ForceParam # the force config object defines the interface and provides default values for parameters used by the Force module
+class ForceParam # the force config object defines the interface and provides default values for parameters used by the Force module
   constructor: (@config = {}) ->
     @type = @config.type || 'constant'
     switch @type

@@ -1,4 +1,4 @@
-class @Factory # a module that keeps track of unused instances to reduce garbage collection overhead from object creation / memory churn
+class Factory # a module that keeps track of unused instances to reduce garbage collection overhead from object creation / memory churn
   @inactive = {} # initialize object
 
   @spawn: (klass, config, callback) -> # only create a new object if one can't be reused, otherwise repurpose/reconfigure the reusable object

@@ -1,4 +1,4 @@
-class @TestCircle extends Circle
+class TestCircle extends Circle
   reaction: (n) ->  
     N    = 240 # random color parameter
     fill = "hsl(" + Math.random() * N + ",80%," + "40%" + ")"

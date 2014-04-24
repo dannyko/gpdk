@@ -1,4 +1,4 @@
-class @Reaction # reaction module with no class variables only class and private methods
+class Reaction # reaction module with no class variables only class and private methods
 
   ## class methods:
 

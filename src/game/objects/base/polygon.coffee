@@ -1,4 +1,4 @@
-class @Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
+class Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
   constructor: (@config = {}) ->
     super(@config)
     @type = 'Polygon'

@@ -1,4 +1,4 @@
-class @Ball extends Circle
+class Ball extends Circle
   @image_url = GameAssetsUrl + "ball.png"
 
   constructor: (@config = {}) ->

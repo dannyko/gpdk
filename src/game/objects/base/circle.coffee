@@ -1,4 +1,4 @@
-class @Circle extends Element
+class Circle extends Element
   constructor: (@config = {}) ->
     @config.size ||= 15
     super(@config)

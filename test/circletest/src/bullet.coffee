@@ -1,4 +1,4 @@
-class @Bullet extends Circle
+class Bullet extends Circle
   constructor: (@config = {}) ->
     super
     @is_bullet = true

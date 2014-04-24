@@ -1,4 +1,4 @@
-class @Drone extends Circle
+class Drone extends Circle
   @url = GameAssetsUrl + "drone_1.png"
   @max_speed = 3
 

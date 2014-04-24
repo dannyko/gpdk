@@ -1,4 +1,4 @@
-class @Root extends Polygon
+class Root extends Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true

@@ -1,4 +1,4 @@
-class @Wallball extends Game
+class Wallball extends Game
   constructor: (@config = {}) ->
     @image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png']
     super
@@ -133,3 +133,7 @@ class @Wallball extends Game
       @spawn_ball()
       @text()
     )
+
+$(document).ready(
+  => new Wallball() # create the game instance
+)

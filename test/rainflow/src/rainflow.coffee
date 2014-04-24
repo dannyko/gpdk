@@ -1,4 +1,4 @@
-class @Rainflow extends Game
+class Rainflow extends Game
   constructor: (@config = {}) ->
     super
     @map_width = 360

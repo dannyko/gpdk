@@ -1,4 +1,4 @@
-class @Dronewar extends Game
+class Dronewar extends Game
 
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
@@ -216,3 +216,7 @@ class @Dronewar extends Game
     @scoretxt.text('SCORE: ' + Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN))  
     @lives.text('ENERGY: ' + Gamescore.lives) 
+
+$(document).ready(
+  => new Dronewar() # create the game instance
+)

@@ -1,4 +1,4 @@
-class @Root extends Circle
+class Root extends Circle
   constructor: (@config = {}) ->
     super
     @is_root   = true
