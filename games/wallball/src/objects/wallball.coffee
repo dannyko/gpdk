@@ -3,7 +3,7 @@ class Wallball extends Game
     @image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png']
     super
     @setup()
-    @div.style('background-color', '#000')
+    @svg.style('background-color', '#000')
 
     @scoretxt = @g.append("text")
       .text("")
@@ -60,7 +60,6 @@ class Wallball extends Game
     return if Physics.off
     return if @spawning_ball # @ball?.collision
     @spawning_ball = true
-    @svg.style("cursor", "none")
     ready = @g.append("text")
       .text("GET READY")
       .attr("stroke", "none")
@@ -132,8 +131,10 @@ class Wallball extends Game
       @wall.v.y = @wall.speed
       @spawn_ball()
       @text()
+      Utils.fullscreen()
+      @div.style("cursor", "none")
     )
 
 $(document).ready(
-  => new Wallball() # create the game instance
+  -> new Wallball() # create the game instance
 )

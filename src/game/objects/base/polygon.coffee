@@ -36,13 +36,13 @@ class Polygon extends Element # simplest path-based shape by default involving 3
     @polygon_path() # set path metadata
     maxnode    = @path[0] # initialize
     @path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y
-    maxd    = @path[0].d
+    maxd       = @path[0].d
     for i in [1..@path.length - 2]
-      node   = @path[i]
-      node.d = node.x * node.x + node.y * node.y
+      node    = @path[i]
+      node.d  = node.x * node.x + node.y * node.y
       maxnode = @path[i] if node.d > maxd
-    @maxnode  = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
-    @size     = @maxnode.length()
+    @maxnode = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
+    @size    = @maxnode.length()
     @image.attr("d", @d_attr())
     @overlay.attr("d", @d_attr())
   

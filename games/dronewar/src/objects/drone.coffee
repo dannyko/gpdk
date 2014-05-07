@@ -73,9 +73,9 @@ class Drone extends Circle
       .style('opacity', 0)
       .ease('linear')
       .remove()
-      .each('end', =>
-        @overlay.style('opacity', depletion * 0.5)
-        @is_flashing = false
+      .each('end', (d) ->
+        d.overlay.style('opacity', depletion * 0.5)
+        d.s_flashing = false
       )
 
   deplete: (power = 1) ->
@@ -122,9 +122,9 @@ class Drone extends Circle
        .duration(dur)
        .ease('poly(0.5)')
        .style("opacity", "0")
-       .each('end', => 
-         @is_removed = true
-         @overlay.style('opacity', 0)
+       .each('end', (d) -> 
+         d.is_removed = true
+         d.overlay.style('opacity', 0)
        )
       scaleSwitch = false
       if scaleSwitch
@@ -141,12 +141,15 @@ class Drone extends Circle
     
   offscreen: -> 
     return if Gamescore.lives < 0
-    dx  = @r.x - Game.width * 0.5
-    dy  = @r.y - Game.height * 0.5 
-    dr2 = dx * dx + dy * dy 
-    scale = Game.width / Game.height
-    if dr2 > Game.height * Game.height * 0.25 * scale * scale
-      scale = .01
-      Force.eval(@, @force_param[0], @f)
-      @v.add(@f.normalize(@max_speed * scale))
+    dx  = Game.width * 0.5 - @r.x 
+    dy  = Game.height * 0.5 - @r.y
+    d   = Math.sqrt(dx * dx + dy * dy) 
+    scale = 0.01 * @max_speed / d
+    if Math.abs(dx) > Game.width * 0.5 - @size
+      @v.x += scale * dx
+    if Math.abs(dy) > Game.height * 0.5 - @size
+      @v.y += scale * dy
+    if super()
+      @r.x = Math.min(Math.max(0, @r.x), Game.width)
+      @r.y = Math.min(Math.max(0, @r.y), Game.height)
     return false

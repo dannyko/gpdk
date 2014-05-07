@@ -40,6 +40,7 @@ class Element
                     .append("g")
                     .attr("transform", "translate(" + @r.x + "," + @r.y + ")")
                     .style('opacity', 0)
+                    .datum(@) # use the d3 "datum" function to "bind" the game element to the <g> tag to allow accessing the object via the DOM element/d3 selection
     @g            = @config.g              || @g
     @svg          = @config.svg            || d3.select("#game_svg") # the container
     @game_g       = @config.game_g         || d3.select("#game_g") # the container's main group
@@ -78,14 +79,14 @@ class Element
     .duration(dur)
     .ease('linear')
     .style("opacity", 1)
-    .each('end', => callback?(@))
+    .each('end', (d) -> callback?(d))
 
   fadeOut: (dur = 30, callback) ->
     @g.transition()
       .duration(dur)
       .ease('linear')
       .style("opacity", 0)
-      .each('end', => callback?(@))
+      .each('end', (d) -> callback?(d))
 
   flash: (dur = 1000, color = '#FFF', scaleFactor = 3, initialOpacity = 0.4) ->
     return if @is_flashing # wait until previous flash finishes
@@ -98,7 +99,7 @@ class Element
       .attr('transform', 'scale(' + scaleFactor + ')')
       .style('opacity', 0)
       .ease('linear')
-      .each('end', => 
+      .each('end', =>  # use double arrow since we don't know if user has bound the data (@) to the overlay element
         @overlay.attr('transform', 'scale(1)')
         @is_flashing = false
       )
@@ -130,7 +131,7 @@ class Element
     return if @is_removed or not @collision
     @collision = false
     if dur > 0
-      @fadeOut(dur, (=> @is_removed = true))
+      @fadeOut(dur, ((d) -> d.is_removed = true))
     else
       @is_removed = true # important detail: mark the element instance as removed but let the physics engine call sleep() to avoid inconsistent data!    
     return

@@ -86,5 +86,5 @@ class Ball extends Circle
       .duration(dur)
       .ease('linear')
       .attr("opacity", 0)
-      .each('end', => @flashing = false)
+      .each('end', (d) -> d.flashing = false)
       .remove()

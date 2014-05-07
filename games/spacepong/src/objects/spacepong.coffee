@@ -15,7 +15,7 @@ class Spacepong extends Game
     @initialN = 1
     @svg.style("background-image", 'url(' + Spacepong.bg_img + ')')
       .style('background-size', '100%, auto')
-      .style('height', '100%')
+      .style('background-repeat', 'no-repeat')
 
     @setup()
 
@@ -132,7 +132,6 @@ class Spacepong extends Game
       
     go.on("click", => 
       go.on("click", null) # so that clicking start more than once before it finishes fading out does not create any actions in the game
-      @svg.style("cursor", "none")
       dur = 300
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
@@ -142,8 +141,10 @@ class Spacepong extends Game
       @text()
       @spawn_ball('GET READY')
       @spawn_ships()
+      Utils.fullscreen()
+      @div.style("cursor", "none")
     )
 
 $(document).ready(
-  => new Spacepong() # create the game instance
+  -> new Spacepong() # create the game instance
 )

@@ -185,7 +185,7 @@ class Dronewar extends Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     go.text("START")
-    go.on("click", => 
+    go.on("click", -> 
       dur = 500
       title.transition().duration(dur).style("opacity", 0).remove()
       prompt.transition().duration(dur).style("opacity", 0).remove()
@@ -194,9 +194,10 @@ class Dronewar extends Game
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      @root.start()
+      Game.instance.root.start()
       Gamescore.value = 0
-      @level()
+      Game.instance.level()
+      Utils.fullscreen()
     )
     how = @g.append("text")
       .text("")
@@ -218,5 +219,5 @@ class Dronewar extends Game
     @lives.text('ENERGY: ' + Gamescore.lives) 
 
 $(document).ready(
-  => new Dronewar() # create the game instance
+  -> new Dronewar() # create the game instance
 )

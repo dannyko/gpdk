@@ -1,4 +1,26 @@
 class Utils
+  @fullscreen: ->
+    elem = document.body.parentNode
+    if (elem.requestFullscreen)
+      elem.requestFullscreen()
+    else if (elem.msRequestFullscreen)
+      elem.msRequestFullscreen()
+    else if (elem.mozRequestFullScreen)
+      elem.mozRequestFullScreen()
+    else if (elem.webkitRequestFullscreen)
+      elem.webkitRequestFullscreen()
+
+  @defaultscreen: ->
+    elem = document
+    if (elem.exitFullscreen)
+      elem.exitFullscreen()
+    else if (elem.msExitFullscreen)
+      elem.msExitFullscreen()
+    else if (elem.mozExitFullScreen)
+      elem.mozExitFullScreen()
+    else if (elem.webkitExitFullscreen)
+      elem.webkitExitFullscreen()
+
   @index_pop: (array, index) ->
     length = array.length
     if index < array.length - 1

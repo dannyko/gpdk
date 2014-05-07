@@ -39,7 +39,7 @@ class Physics # numerical integration module for solving differential equations 
 
   @verlet: (element, elapsedTime) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm 
     # integral time step(s):
-    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer => more physics steps per frame)
+    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
     step  = 0 # initialize step counter
     while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
       Physics.verlet_step(element)
@@ -90,12 +90,13 @@ class Physics # numerical integration module for solving differential equations 
     $(window).focus( null )
     $(window).blur( blurCallback )
     $(window).focus( -> # window regains focus
-      return unless Physics.paused
+      return unless Physics.off
+      Physics.paused = false
       if Gamescore.lives >= 0
         Game.instance.message('GET READY', ->
+          return if Physics.paused
           Physics.timestamp = 0
           Physics.start()
-          Physics.paused = false
         )
     )
     return

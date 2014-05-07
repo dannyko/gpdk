@@ -2,9 +2,9 @@
 (function() {
   var Ball, Circle, Collision, Element, Factory, Force, ForceParam, Game, Gamescore, ImageLoader, Paddle, Physics, Polygon, Reaction, Ship, Spacepong, Utils, Vec,
     __slice = [].slice,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   Factory = (function() {
     function Factory() {}
@@ -134,6 +134,34 @@
 
   Utils = (function() {
     function Utils() {}
+
+    Utils.fullscreen = function() {
+      var elem;
+      elem = document.body.parentNode;
+      if (elem.requestFullscreen) {
+        return elem.requestFullscreen();
+      } else if (elem.msRequestFullscreen) {
+        return elem.msRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        return elem.mozRequestFullScreen();
+      } else if (elem.webkitRequestFullscreen) {
+        return elem.webkitRequestFullscreen();
+      }
+    };
+
+    Utils.defaultscreen = function() {
+      var elem;
+      elem = document;
+      if (elem.exitFullscreen) {
+        return elem.exitFullscreen();
+      } else if (elem.msExitFullscreen) {
+        return elem.msExitFullscreen();
+      } else if (elem.mozExitFullScreen) {
+        return elem.mozExitFullScreen();
+      } else if (elem.webkitExitFullscreen) {
+        return elem.webkitExitFullscreen();
+      }
+    };
 
     Utils.index_pop = function(array, index) {
       var length, swap;
@@ -325,7 +353,7 @@
       this.type = this.config.type || null;
       this.image = this.config.image || null;
       this.overlay = this.config.overlay || null;
-      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0);
+      this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0).datum(this);
       this.g = this.config.g || this.g;
       this.svg = this.config.svg || d3.select("#game_svg");
       this.game_g = this.config.game_g || d3.select("#game_g");
@@ -370,22 +398,18 @@
       if (dur == null) {
         dur = 30;
       }
-      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', (function(_this) {
-        return function() {
-          return typeof callback === "function" ? callback(_this) : void 0;
-        };
-      })(this));
+      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
+        return typeof callback === "function" ? callback(d) : void 0;
+      });
     };
 
     Element.prototype.fadeOut = function(dur, callback) {
       if (dur == null) {
         dur = 30;
       }
-      return this.g.transition().duration(dur).ease('linear').style("opacity", 0).each('end', (function(_this) {
-        return function() {
-          return typeof callback === "function" ? callback(_this) : void 0;
-        };
-      })(this));
+      return this.g.transition().duration(dur).ease('linear').style("opacity", 0).each('end', function(d) {
+        return typeof callback === "function" ? callback(d) : void 0;
+      });
     };
 
     Element.prototype.flash = function(dur, color, scaleFactor, initialOpacity) {
@@ -458,11 +482,9 @@
       }
       this.collision = false;
       if (dur > 0) {
-        this.fadeOut(dur, ((function(_this) {
-          return function() {
-            return _this.is_removed = true;
-          };
-        })(this)));
+        this.fadeOut(dur, (function(d) {
+          return d.is_removed = true;
+        }));
       } else {
         this.is_removed = true;
       }
@@ -517,7 +539,7 @@
   })();
 
   Game = (function() {
-    var current_height, current_width, get_scale;
+    var current_height, current_width, get_scale, image_preload_callback;
 
     Game.width = null;
 
@@ -536,7 +558,6 @@
     function Game(config) {
       var force;
       this.config = config != null ? config : {};
-      this.update_window = __bind(this.update_window, this);
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
@@ -552,25 +573,24 @@
         this.g = this.svg.append('g');
       }
       this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      Game.instance = this;
       this.update_window(force = true);
       $(window.top).on('resize', this.update_window);
-      Game.instance = this;
       Game.instance.div.style('opacity', 0);
       this.preload_images();
     }
 
-    Game.prototype.preload_images = function(image_list, image_preload_callback) {
+    image_preload_callback = function() {
+      var dur;
+      Game.instance.images_loaded = true;
+      Game.instance.start();
+      dur = 1000;
+      return Game.instance.div.transition().duration(dur).style('opacity', 1);
+    };
+
+    Game.prototype.preload_images = function(image_list, preload_callback) {
       if (image_list == null) {
         image_list = Game.instance.image_list;
-      }
-      if (image_preload_callback == null) {
-        image_preload_callback = function() {
-          var dur;
-          Game.instance.images_loaded = true;
-          Game.instance.start();
-          dur = 1000;
-          return Game.instance.div.transition().duration(dur).style('opacity', 1);
-        };
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
         return ImageLoader.preload(image_list, image_preload_callback);
@@ -615,7 +635,7 @@
     };
 
     Game.prototype.update_window = function() {
-      var frame, h, scale, w;
+      var h, scale, shh, swh, w;
       if (Game.width === null || Game.height === null) {
         return Game.scale;
       }
@@ -623,13 +643,11 @@
       Game.scale = scale;
       w = Math.ceil(Game.width * scale) + 'px';
       h = Math.ceil(Game.height * scale) + 'px';
-      this.div.style('width', w).style('height', h);
-      this.svg.style('width', w).style('height', h);
-      this.g.attr('transform', 'translate(' + scale * Game.width * 0.5 + ',' + scale * Game.height * 0.5 + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
-      frame = $('#game_iframe', window.parent.document);
-      if (frame != null) {
-        frame.height(h);
-      }
+      Game.instance.div.style('height', current_height() + 'px');
+      Game.instance.svg.style('width', w).style('height', h);
+      swh = scale * Game.width * 0.5;
+      shh = scale * Game.height * 0.5;
+      Game.instance.g.attr('transform', 'translate(' + swh + ',' + shh + ') scale(' + scale + ')' + 'translate(' + -Game.width * 0.5 + ',' + -Game.height * 0.5 + ')');
     };
 
     Game.prototype.start = function() {
@@ -1389,14 +1407,17 @@
       $(window).focus(null);
       $(window).blur(blurCallback);
       $(window).focus(function() {
-        if (!Physics.paused) {
+        if (!Physics.off) {
           return;
         }
+        Physics.paused = false;
         if (Gamescore.lives >= 0) {
           return Game.instance.message('GET READY', function() {
+            if (Physics.paused) {
+              return;
+            }
             Physics.timestamp = 0;
-            Physics.start();
-            return Physics.paused = false;
+            return Physics.start();
           });
         }
       });
@@ -1709,11 +1730,9 @@
       this.flashing = true;
       dur = 200;
       fill = "#FFF";
-      return this.g.append("circle").attr("r", this.size * 1.05).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .5).transition().duration(dur).ease('linear').attr("opacity", 0).each('end', (function(_this) {
-        return function() {
-          return _this.flashing = false;
-        };
-      })(this)).remove();
+      return this.g.append("circle").attr("r", this.size * 1.05).attr("x", 0).attr("y", 0).attr('opacity', 0).attr('fill', fill).transition().duration(dur).ease('poly(0.5)').attr("opacity", .5).transition().duration(dur).ease('linear').attr("opacity", 0).each('end', function(d) {
+        return d.flashing = false;
+      }).remove();
     };
 
     return Ball;
@@ -2106,7 +2125,7 @@
       this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
-      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%, auto').style('height', '100%');
+      this.svg.style("background-image", 'url(' + Spacepong.bg_img + ')').style('background-size', '100%, auto').style('background-repeat', 'no-repeat');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
@@ -2194,7 +2213,6 @@
         return function() {
           var dur;
           go.on("click", null);
-          _this.svg.style("cursor", "none");
           dur = 300;
           title.transition().duration(dur).style("opacity", 0).remove();
           go.transition().duration(dur).style("opacity", 0).remove();
@@ -2203,7 +2221,9 @@
           Spacepong.__super__.start.call(_this);
           _this.text();
           _this.spawn_ball('GET READY');
-          return _this.spawn_ships();
+          _this.spawn_ships();
+          Utils.fullscreen();
+          return _this.div.style("cursor", "none");
         };
       })(this));
     };
@@ -2212,10 +2232,8 @@
 
   })(Game);
 
-  $(document).ready((function(_this) {
-    return function() {
-      return new Spacepong();
-    };
-  })(this));
+  $(document).ready(function() {
+    return new Spacepong();
+  });
 
 }).call(this);
