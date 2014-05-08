@@ -1,4 +1,4 @@
-class Force # this simple object does one job: return the value of the force f(x)
+class $z.Force # this simple object does one job: return the value of the force f(x)
   @dr  = {x: 0, y: 0}
   @rpx = {x: 0, y: 0}
   @rmx = {x: 0, y: 0}

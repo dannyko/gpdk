@@ -1,4 +1,4 @@
-class Wall extends Polygon
+class $z.Wall extends $z.Polygon
   @image_url = GameAssetsUrl + "wall.png"
 
   set_wall = (w, h) ->
@@ -12,13 +12,13 @@ class Wall extends Polygon
 
   constructor: (@config = {}) ->
     @config.fill ||= 'darkblue'
-    w = Game.width * 0.5
-    h = Game.height * 0.5
+    w = $z.Game.width * 0.5
+    h = $z.Game.height * 0.5
     @config.path ||= set_wall(w, h)
     @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
     super(@config)
-    @r.x = Game.width * 0.5
-    @r.y = -Game.height * 0.5 + 0.05 * Game.height
+    @r.x = $z.Game.width * 0.5
+    @r.y = -$z.Game.height * 0.5 + 0.05 * $z.Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
     @speed = 2 # initial wall speed
     @padding = 300
@@ -26,10 +26,10 @@ class Wall extends Polygon
     @g = d3.select('#game_g').insert("g", ":first-child")
     @g.attr("class", "wall")
     @image = @g.append("image")
-     .attr("xlink:href", Wall.image_url)
+     .attr("xlink:href", $z.Wall.image_url)
      .attr("x", -w - 1).attr("y", -h)
-     .attr("width", Game.width + 2)
-     .attr("height", Game.height)
+     .attr("width", $z.Game.width + 2)
+     .attr("height", $z.Game.height)
     @overlay = @g.append("path")
      .attr("d", @d_attr())
      .attr("x", -w).attr("y", -h)
@@ -38,12 +38,12 @@ class Wall extends Polygon
 
   draw: ->
     @r.y += @dt * @v.y * @speed # update wall position with constant speed and variable direction
-    if @r.y > (Game.height * 0.5 - @padding)
+    if @r.y > ($z.Game.height * 0.5 - @padding)
       on_edge   = true
-      @r.y = Game.height * 0.5 - @padding
-    if (@r.y + Game.height * 0.5) < @tol
+      @r.y = $z.Game.height * 0.5 - @padding
+    if (@r.y + $z.Game.height * 0.5) < @tol
       on_edge   = true
-      @r.y = @tol - Game.height * 0.5
+      @r.y = @tol - $z.Game.height * 0.5
     @v.y = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
     super
 

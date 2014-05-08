@@ -1,4 +1,4 @@
-class Wallball extends Game
+class $z.Wallball extends $z.Game
   constructor: (@config = {}) ->
     @image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png']
     super
@@ -28,8 +28,8 @@ class Wallball extends Game
 
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
-    Game.message_color = '#FF4'
-    Game.sound = new Howl({
+    $z.Game.message_color = '#FF4'
+    $z.Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
       volume: 0.5,
       sprite: {
@@ -41,8 +41,8 @@ class Wallball extends Game
     @spawning_ball = false
 
   setup: ->
-    @paddle = Factory.spawn(Paddle) # paddle element i.e. under user control
-    @wall   = Factory.spawn(Wall)
+    @paddle = $z.Factory.spawn($z.Paddle) # paddle element i.e. under user control
+    @wall   = $z.Factory.spawn($z.Wall)
     @ball   = null # no ball initially, until first spawn_ball
 
   keydown: =>
@@ -52,12 +52,12 @@ class Wallball extends Game
     return
 
   text: ->
-    @scoretxt.text('SCORE: ' + Gamescore.value)
-    @lives.text('LIVES: ' + Gamescore.lives) unless Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
+    @scoretxt.text('SCORE: ' + $z.Gamescore.value)
+    @lives.text('LIVES: ' + $z.Gamescore.lives) unless $z.Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
 
   spawn_ball: ->
-    return if Gamescore.lives < 0 # game has ended or is loading "game over" outro sequence, so do nothing
-    return if Physics.off
+    return if $z.Gamescore.lives < 0 # game has ended or is loading "game over" outro sequence, so do nothing
+    return if $z.Physics.off
     return if @spawning_ball # @ball?.collision
     @spawning_ball = true
     ready = @g.append("text")
@@ -65,8 +65,8 @@ class Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "#FF4")
       .attr("font-size", "36")
-      .attr("x", Game.width / 2 - 105)
-      .attr("y", Game.height / 2 + 20)
+      .attr("x", $z.Game.width / 2 - 105)
+      .attr("y", $z.Game.height / 2 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .attr('opacity', 0)
@@ -79,7 +79,7 @@ class Wallball extends Game
       .style('opacity', 0)
       .remove()
       .each('end', => 
-        @ball = Factory.spawn(Ball)
+        @ball = $z.Factory.spawn($z.Ball)
         @ball.start()
         @spawning_ball = false
       )
@@ -91,7 +91,7 @@ class Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", Game.width / 2 - 135)
+      .attr("x", $z.Game.width / 2 - 135)
       .attr("y", 90).attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     title.text("WALLBALL")
@@ -101,8 +101,8 @@ class Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "#FF4")
       .attr("font-size", "36")
-      .attr("x", Game.width * 0.5 - 60)
-      .attr("y", Game.height / 2 + 130)
+      .attr("x", $z.Game.width * 0.5 - 60)
+      .attr("y", $z.Game.height / 2 + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -112,8 +112,8 @@ class Wallball extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", Game.width / 2 - 170)
-      .attr("y", Game.height - 100)
+      .attr("x", $z.Game.width / 2 - 170)
+      .attr("y", $z.Game.height - 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -125,16 +125,16 @@ class Wallball extends Game
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      Gamescore.value = 0
+      $z.Gamescore.value = 0
       super()
-      Game.sound.play('start')
+      $z.Game.sound.play('start')
       @wall.v.y = @wall.speed
       @spawn_ball()
       @text()
-      Utils.fullscreen()
+      $z.Utils.fullscreen()
       @div.style("cursor", "none")
     )
 
 $(document).ready(
-  -> new Wallball() # create the game instance
+  -> new $z.Wallball() # create the game instance
 )

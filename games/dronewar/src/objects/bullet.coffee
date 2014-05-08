@@ -1,4 +1,4 @@
-class Bullet extends Circle
+class $z.Bullet extends $z.Circle
   constructor: (@config = {}) ->
     super
     @is_bullet = true
@@ -13,9 +13,9 @@ class Bullet extends Circle
       return true
     n.deplete(@power) unless n.invincible # deplete the drone
     if n.depleted() # remove the drone if depleted
-      Gamescore.increment_value()  # increment score for hitting the drone
-      Game.instance.text()
-      Gameprez?.score(Gamescore.value) # send score update to Gameprez if available
+      $z.Gamescore.increment_value()  # increment score for hitting the drone
+      $z.Game.instance.text()
+      Gameprez?.score($z.Gamescore.value) # send score update to Gameprez if available
       n.remove()
     @remove() # remove the bullet that hit the drone 
     true

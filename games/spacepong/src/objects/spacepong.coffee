@@ -1,19 +1,19 @@
-class Spacepong extends Game
+class $z.Spacepong extends $z.Game
 
   @bg_img = GameAssetsUrl + 'earth_background.jpg'
   
   @ball_count: ->
-    count = 1 if Gamescore.value < 1000
-    count = 2 if 1000 <= Gamescore.value < 5000
-    count = 3 if 5000 <= Gamescore.value < 10000
-    count = 4 if 10000 <= Gamescore.value
+    count = 1 if $z.Gamescore.value < 1000
+    count = 2 if 1000 <= $z.Gamescore.value < 5000
+    count = 3 if 5000 <= $z.Gamescore.value < 10000
+    count = 4 if 10000 <= $z.Gamescore.value
     count
 
   constructor: (@config = {}) ->
     @image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png']    
     super
     @initialN = 1
-    @svg.style("background-image", 'url(' + Spacepong.bg_img + ')')
+    @svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')')
       .style('background-size', '100%, auto')
       .style('background-repeat', 'no-repeat')
 
@@ -41,7 +41,7 @@ class Spacepong extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
 
-    Game.sound = new Howl({
+    $z.Game.sound = new Howl({
       urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
       volume: 0.15,
       sprite: {
@@ -54,10 +54,10 @@ class Spacepong extends Game
     })
 
   setup: ->
-    @paddle = Factory.spawn(Paddle) # paddle element i.e. under user control
-    Game.paddle = @paddle
+    @paddle = $z.Factory.spawn($z.Paddle) # paddle element i.e. under user control
+    $z.Game.paddle = @paddle
     @spawn_check_needed = true
-    Gamescore.lives = 2
+    $z.Gamescore.lives = 2
 
   keydown: =>
     switch d3.event.keyCode 
@@ -66,30 +66,30 @@ class Spacepong extends Game
     return
   
   spawn_ball: (txt) ->
-    return if Physics.off # check before spawning since game may be over
-    Physics.stop() # pause the movement of balls and ships
+    return if $z.Physics.off # check before spawning since game may be over
+    $z.Physics.stop() # pause the movement of balls and ships
     @message(txt, @spawn_ball_callback)
     return    
 
   spawn_ball_callback: =>
-    ball = Factory.spawn(Ball)
+    ball = $z.Factory.spawn($z.Ball)
     ball.start()
-    Physics.start() # unpause the physics engine
+    $z.Physics.start() # unpause the physics engine
 
   spawn_ships: ->
-    if Gamescore.value > 0
-      @new_ship_count = Math.max(2, @initialN + Math.floor(Gamescore.value / 1000 + Math.random() * 2)) # (Math.random() * 4) + 1    
+    if $z.Gamescore.value > 0
+      @new_ship_count = Math.max(2, @initialN + Math.floor($z.Gamescore.value / 1000 + Math.random() * 2)) # (Math.random() * 4) + 1    
     else 
       @new_ship_count = 1 # always start with one ship
     index = @new_ship_count
     while index--
-      ship = Factory.spawn(Ship)
+      ship = $z.Factory.spawn($z.Ship)
       ship.start()
     return
 
   text: ->
-    @scoretxt.text('SCORE: ' + Gamescore.value)
-    @lives.text('LIVES: ' + Gamescore.lives) unless Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
+    @scoretxt.text('SCORE: ' + $z.Gamescore.value)
+    @lives.text('LIVES: ' + $z.Gamescore.lives) unless $z.Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
 
   stop: =>
     super
@@ -102,7 +102,7 @@ class Spacepong extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", Game.width / 2 - 320)
+      .attr("x", $z.Game.width / 2 - 320)
       .attr("y", 90).attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .text("SPACEPONG")
@@ -112,8 +112,8 @@ class Spacepong extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", Game.width / 2 - 320)
-      .attr("y", Game.height / 2 + 130)
+      .attr("x", $z.Game.width / 2 - 320)
+      .attr("y", $z.Game.height / 2 + 130)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .text("drag, move the mouse, or use left/right arrow-keys to control the paddle")
@@ -123,8 +123,8 @@ class Spacepong extends Game
       .attr("stroke", "none")
       .attr("fill", "#FF2")
       .attr("font-size", "36")
-      .attr("x", Game.width * 0.5 - 60)
-      .attr("y", Game.height - 100)
+      .attr("x", $z.Game.width * 0.5 - 60)
+      .attr("y", $z.Game.height - 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -136,15 +136,15 @@ class Spacepong extends Game
       title.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      Gamescore.value = 0
+      $z.Gamescore.value = 0
       super()
       @text()
       @spawn_ball('GET READY')
       @spawn_ships()
-      Utils.fullscreen()
+      $z.Utils.fullscreen()
       @div.style("cursor", "none")
     )
 
 $(document).ready(
-  -> new Spacepong() # create the game instance
+  -> new $z.Spacepong() # create the game instance
 )

@@ -1,4 +1,4 @@
-class Vec # two-dimensional vectors {x, y}
+class $z.Vec # two-dimensional vectors {x, y}
   constructor: (@config = {}) ->
     @x = @config.x || 0
     @y = @config.y || 0 

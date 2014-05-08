@@ -1,4 +1,4 @@
-class Paddle extends Polygon
+class $z.Paddle extends $z.Polygon
   @image_url = GameAssetsUrl + "paddle.png"
 
   constructor: (@config = {}) ->
@@ -17,15 +17,15 @@ class Paddle extends Polygon
     @is_root   = true # Make this the player controlled element
     @fixed     = true    
     @padding   = 50
-    @r.x       = Game.width / 2
-    @r.y       = Game.height - @height - @padding
+    @r.x       = $z.Game.width / 2
+    @r.y       = $z.Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = Game.width - @config.size - @tol
+    @max_x     = $z.Game.width - @config.size - @tol
     @min_x     = @config.size + @tol
     @g.attr("class", "paddle")
     @image.remove()
     @image = @g.append("image")
-     .attr("xlink:href", Paddle.image_url)
+     .attr("xlink:href", $z.Paddle.image_url)
      .attr("x", -@size).attr("y", -@height)
      .attr("width", @size * 2)
      .attr("height", @height * 2)
@@ -49,7 +49,7 @@ class Paddle extends Polygon
 
   redraw: (e = d3.event) =>
     return unless @collision # don't draw if not active
-    @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
+    @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / $z.Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
     @draw()

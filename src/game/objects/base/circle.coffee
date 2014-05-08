@@ -1,4 +1,4 @@
-class Circle extends Element
+class $z.Circle extends $z.Element
   constructor: (@config = {}) ->
     @config.size ||= 15
     super(@config)

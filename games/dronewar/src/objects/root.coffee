@@ -1,12 +1,12 @@
-class Root extends Polygon
+class $z.Root extends $z.Polygon
   constructor: (@config = {size: 0}) ->
     super(@config)
     @is_root       = true
     @init()
 
   init: ->
-    @r.x           = Game.width / 2
-    @r.y           = Game.height - 180
+    @r.x           = $z.Game.width / 2
+    @r.y           = $z.Game.height - 180
     @angle         = 0
     @angleStep     = 2 * Math.PI / 40 # initialize per-step angle change magnitude 
     @lastfire      = undefined # initialize timestamp
@@ -33,7 +33,7 @@ class Root extends Polygon
     return
 
   apply_limits: (xy) ->
-    [Math.min(Math.max(@bb_width, xy[0]), Game.width - @bb_width), Math.min(Math.max(@bb_height, xy[1]), Game.height - @bb_height)]
+    [Math.min(Math.max(@bb_width, xy[0]), $z.Game.width - @bb_width), Math.min(Math.max(@bb_height, xy[1]), $z.Game.height - @bb_height)]
 
   redraw_interp: (xy = d3.mouse(@game_g.node())) =>
     return unless @collision # don't draw if not active
@@ -51,7 +51,7 @@ class Root extends Polygon
         count++
         @dr.normalize(step) # difference vector pointing towards destination
         # console.log(xy[0], xy[1], @r.x, @r.y, @dr.x, @dr.y)
-        @r.add(@dr) # if @r.x > @bb_width and @r.x < (Game.width - @bb_width) and @r.y > @bb_height and @r.y < (Game.height - @bb_height)
+        @r.add(@dr) # if @r.x > @bb_width and @r.x < ($z.Game.width - @bb_width) and @r.y > @bb_height and @r.y < ($z.Game.height - @bb_height)
         return false
     d3.timer(redraw_func)
     return
@@ -74,12 +74,12 @@ class Root extends Polygon
 
   fire: =>
     return true if @is_removed
-    return if Gamescore.lives < 0 # do nothing if game is over / ending
-    if @lastfire is undefined or @lastfire > Physics.timestamp
-      @lastfire = Physics.timestamp
+    return if $z.Gamescore.lives < 0 # do nothing if game is over / ending
+    if @lastfire is undefined or @lastfire > $z.Physics.timestamp
+      @lastfire = $z.Physics.timestamp
       return
-    return unless (Physics.timestamp - @lastfire) >= @wait
-    @lastfire = Physics.timestamp
+    return unless ($z.Physics.timestamp - @lastfire) >= @wait
+    @lastfire = $z.Physics.timestamp
     @shoot()
     return
   
@@ -90,7 +90,7 @@ class Root extends Polygon
     y = Math.sin(@angle - Math.PI * 0.5)
     bullet_config.power = @bullet_size * @bullet_size
     bullet_config.size  = @bullet_size
-    bullet = Factory.spawn(Bullet, bullet_config) # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
+    bullet = $z.Factory.spawn($z.Bullet, bullet_config) # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
     bullet.r.x = @r.x + x * (@size / 3 + @bullet_size)
     bullet.r.y = @r.y + y * 20
     bullet.v.x = @bullet_speed * x
@@ -101,7 +101,7 @@ class Root extends Polygon
     bullet.start()
     return
 
-  ship: (ship = Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using Utils.pathTween
+  ship: (ship = $z.Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
     @collision = false
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill
@@ -120,7 +120,7 @@ class Root extends Polygon
       .data([endPath])
       .transition()
       .duration(dur)
-      .attrTween("d", Utils.pathTween)
+      .attrTween("d", $z.Utils.pathTween)
       .transition()
       .duration(dur * 0.5)
       .attr("opacity", 0)
@@ -136,7 +136,7 @@ class Root extends Polygon
       .each('end', => 
         @set_path()
         @collision = true
-        Physics.callbacks.push(@fire)
+        $z.Physics.callbacks.push(@fire)
       )
       
   start: ->
@@ -155,15 +155,15 @@ class Root extends Polygon
     if n.is_bullet # bullets don't hurt the ship
       n.remove()
       return
-    return if Gamescore.lives < 0 # game is already over or ending
+    return if $z.Gamescore.lives < 0 # game is already over or ending
     damage = 10
-    Gamescore.lives -= damage # decrement lives for this game
-    if Gamescore.lives < 0
+    $z.Gamescore.lives -= damage # decrement lives for this game
+    if $z.Gamescore.lives < 0
       @charge = 0 # drones stop attacking root when it's destroyed
-      Game.instance.stop()
+      $z.Game.instance.stop()
     else
-      Game.instance.text()
-    n.remove() unless Gamescore.lives < 0 # don't remove the drone that kills the root element
+      $z.Game.instance.text()
+    n.remove() unless $z.Gamescore.lives < 0 # don't remove the drone that kills the root element
     N    = 240 # random color parameter
     fill = '#ff0' 
     dur  = 150 # color effect transition duration parameter

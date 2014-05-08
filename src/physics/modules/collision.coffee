@@ -1,4 +1,4 @@
-class Collision
+class $z.Collision
   @use_bb   = false # don't use bounding box for all collisions and reactions by default
   @list     = [] # initialize list of elements
 
@@ -13,7 +13,7 @@ class Collision
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false
-    while Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+    while $z.Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.tick() # update position unless root or bullet 
       n.tick() # update position unless root or bullet 
       iter++ # increment the iteration counter
@@ -38,14 +38,14 @@ class Collision
             return false if p.is_removed # this node got cleaned up
             return false unless d isnt p.d and p.d.collision # skip this point and continue searching lower levels of the hierarchy
             if (p.x >= x0) and (p.x < x3) and (p.y >= y0) and (p.y < y3)
-              Collision.check(d, p.d) # check for collision and run reactions if collision occurred
+              $z.Collision.check(d, p.d) # check for collision and run reactions if collision occurred
           x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0
         )
       length = @list.length
       i++
 
-  name = [null, null] # initialize static array instance outside of class function definition to reduce memory churn
-  sort = [null, null] # initialize static array instance outsider of class function definition to reduce memory churn
+  name = [null, null] # initialize static array instance outside of class $z.function definition to reduce memory churn
+  sort = [null, null] # initialize static array instance outsider of class $z.function definition to reduce memory churn
 
   @check: (ei, ej, reaction = true) -> # check for collision between Elements i and j
     # alphabetize the object names before entering the switch block since inputs are ordered but collision types are not
@@ -83,7 +83,7 @@ class Collision
             reaction_type = 'polygon_polygon'
           )
       )
-    Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
+    $z.Reaction[reaction_type](m, n, d) if d.collision and reaction # handles all cases dynamically without another switch block 
     collision = d.collision
     collision
   

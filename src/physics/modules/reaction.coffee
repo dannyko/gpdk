@@ -1,13 +1,13 @@
-class Reaction # reaction module with no class variables only class and private methods
+class $z.Reaction # reaction module with no class $z.variables only class $z.and private methods
 
-  ## class methods:
+  ## class $z.methods:
 
   @circle_circle: (m, n, d) -> # perfectly elastic collision between perfectly circlular rigid bodies according to Newtonian dynamics
     return if m.remove_check(n) || n.remove_check(m)
     line     = m.line.init(d).normalize()
     overstep = Math.max(d.dmin - d.dist, 0) # account for overstep since simulated movement occurs in discrete jumps
     shift    = 0.5 * (Math.max(m.tol, n.tol) + overstep) # shift both by an equal amount adding up to satisfy tolerance while taking into account overstep
-    Reaction.elastic_collision(m, n, line, shift)
+    $z.Reaction.elastic_collision(m, n, line, shift)
     m.reaction(n) # should give the same result as n.reaction(m) - symmetric after remove_check
     return  
     
@@ -16,7 +16,7 @@ class Reaction # reaction module with no class variables only class and private 
     intersecting_segment = polygon.path[d.i]
     normal = intersecting_segment.n
     shift = 0.5 * Math.max(circle.tol, polygon.tol)
-    Reaction.elastic_collision(circle, polygon, normal, shift)
+    $z.Reaction.elastic_collision(circle, polygon, normal, shift)
     return
     
   @polygon_polygon: (m, n, d) -> # perfectly elastic default collision type
@@ -33,7 +33,7 @@ class Reaction # reaction module with no class variables only class and private 
       normal = m.normal.init(nseg.n).scale(dot_b / Math.abs(dot_b)) # copy of reference to line segment normal vector object defining direction of exchange of velocity components
       segj   = mseg
     shift  = 0.5 * Math.max(m.tol, n.tol)
-    Reaction.elastic_collision(m, n, normal, shift)
+    $z.Reaction.elastic_collision(m, n, normal, shift)
     m.reaction(n) # should give the same effects as n.reaction(m) by symmetry -- see Element abstract superclass
     return
     
@@ -42,7 +42,7 @@ class Reaction # reaction module with no class variables only class and private 
     maxiter  = 32 # should not occur under normal conditions
     iter     = 1 # initialize
     reaction = false # input for collision check to prevent reaction being called while the while loop executes
-    while Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
+    while $z.Collision.check(m, n, reaction) and iter <= maxiter # stop iterating after collision == false or iter > maxiter
       m.r     = m.r.add(lshift) # update position to resolve conflict
       n.r     = n.r.subtract(lshift) # update position unless root or bullet 
       iter++ # increment the iteration counter

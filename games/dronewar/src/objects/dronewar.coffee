@@ -1,4 +1,4 @@
-class Dronewar extends Game
+class $z.Dronewar extends $z.Game
 
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
@@ -7,7 +7,7 @@ class Dronewar extends Game
     super
 
   level: ->
-    return if Gamescore.lives < 0 or Physics.off # do nothing if the game is over/ending
+    return if $z.Gamescore.lives < 0 or $z.Physics.off # do nothing if the game is over/ending
     drone_increment = 1
     @N += drone_increment unless @N >= @maxN
     @charge *= 20
@@ -16,17 +16,17 @@ class Dronewar extends Game
     @element   = [] # reinitialize element list
     multiplier = 20
     offset     = 200
-    Drone.max_speed += 0.1
+    $z.Drone.max_speed += 0.1
     drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
-      newAttacker = Factory.spawn(Drone, drone_config) unless Gamescore.lives < 0 or Physics.off # spawn if game is over or ending
+      newAttacker = $z.Factory.spawn($z.Drone, drone_config) unless $z.Gamescore.lives < 0 or $z.Physics.off # spawn if game is over or ending
       @element.push(newAttacker) # extend the array of all elements in this game
-      @element[i].r.x = Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
-      @element[i].r.y = Game.height * 0.1 + Math.random() * 0.1 * Game.height # + j  * @element[i].size  * 2  + @element[i].tol
+      @element[i].r.x = $z.Game.width  * 0.5 + (Math.random() - 0.5) * 0.5 * $z.Game.width # k   * @element[i].size * 2 + @element[i].tol - Math.ceil(Math.sqrt(@element.length)) * @element[i].size 
+      @element[i].r.y = $z.Game.height * 0.1 + Math.random() * 0.1 * $z.Game.height # + j  * @element[i].size  * 2  + @element[i].tol
       @element[i].start()
 
     n = @element.length * 2
-    dur = 300 + 200 / (100 + Gamescore.value)
+    dur = 300 + 200 / (100 + $z.Gamescore.value)
     return
 
   keydown: =>
@@ -40,7 +40,7 @@ class Dronewar extends Game
         @root.draw([@root.r.x, @root.r.y]) 
       )
       when 82
-        @reset() if Gamescore.lives < 0
+        @reset() if $z.Gamescore.lives < 0
       # down arrow reverses direction of firing angle 
     return
 
@@ -51,15 +51,15 @@ class Dronewar extends Game
     return
 
   start: -> # start new game
-    Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
-    Gamescore.lives = Gamescore.initialLives
+    $z.Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
+    $z.Gamescore.lives = $z.Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
       .style('background-size', '100%')
       .style('background-repeat', 'no-repeat')
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones
-    @root     = Factory.spawn(Root) # root element i.e. under user control; don't need to use Factory because we never remove it
+    @root     = $z.Factory.spawn($z.Root) # root element i.e. under user control; don't need to use Factory because we never remove it
     @scoretxt = @g.append("text").text("")
       .attr("stroke", "none")
       .attr("fill", "white")
@@ -86,9 +86,9 @@ class Dronewar extends Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) unless window is window.top # keyboard listener
     # load audio:
-    Game.audioSwitch = true
-    if Game.audioSwitch
-      Game.sound = new Howl({
+    $z.Game.audioSwitch = true
+    if $z.Game.audioSwitch
+      $z.Game.sound = new Howl({
         urls: [GameAssetsUrl + 'dronewar.mp3', GameAssetsUrl + 'dronewar.ogg'],
         volume: 0.5,
         sprite: {
@@ -103,7 +103,7 @@ class Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "48")
-      .attr("x", Game.width / 2 - 150)
+      .attr("x", $z.Game.width / 2 - 150)
       .attr("y", 60)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -113,8 +113,8 @@ class Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "24")
-      .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 20)
+      .attr("x", $z.Game.width / 2 - 350)
+      .attr("y", $z.Game.height / 4 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
     prompt.text("SELECT SHIP:")
@@ -125,8 +125,8 @@ class Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "32")
-      .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 100)
+      .attr("x", $z.Game.width / 2 - 350)
+      .attr("y", $z.Game.height / 4 + 100)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
@@ -134,7 +134,7 @@ class Dronewar extends Game
     dur = 500
     sidewinder.on("click", -> 
       return if this.style.fill == '#000996'
-      root.ship(Ship.sidewinder()) 
+      @root.ship($z.Ship.sidewinder()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -144,14 +144,14 @@ class Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "32")
-      .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 200)
+      .attr("x", $z.Game.width / 2 - 350)
+      .attr("y", $z.Game.height / 4 + 200)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold').style("cursor", "pointer")
     viper.text("VIPER")
     viper.on("click", -> 
       return if this.style.fill == '#000996'
-      root.ship(Ship.viper()) 
+      @root.ship($z.Ship.viper()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
       sidewinder.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -161,15 +161,15 @@ class Dronewar extends Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "32")
-      .attr("x", Game.width / 2 - 350)
-      .attr("y", Game.height / 4 + 300)
+      .attr("x", $z.Game.width / 2 - 350)
+      .attr("y", $z.Game.height / 4 + 300)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     fang.text("FANG")
     fang.on("click", -> 
       return if this.style.fill == '#000996'
-      root.ship(Ship.fang())
+      @root.ship($z.Ship.fang())
       d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF")
       sidewinder.style("fill", "#FFF")
@@ -194,30 +194,30 @@ class Dronewar extends Game
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()
       how.transition().duration(dur).style("opacity", 0).remove()
-      Game.instance.root.start()
-      Gamescore.value = 0
-      Game.instance.level()
-      Utils.fullscreen()
+      $z.Game.instance.root.start()
+      $z.Gamescore.value = 0
+      $z.Game.instance.level()
+      $z.Utils.fullscreen()
     )
     how = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", "18")
-      .attr("x", Game.width / 2 - 350)
+      .attr("x", $z.Game.width / 2 - 350)
       .attr("y", @root.r.y + 140)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation")
-    Game.sound?.play('music') if Game.musicSwitch
+    $z.Game.sound?.play('music') if $z.Game.musicSwitch
     super
 
   text: ->
-    @scoretxt.text('SCORE: ' + Gamescore.value)
+    @scoretxt.text('SCORE: ' + $z.Gamescore.value)
     @leveltxt.text('LEVEL: ' + (@N - @initialN))  
-    @lives.text('ENERGY: ' + Gamescore.lives) 
+    @lives.text('ENERGY: ' + $z.Gamescore.lives) 
 
 $(document).ready(
-  -> new Dronewar() # create the game instance
+  -> new $z.Dronewar() # create the game instance
 )

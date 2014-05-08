@@ -9,15 +9,15 @@
 
     function Gamescore() {}
 
-    Gamescore.value = 0;
+    $z.Gamescore.value = 0;
 
-    Gamescore.increment = 100;
+    $z.Gamescore.increment = 100;
 
-    Gamescore.initialLives = 2;
+    $z.Gamescore.initialLives = 2;
 
-    Gamescore.lives = Gamescore.initialLives;
+    $z.Gamescore.lives = $z.Gamescore.initialLives;
 
-    Gamescore.increment_value = function() {
+    $z.Gamescore.increment_value = function() {
       return this.value += this.increment;
     };
 

@@ -1,4 +1,4 @@
-class Polygon extends Element # simplest path-based shape by default involving 3 straight line segments
+class $z.Polygon extends $z.Element # simplest path-based shape by default involving 3 straight line segments
   constructor: (@config = {}) ->
     super(@config)
     @type = 'Polygon'
@@ -22,17 +22,17 @@ class Polygon extends Element # simplest path-based shape by default involving 3
     ]
 
   d_attr: -> # generate path "d" attribute
-    Utils.d(@path)
+    $z.Utils.d(@path)
     
   polygon_path: -> # assign path metadata
     for i in [0..@path.length - 2] # set edge vectors: path.r
-      @path[i].r = Factory.spawn(Vec, @path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
-      @path[i].n = Factory.spawn(Vec, {x: -@path[i].r.y, y: @path[i].r.x}).normalize() # unit normal vector 
+      @path[i].r = $z.Factory.spawn($z.Vec, @path[i]).subtract(@path[(i + 1) % (@path.length - 1)]) # vector pointing to this node from the subsequent node
+      @path[i].n = $z.Factory.spawn($z.Vec, {x: -@path[i].r.y, y: @path[i].r.x}).normalize() # unit normal vector 
     @BB()
     return
 
   set_path: (@path = @path) -> # update path data and metadata
-    @pathref  = @path.map((d) -> Utils.clone(d)) # original path array for reference
+    @pathref  = @path.map((d) -> $z.Utils.clone(d)) # original path array for reference
     @polygon_path() # set path metadata
     maxnode    = @path[0] # initialize
     @path[0].d = maxnode.x * maxnode.x + maxnode.y * maxnode.y
@@ -41,7 +41,7 @@ class Polygon extends Element # simplest path-based shape by default involving 3
       node    = @path[i]
       node.d  = node.x * node.x + node.y * node.y
       maxnode = @path[i] if node.d > maxd
-    @maxnode = Factory.spawn(Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
+    @maxnode = $z.Factory.spawn($z.Vec, maxnode) # farthest node's coordinates define the radius of the bounding circle for the entire polygon
     @size    = @maxnode.length()
     @image.attr("d", @d_attr())
     @overlay.attr("d", @d_attr())

@@ -1,4 +1,4 @@
-class Paddle extends Polygon
+class $z.Paddle extends $z.Polygon
   @image_url = GameAssetsUrl + "paddle.png"
 
   constructor: (@config = {}) ->
@@ -14,19 +14,19 @@ class Paddle extends Polygon
     @padding   = 50
     @config.fill  = 'red'
     @config.stroke = 'none'
-    @config.r   = Factory.spawn(Vec)
-    @config.r.x = Game.width / 2
-    @config.r.y = Game.height - @height - @padding
+    @config.r   = $z.Factory.spawn($z.Vec)
+    @config.r.x = $z.Game.width / 2
+    @config.r.y = $z.Game.height - @height - @padding
     super(@config)
     @is_root   = true # Make this the player controlled element
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = Game.width - @config.size - @tol - @padding * 0.1
+    @max_x     = $z.Game.width - @config.size - @tol - @padding * 0.1
     @min_x     = @config.size + @tol + @padding * 0.1
     @overshoot = @padding
     @image.remove()
     @g.attr("class", "paddle")
     @image = @g.append("image")
-     .attr("xlink:href", Paddle.image_url)
+     .attr("xlink:href", $z.Paddle.image_url)
      .attr("x", -@size - @overshoot).attr("y", -@height)
      .attr("width", @size * 2 + @overshoot * 2)
      .attr("height", @height * 2)
@@ -50,7 +50,7 @@ class Paddle extends Polygon
     d3.timer(func)
 
   redraw: (e = d3.event) =>
-    @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / Game.scale
+    @r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / $z.Game.scale
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
     @draw()

@@ -1,4 +1,4 @@
-class Drone extends Circle
+class $z.Drone extends $z.Circle
   @url = GameAssetsUrl + "drone_1.png"
   @max_speed = 3
 
@@ -8,13 +8,13 @@ class Drone extends Circle
     @root   = @config.root
     @param  = {type: 'charge', cx: null, cy: null, q: null}
     @set_param()
-    @max_speed = Drone.max_speed
+    @max_speed = $z.Drone.max_speed
     @invincible = false 
     @energy = @config.energy || 10
     @image.remove()
     @g.attr("class", "drone")
     @image = @g.insert("image", ":first-child")
-      .attr("xlink:href", Drone.url)
+      .attr("xlink:href", $z.Drone.url)
       .attr("x", -@size).attr("y", -@size)
       .attr("width", @size * 2)
       .attr("height", @size * 2)
@@ -27,7 +27,7 @@ class Drone extends Circle
   set_param: ->
     @param.cx       = @root.r.x
     @param.cy       = @root.r.y
-    @param.q        = if @collision then @root.charge * (1 + Gamescore.value / 1000) else 1e-6 # charge, avoid hard zero to preserver angle / rotation of drone (no NaN)
+    @param.q        = if @collision then @root.charge * (1 + $z.Gamescore.value / 1000) else 1e-6 # charge, avoid hard zero to preserver angle / rotation of drone (no NaN)
     @force_param[0] = @param
 
   draw: ->
@@ -38,7 +38,7 @@ class Drone extends Circle
     super
     
   start: ->
-    v0           = 1 + Gamescore.value * 0.0001 * Drone.max_speed 
+    v0           = 1 + $z.Gamescore.value * 0.0001 * $z.Drone.max_speed 
     @max_speed   = 0
     dur          = 1000
     @invincible  = true
@@ -50,7 +50,7 @@ class Drone extends Circle
       dy        /= d1
       d.v.x = v0 * dx
       d.v.y = v0 * dy
-      d.max_speed = Drone.max_speed
+      d.max_speed = $z.Drone.max_speed
       d.invincible = false
     )
 
@@ -82,7 +82,7 @@ class Drone extends Circle
     return if @invincible
     @energy = @energy - power
     @flash()
-    Game.sound?.play('shot') if Game.audioSwitch
+    $z.Game.sound?.play('shot') if $z.Game.audioSwitch
     return
 
   depleted: ->
@@ -91,9 +91,9 @@ class Drone extends Circle
   remove: ->
     return if @is_removed or not @collision
     dur = 800
-    if Gamescore.lives >= 0
+    if $z.Gamescore.lives >= 0
       @collision = false # prevent additional reactions from occuring while transition lasts
-      Game.sound.play('boom') if Game.audioSwitch
+      $z.Game.sound.play('boom') if $z.Game.audioSwitch
       @overlay.style('opacity', 0.6)
       @g.append('circle') # overlay #2
         .attr("x", 0)
@@ -136,20 +136,20 @@ class Drone extends Circle
          .attr('transform', 'scale(5)')
     else
       super(dur)
-    Game.instance.level() if Game.instance.element.every (d) -> not d.collision
+    $z.Game.instance.level() if $z.Game.instance.element.every (d) -> not d.collision
     return
     
   offscreen: -> 
-    return if Gamescore.lives < 0
-    dx  = Game.width * 0.5 - @r.x 
-    dy  = Game.height * 0.5 - @r.y
+    return if $z.Gamescore.lives < 0
+    dx  = $z.Game.width * 0.5 - @r.x 
+    dy  = $z.Game.height * 0.5 - @r.y
     d   = Math.sqrt(dx * dx + dy * dy) 
     scale = 0.01 * @max_speed / d
-    if Math.abs(dx) > Game.width * 0.5 - @size
+    if Math.abs(dx) > $z.Game.width * 0.5 - @size
       @v.x += scale * dx
-    if Math.abs(dy) > Game.height * 0.5 - @size
+    if Math.abs(dy) > $z.Game.height * 0.5 - @size
       @v.y += scale * dy
     if super()
-      @r.x = Math.min(Math.max(0, @r.x), Game.width)
-      @r.y = Math.min(Math.max(0, @r.y), Game.height)
+      @r.x = Math.min(Math.max(0, @r.x), $z.Game.width)
+      @r.y = Math.min(Math.max(0, @r.y), $z.Game.height)
     return false

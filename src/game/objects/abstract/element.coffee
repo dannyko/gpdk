@@ -1,23 +1,23 @@
-class Element
+class $z.Element
   constructor: (@config = {}) ->      
-    @d            = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @ri           = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @rj           = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @r_temp       = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @dr_temp      = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @line         = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @normal       = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @lshift       = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @vPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @vPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @uPar         = Factory.spawn(Vec) # temporary vector used by the physics engine
-    @uPerp        = Factory.spawn(Vec) # temporary vector used by the physics engine    
+    @d            = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @ri           = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @rj           = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @r_temp       = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @dr_temp      = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @line         = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @normal       = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @lshift       = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @vPar         = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @vPerp        = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @uPar         = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine
+    @uPerp        = $z.Factory.spawn($z.Vec) # temporary vector used by the physics engine    
     @dt           = @config.dt             || 0.25 # controls displacement of physics engine relative to the framerate
-    @r            = @config.r              || Factory.spawn(Vec) # position vector (rx, ry)
-    @dr           = @config.dr             || Factory.spawn(Vec) # displacement vector (dx, dy)
-    @v            = @config.v              || Factory.spawn(Vec) # velocity vector (vx, vy)
-    @f            = @config.f              || Factory.spawn(Vec) # force vector (fx, fy)
-    @fcopy        = Utils.clone(@config.f) || Factory.spawn(Vec) # copy of force vector (fx, fy) to speed up physics computations
+    @r            = @config.r              || $z.Factory.spawn($z.Vec) # position vector (rx, ry)
+    @dr           = @config.dr             || $z.Factory.spawn($z.Vec) # displacement vector (dx, dy)
+    @v            = @config.v              || $z.Factory.spawn($z.Vec) # velocity vector (vx, vy)
+    @f            = @config.f              || $z.Factory.spawn($z.Vec) # force vector (fx, fy)
+    @fcopy        = $z.Utils.clone(@config.f) || $z.Factory.spawn($z.Vec) # copy of force vector (fx, fy) to speed up physics computations
     @force_param  = @config.force_param    || [] # array of objects for computing net force vectors 
     @size         = @config.size           || 0 # zero default size in units of pixels for abstract class
     @bb_width     = @config.bb_width       || 0 # bounding box width
@@ -45,13 +45,13 @@ class Element
     @svg          = @config.svg            || d3.select("#game_svg") # the container
     @game_g       = @config.game_g         || d3.select("#game_g") # the container's main group
     @quadtree     = @config.quadtree       || null
-    @tick         = @config.tick           || Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
+    @tick         = @config.tick           || $z.Physics.verlet # an update function; by default, assume that the force is independent of velocity i.e. f(x, v) = f(x)
     @is_removed   = false
     @is_sleeping  = false
     @is_flashing  = false
     @_cleanup     = true # call remove() when element goes offscreen by default
-    Utils.addChainedAttributeAccessor(@, 'fill')
-    Utils.addChainedAttributeAccessor(@, 'stroke')
+    $z.Utils.addChainedAttributeAccessor(@, 'fill')
+    $z.Utils.addChainedAttributeAccessor(@, 'stroke')
         
   reaction: (element) -> # interface for reactions after a collision event with another element occurs 
     element?.reaction() # reactions occur in pairs so let one half of the pair trigger the other's reaction by default
@@ -72,7 +72,7 @@ class Element
       return true
     false
 
-  offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > Game.width + @size or @r.y > Game.height + @size
+  offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > $z.Game.width + @size or @r.y > $z.Game.height + @size
 
   fadeIn: (dur = 30, callback) ->
     @g.transition()
@@ -108,9 +108,9 @@ class Element
     if @is_sleeping
       console.log('element.start: is_sleeping... bug?')
       return
-    index = Collision.list.indexOf(@)
+    index = $z.Collision.list.indexOf(@)
     if index == -1
-      Collision.list.push(@) # tell physics module that this element wants to join
+      $z.Collision.list.push(@) # tell physics module that this element wants to join
     else
       console.log('element.start: this element is already on the physics list! bug?')
     @collision  = true
@@ -123,7 +123,7 @@ class Element
     @remove() if @_cleanup and @offscreen()
 
   sleep: ->
-    Factory.sleep(@) # push this element onto the inactive array
+    $z.Factory.sleep(@) # push this element onto the inactive array
     @is_sleeping = true # mark the element instance as asleep
     return
 
@@ -156,7 +156,7 @@ class Element
     @is_sleeping  = false  # mark the eleemnt as awake
     # restore default position, velocity, and force values:
     @init()
-    Utils.set(@, config) if config?
+    $z.Utils.set(@, config) if config?
     @ # return this element instance
     
   update: (elapsedTime) -> # helper to combine these three operations into one loop for efficiency    

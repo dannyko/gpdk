@@ -1,10 +1,10 @@
-class Frame extends Polygon
+class $z.Frame extends $z.Polygon
   constructor: (@config = {}) ->
     @config.fill ||= 'none'
     super
     tol = 1
-    w = 0.5 * (Game.width + tol)
-    h = (Game.height + tol)
+    w = 0.5 * ($z.Game.width + tol)
+    h = ($z.Game.height + tol)
     @path = [ # frame path for border containing the ball
              {pathSegTypeAsLetter: 'M', x: -w,  y:  h, react: true},
              {pathSegTypeAsLetter: 'L', x: -w,  y: -h, react: true},
@@ -14,7 +14,7 @@ class Frame extends Polygon
              ]
     @tick = -> # allows the element to be part of the physics engine without moving (can still take part in collision events)
     @set_path()
-    @r.x = Game.width * 0.5 # centered horizontally
+    @r.x = $z.Game.width * 0.5 # centered horizontally
     @r.y = 0 # centered vertically
     @g.remove() # frame is hidden so don't render a corresponding image
 

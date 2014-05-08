@@ -1,5 +1,5 @@
-class Utils
-  @fullscreen: ->
+class $z.Utils
+  @fullscreen = ->
     elem = document.body.parentNode
     if (elem.requestFullscreen)
       elem.requestFullscreen()
@@ -10,7 +10,7 @@ class Utils
     else if (elem.webkitRequestFullscreen)
       elem.webkitRequestFullscreen()
 
-  @defaultscreen: ->
+  @defaultscreen = ->
     elem = document
     if (elem.exitFullscreen)
       elem.exitFullscreen()
@@ -21,7 +21,7 @@ class Utils
     else if (elem.webkitExitFullscreen)
       elem.webkitExitFullscreen()
 
-  @index_pop: (array, index) ->
+  @index_pop = (array, index) ->
     length = array.length
     if index < array.length - 1
       swap = array[index]
@@ -29,15 +29,15 @@ class Utils
       array[length - 1] = swap
     array.pop()
 
-  @set: (obj, config) ->
+  @set = (obj, config) ->
     for x of config # set the new configuration values for the object to prepare it for its new role
       obj[x] = config[x] # set configuration value
 
-  @clone: (obj) ->
+  @clone = (obj) ->
     return obj if obj is null or typeof (obj) isnt "object"
     temp = new obj.constructor()
     for key of obj
-      temp[key] = Utils.clone(obj[key])
+      temp[key] = $z.Utils.clone(obj[key])
     temp
 
   @addChainedAttributeAccessor = (obj, attr) -> # modified from  http://coffeescriptcookbook.com/chapters/classes_and_objects/chaining
