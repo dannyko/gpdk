@@ -1,24 +1,22 @@
-class Drop extends Circle
+class $z.Drop extends $z.Circle
   constructor: (@config = {}) ->
-    super
-    @dt = 1
-    @size = .7
+    @config.size = @config.size || .6
+    super(@config)
     @fill('navy')
     @stroke('none')
-    @image.attr('opacity', '0.6').attr('stroke-width', 0.25)
-    @lifetime = Utils.timestamp()
-    @max_lifetime = 3e4
-    @vscale = .7
-    # @BB() to allow bounding boxes to be used for collision detection
+    @image.attr('opacity', '0.6')
+    @lifetime = $z.Utils.timestamp()
+    @max_lifetime = 2e4
+    @fadeIn(dur = 250)
 
-  reaction: (element) ->
-    @v.scale(@vscale)
-    super
+  init: ->
+    @lifetime = $z.Utils.timestamp()
+    super  
 
-  cleanup: (@_cleanup = @_cleanup) ->
-    @lifetime = Utils.timestamp() - @lifetime
-    @destroy() if @lifetime > @max_lifetime
-    @lifetime = Utils.timestamp() - @lifetime
+  cleanup: ->
+    @lifetime = $z.Utils.timestamp() - @lifetime
+    @remove() if @lifetime > @max_lifetime
+    @lifetime = $z.Utils.timestamp() - @lifetime
     if @offscreen() # periodic wrapping 
       if @r.x > @width then @r.x = @r.x % @width
       if @r.x < 0 then @r.x = @width + @r.x

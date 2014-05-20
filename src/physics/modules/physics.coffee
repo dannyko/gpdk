@@ -45,8 +45,8 @@ class $z.Physics # numerical integration module for solving differential equatio
       Physics.verlet_step(element)
       ++step
     # fractional time step:
-    error  = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
-    dt     = element.dt * error # scale timestep of physics to compensate for noise in framerate
+    error = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
+    dt    = element.dt * error # scale timestep of physics to compensate for noise in framerate
     Physics.verlet_step(element, dt) # substep to compensate for slop in timing
     return
 

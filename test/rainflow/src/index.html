@@ -37,7 +37,7 @@ svg {
     </div>
 
     <!-- for development use only: load and compile coffeescript code in the browser -->
-<script type="text/coffeescript" src="../../../src/game/modules/$z.Gamescore.coffee"></script>
+<script type="text/coffeescript" src="../../../src/game/modules/Gamescore.coffee"></script>
 <script type="text/coffeescript" src="../../../src/game/modules/utils.coffee"></script>
 <script type="text/coffeescript" src="../../../src/physics/modules/collision.coffee"></script>
 <script type="text/coffeescript" src="../../../src/physics/modules/reaction.coffee"></script>
@@ -53,7 +53,7 @@ svg {
 <script type="text/coffeescript" src="drop.coffee"></script>
 <script type="text/coffeescript" src="rainflow.coffee"></script>
     <script type="text/coffeescript">
-      new Rainflow().start()
+      new $z.Rainflow().start()
     </script>
   </body>
 </html>

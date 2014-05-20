@@ -17,7 +17,7 @@ class $z.Factory # a module that keeps track of unused instances to reduce garba
       else # execute default action
         $z.Utils.set(old, config) # set instance parameters to config params
     callback?(old) # execute callback if provided
-    old # now it's new; i.e., not really old anymore, despite its name
+    old # now it's new; i.e., not really old anymore
 
   @sleep: (instance) -> # inactivate the instance and add it to the inactive array for its class $z.type
     if instance is undefined # or instance.is_sleeping is true

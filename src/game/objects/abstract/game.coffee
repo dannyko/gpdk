@@ -7,26 +7,23 @@ class $z.Game
   @musicSwitch: true
   @instance: null
   @message_color: "#FFF"
+  @width: 800 # default 'natural' width for the game (sets aspect ratio)
+  @height: 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
   
   constructor: (@config = {}) ->
     @images_loaded  = false # initialize
     @element    = [] # initialize
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
+    @svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%')
     @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
-    $z.Game.width  = 800 # default 'natural' width for the game (sets aspect ratio)
-    $z.Game.height = 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")
     @g          = @svg.append('g') if @g.empty()
     @g.attr('id', 'game_g')
-      .attr('width', @svg.attr('width'))
-      .attr('height', @svg.attr('height'))
       .style('width', '')
       .style('height', '')
     $z.Game.instance = @ # associate class $z.variable with this instance for global accessibility from any context
-    @update_window(force = true)
-    $(window.top).on('resize', @update_window) # if the game gives the physics engine a reference to itself, use it to keep the game's window updated
     $z.Game.instance.div.style('opacity', 0)
     @preload_images()
 
@@ -38,7 +35,14 @@ class $z.Game
       .duration(dur)
       .style('opacity', 1)    
 
-  preload_images: (image_list = $z.Game.instance.image_list, preload_callback) -> $z.ImageLoader.preload(image_list, image_preload_callback) if image_list? and image_list.length? and image_list.length > 0
+  preload_images: (image_list = $z.Game.instance.image_list, preload_callback) -> 
+    if image_list? and image_list.length? and image_list.length > 0
+      $z.ImageLoader.preload(image_list, image_preload_callback)
+    else
+      dur = 1000
+      $z.Game.instance.div.transition()
+        .duration(dur)
+        .style('opacity', 1)    
 
   current_width = (padding = 8) ->
     element   = window.top.document.body # .getElementsByTagName('iframe')[0]
@@ -61,21 +65,6 @@ class $z.Game
     min_scale = 0.39
     scale     = Math.max(min_scale, Math.min(max_scale, scale))
 
-  update_window:  ->
-    return $z.Game.scale if $z.Game.width is null or $z.Game.height is null
-    scale = get_scale()
-    $z.Game.scale = scale 
-    w          = Math.ceil($z.Game.width * scale) + 'px'
-    h          = Math.ceil($z.Game.height * scale) + 'px'
-    $z.Game.instance.div.style('height', current_height() + 'px')    
-    $z.Game.instance.svg.style('width', w)
-      .style('height', h)
-    swh = scale * $z.Game.width * 0.5
-    shh = scale * $z.Game.height * 0.5
-    $z.Game.instance.g
-      .attr('transform', 'translate(' + swh + ',' + shh + ') scale(' + scale + ')' + 'translate(' + -$z.Game.width * 0.5 + ',' + -$z.Game.height * 0.5 + ')'      )
-    return
-
   start: -> 
     $z.Physics.start() # start all elements and associate physics engine with this game instance
     Gameprez?.start()
@@ -95,7 +84,7 @@ class $z.Game
     $z.Collision.list[len].remove() while (len--) # decrementing avoids potential indexing issues after popping last element off of $z.Collision.list during element.remove()      
     return
 
-  message: (txt, callback, dur = 1000) ->
+  message: (txt, callback, dur = 500) ->
     if callback is undefined
       callback = ->
     @g.selectAll('.game_message').remove()

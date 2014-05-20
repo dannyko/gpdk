@@ -34,22 +34,22 @@ class $z.Force # this simple object does one job: return the value of the force 
         fy =  param.fyBound if element.r.y < 0 # enforce boundary
       )
       when 'gradient' then ( # evaluate the force as the negative gradient of a scalar potential energy function V(x, y)
-        rpx.x = element.r.x 
-        rpx.y = element.r.y
-        rpx.x += param.tol # r + dx
-        rmx.x = element.r.x 
-        rmx.y = element.r.y
-        rmx.x -= param.tol # r - dx
-        rpy.x = element.r.x
-        rpy.y = element.r.y 
-        rpy.y += param.tol # r + dy
-        rmy.x = element.r.x
-        rmy.y = element.r.y
-        rmy.y -= param.tol # r - dy
-        epx = param.energy(rpx) # V(r + dx)
-        emx = param.energy(rmx) # V(r - dx)
-        epy = param.energy(rpy) # V(r + dy)
-        emy = param.energy(rmy) # V(r - dy)
+        @rpx.x = element.r.x 
+        @rpx.y = element.r.y
+        @rpx.x += param.tol # r + dx
+        @rmx.x = element.r.x 
+        @rmx.y = element.r.y
+        @rmx.x -= param.tol # r - dx
+        @rpy.x = element.r.x
+        @rpy.y = element.r.y 
+        @rpy.y += param.tol # r + dy
+        @rmy.x = element.r.x
+        @rmy.y = element.r.y
+        @rmy.y -= param.tol # r - dy
+        epx = param.energy(@rpx) # V(r + dx)
+        emx = param.energy(@rmx) # V(r - dx)
+        epy = param.energy(@rpy) # V(r + dy)
+        emy = param.energy(@rmy) # V(r - dy)
         unless epx? and emx? and epy? and emy? # make sure energy is defined or else default to zero force to prevent failure
           fx = 0
           fy = 0

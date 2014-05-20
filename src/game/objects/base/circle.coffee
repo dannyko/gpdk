@@ -5,6 +5,9 @@ class $z.Circle extends $z.Element
     @type  = 'Circle'
     @BB() # reset bounding box
     @image = @g.append("circle")
+      .attr("r", @size)
+      .attr("x", 0)
+      .attr("y", 0)
     @overlay = @g.append("circle")
       .style('opacity', 0)
       .attr("r", @size)
