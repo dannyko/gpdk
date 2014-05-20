@@ -14,8 +14,9 @@ class $z.Spacepong extends $z.Game
     super
     @initialN = 1
     @svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')')
-      .style('background-size', '100%, auto')
+      .style('background-size', 'cover')
       .style('background-repeat', 'no-repeat')
+      .style('background-position', 'top center')
 
     @setup()
 

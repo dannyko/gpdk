@@ -357,8 +357,8 @@
       this.overlay = this.config.overlay || null;
       this.g = d3.select("#game_g").append("g").attr("transform", "translate(" + this.r.x + "," + this.r.y + ")").style('opacity', 0).datum(this);
       this.g = this.config.g || this.g;
-      this.svg = this.config.svg || d3.select("#game_svg");
-      this.game_g = this.config.game_g || d3.select("#game_g");
+      this.svg = this.config.svg || $z.Game.instance.svg;
+      this.game_g = this.config.game_g || $z.Game.instance.g;
       this.quadtree = this.config.quadtree || null;
       this.tick = this.config.tick || $z.Physics.verlet;
       this.is_removed = false;
@@ -557,27 +557,27 @@
 
     Game.message_color = "#FFF";
 
+    Game.width = 800;
+
+    Game.height = 600;
+
     function Game(config) {
-      var force;
       this.config = config != null ? config : {};
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%');
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      $z.Game.width = 800;
-      $z.Game.height = 600;
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
-      this.g.attr('id', 'game_g').attr('width', this.svg.attr('width')).attr('height', this.svg.attr('height')).style('width', '').style('height', '');
+      this.g.attr('id', 'game_g').style('width', '').style('height', '');
       $z.Game.instance = this;
-      this.update_window(force = true);
-      $(window.top).on('resize', this.update_window);
       $z.Game.instance.div.style('opacity', 0);
       this.preload_images();
     }
@@ -591,11 +591,15 @@
     };
 
     Game.prototype.preload_images = function(image_list, preload_callback) {
+      var dur;
       if (image_list == null) {
         image_list = $z.Game.instance.image_list;
       }
       if ((image_list != null) && (image_list.length != null) && image_list.length > 0) {
         return $z.ImageLoader.preload(image_list, image_preload_callback);
+      } else {
+        dur = 1000;
+        return $z.Game.instance.div.transition().duration(dur).style('opacity', 1);
       }
     };
 
@@ -636,22 +640,6 @@
       return scale = Math.max(min_scale, Math.min(max_scale, scale));
     };
 
-    Game.prototype.update_window = function() {
-      var h, scale, shh, swh, w;
-      if ($z.Game.width === null || $z.Game.height === null) {
-        return $z.Game.scale;
-      }
-      scale = get_scale();
-      $z.Game.scale = scale;
-      w = Math.ceil($z.Game.width * scale) + 'px';
-      h = Math.ceil($z.Game.height * scale) + 'px';
-      $z.Game.instance.div.style('height', current_height() + 'px');
-      $z.Game.instance.svg.style('width', w).style('height', h);
-      swh = scale * $z.Game.width * 0.5;
-      shh = scale * $z.Game.height * 0.5;
-      $z.Game.instance.g.attr('transform', 'translate(' + swh + ',' + shh + ') scale(' + scale + ')' + 'translate(' + -$z.Game.width * 0.5 + ',' + -$z.Game.height * 0.5 + ')');
-    };
-
     Game.prototype.start = function() {
       $z.Physics.start();
       if (typeof Gameprez !== "undefined" && Gameprez !== null) {
@@ -683,7 +671,7 @@
     Game.prototype.message = function(txt, callback, dur) {
       var ready;
       if (dur == null) {
-        dur = 1000;
+        dur = 500;
       }
       if (callback === void 0) {
         callback = function() {};
@@ -706,7 +694,7 @@
       Circle.__super__.constructor.call(this, this.config);
       this.type = 'Circle';
       this.BB();
-      this.image = this.g.append("circle");
+      this.image = this.g.append("circle").attr("r", this.size).attr("x", 0).attr("y", 0);
       this.overlay = this.g.append("circle").style('opacity', 0).attr("r", this.size).attr("x", 0).attr("y", 0);
       this.stroke(this._stroke);
       this.fill(this._fill);
@@ -1249,22 +1237,22 @@
           }
           break;
         case 'gradient':
-          rpx.x = element.r.x;
-          rpx.y = element.r.y;
-          rpx.x += param.tol;
-          rmx.x = element.r.x;
-          rmx.y = element.r.y;
-          rmx.x -= param.tol;
-          rpy.x = element.r.x;
-          rpy.y = element.r.y;
-          rpy.y += param.tol;
-          rmy.x = element.r.x;
-          rmy.y = element.r.y;
-          rmy.y -= param.tol;
-          epx = param.energy(rpx);
-          emx = param.energy(rmx);
-          epy = param.energy(rpy);
-          emy = param.energy(rmy);
+          this.rpx.x = element.r.x;
+          this.rpx.y = element.r.y;
+          this.rpx.x += param.tol;
+          this.rmx.x = element.r.x;
+          this.rmx.y = element.r.y;
+          this.rmx.x -= param.tol;
+          this.rpy.x = element.r.x;
+          this.rpy.y = element.r.y;
+          this.rpy.y += param.tol;
+          this.rmy.x = element.r.x;
+          this.rmy.y = element.r.y;
+          this.rmy.y -= param.tol;
+          epx = param.energy(this.rpx);
+          emx = param.energy(this.rmx);
+          epy = param.energy(this.rpy);
+          emy = param.energy(this.rmy);
           if (!((epx != null) && (emx != null) && (epy != null) && (emy != null))) {
             fx = 0;
             fy = 0;
@@ -2127,7 +2115,7 @@
       this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
-      this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', '100%, auto').style('background-repeat', 'no-repeat');
+      this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
       this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');

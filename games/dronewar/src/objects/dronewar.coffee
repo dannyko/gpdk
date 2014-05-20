@@ -54,8 +54,9 @@ class $z.Dronewar extends $z.Game
     $z.Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
     $z.Gamescore.lives = $z.Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
-      .style('background-size', '100%')
+      .style('background-size', 'cover')
       .style('background-repeat', 'no-repeat')
+      .style('background-position', 'top center')
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones
