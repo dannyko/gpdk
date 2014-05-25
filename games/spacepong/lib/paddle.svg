@@ -10,7 +10,7 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    version="1.1"
    width="210"
-   height="29"
+   height="26"
    id="svg3175">
   <defs
      id="defs3177">
@@ -27,11 +27,11 @@
        id="linearGradient4422">
       <stop
          id="stop4424"
-         style="stop-color:#cc00ff;stop-opacity:1"
+         style="stop-color:#500907;stop-opacity:1"
          offset="0" />
       <stop
          id="stop4426"
-         style="stop-color:#ff0000;stop-opacity:1"
+         style="stop-color:#ff1a00;stop-opacity:1"
          offset="1" />
     </linearGradient>
     <linearGradient
@@ -47,7 +47,7 @@
        id="linearGradient4414">
       <stop
          id="stop4416"
-         style="stop-color:#0000ff;stop-opacity:1"
+         style="stop-color:#7e00b7;stop-opacity:1"
          offset="0" />
       <stop
          id="stop4418"
@@ -58,10 +58,10 @@
        color-interpolation-filters="sRGB"
        id="filter4550">
       <feFlood
-         result="flood"
-         flood-color="rgb(255,255,255)"
+         id="feFlood4552"
          flood-opacity="0.5"
-         id="feFlood4552" />
+         flood-color="rgb(255,255,255)"
+         result="flood" />
       <feComposite
          in2="SourceGraphic"
          operator="in"
@@ -69,14 +69,14 @@
          result="composite1"
          id="feComposite4554" />
       <feGaussianBlur
-         result="blur"
+         id="feGaussianBlur4556"
          stdDeviation="1.9"
-         id="feGaussianBlur4556" />
+         result="blur" />
       <feOffset
-         result="offset"
-         dy="1.9"
+         id="feOffset4558"
          dx="0.2"
-         id="feOffset4558" />
+         dy="1.9"
+         result="offset" />
       <feComposite
          in2="offset"
          operator="over"
@@ -85,10 +85,10 @@
          id="feComposite4560" />
     </filter>
     <linearGradient
-       x1="106.02141"
-       y1="244.38603"
-       x2="107.03156"
-       y2="195.39363"
+       x1="106.70322"
+       y1="260.74966"
+       x2="106.34975"
+       y2="197.43909"
        id="linearGradient3297"
        xlink:href="#linearGradient4422"
        gradientUnits="userSpaceOnUse"
@@ -107,7 +107,7 @@
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(34.761914,-1024.9071)"
+     transform="matrix(1,0,0,1.0116775,34.761914,-1037.5824)"
      id="layer1">
     <path
        d="m -15.848988,1026.6033 172.404878,0 14,23.7386 -200.404877,0 z"

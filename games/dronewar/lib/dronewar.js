@@ -1913,7 +1913,7 @@
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      this.config.size = 25;
+      this.config.size = 30;
       Drone.__super__.constructor.call(this, this.config);
       this.root = this.config.root;
       this.param = {
@@ -1980,7 +1980,7 @@
       this.overlay.style('fill', d3.interpolateRgb('#600', '#FF0')(depletion));
       return this.g.append("circle").attr("r", this.size * .85).attr("x", 0).attr("y", 0).style('fill', flashColor).style('opacity', .4).transition().delay(dur).duration(dur).style('opacity', 0).ease('linear').remove().each('end', function(d) {
         d.overlay.style('opacity', depletion * 0.5);
-        return d.s_flashing = false;
+        return d.is_flashing = false;
       });
     };
 

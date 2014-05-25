@@ -2058,8 +2058,8 @@
       Wallball.__super__.constructor.apply(this, arguments);
       this.setup();
       this.svg.style('background-color', '#000');
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '3px').attr("fill", "#F90").attr("font-size", "40px").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
-      this.lives = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '3px').attr("fill", "#F90").attr("font-size", "40px").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '1px').attr("fill", "#F90").attr("font-size", "36px").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "#222").attr('stroke-width', '1px').attr("fill", "#F90").attr("font-size", "36px").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
       d3.select(window.top).on("keydown", this.keydown);
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);

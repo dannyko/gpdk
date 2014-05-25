@@ -75,7 +75,7 @@ class $z.Drone extends $z.Circle
       .remove()
       .each('end', (d) ->
         d.overlay.style('opacity', depletion * 0.5)
-        d.s_flashing = false
+        d.is_flashing = false
       )
 
   deplete: (power = 1) ->
