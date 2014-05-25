@@ -3,7 +3,7 @@ class $z.Dronewar extends $z.Game
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
   constructor: ->
-    @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png']    
+    @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone.svg', GameAssetsUrl + 'viper.svg', GameAssetsUrl + 'fang.svg', GameAssetsUrl + 'cobra.svg']    
     super
 
   level: ->
@@ -120,7 +120,7 @@ class $z.Dronewar extends $z.Game
       .attr('font-weight', 'bold')
     prompt.text("SELECT SHIP:")
     root = @root # copy local reference to @root for access inside other objects without using @ 
-    sidewinder = @g
+    cobra = @g
       .append("text")
       .text("")
       .attr("stroke", "none")
@@ -131,11 +131,11 @@ class $z.Dronewar extends $z.Game
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
-    sidewinder.text("SIDEWINDER").style("fill", "#099")
+    cobra.text("COBRA").style("fill", "#099")
     dur = 500
-    sidewinder.on("click", -> 
+    cobra.on("click", -> 
       return if this.style.fill == '#000996'
-      @root.ship($z.Ship.sidewinder()) 
+      @root.ship($z.Ship.cobra()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -154,7 +154,7 @@ class $z.Dronewar extends $z.Game
       return if this.style.fill == '#000996'
       @root.ship($z.Ship.viper()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
-      sidewinder.style("fill", "#FFF") 
+      cobra.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
     fang = @g.append("text")
@@ -173,7 +173,7 @@ class $z.Dronewar extends $z.Game
       @root.ship($z.Ship.fang())
       d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF")
-      sidewinder.style("fill", "#FFF")
+      cobra.style("fill", "#FFF")
     )
     go = @g.append("text")
       .text("")
@@ -190,7 +190,7 @@ class $z.Dronewar extends $z.Game
       dur = 500
       title.transition().duration(dur).style("opacity", 0).remove()
       prompt.transition().duration(dur).style("opacity", 0).remove()
-      sidewinder.transition().duration(dur).style("opacity", 0).remove()
+      cobra.transition().duration(dur).style("opacity", 0).remove()
       viper.transition().duration(dur).style("opacity", 0).remove()
       fang.transition().duration(dur).style("opacity", 0).remove()
       go.transition().duration(dur).style("opacity", 0).remove()

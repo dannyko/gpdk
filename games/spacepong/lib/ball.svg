@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="29.334328"
+   height="29.07888"
+   id="svg3141">
+  <defs
+     id="defs3143">
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter4028">
+      <feGaussianBlur
+         stdDeviation="1.6550838"
+         id="feGaussianBlur4030" />
+    </filter>
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter4854-1-1-4">
+      <feGaussianBlur
+         id="feGaussianBlur4856-3-7-8"
+         stdDeviation="12"
+         in="SourceAlpha"
+         result="result1" />
+      <feComposite
+         in2="result1"
+         operator="arithmetic"
+         k1="0"
+         k2="3.5"
+         k3="0"
+         k4="-2"
+         result="result2"
+         id="feComposite4858-2-4-8" />
+      <feComposite
+         in2="result2"
+         operator="out"
+         in="SourceGraphic"
+         result="result91"
+         id="feComposite4860-8-0-2" />
+      <feBlend
+         in2="result91"
+         mode="darken"
+         id="feBlend4862-1-9-4" />
+    </filter>
+  </defs>
+  <metadata
+     id="metadata3146">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0.80320829,-1024.042)"
+     id="layer1">
+    <g
+       transform="translate(0.59295632,1023.389)"
+       id="layer2">
+      <path
+         d="m 115.21397,11.837993 a 22.911285,24.400259 0 1 1 -45.822567,0 22.911285,24.400259 0 1 1 45.822567,0 z"
+         transform="matrix(0.54558266,0,0,0.51228964,-37.087746,9.1280018)"
+         id="path4227-3-6-4"
+         style="fill:#5395ff;fill-opacity:1;stroke:none;display:inline;filter:url(#filter4028)" />
+      <path
+         d="m 115.21397,11.837993 a 22.911285,24.400259 0 1 1 -45.822567,0 22.911285,24.400259 0 1 1 45.822567,0 z"
+         transform="matrix(0.44438048,0,0,0.41726311,-27.746515,10.252926)"
+         id="path4227-3-6-4-9"
+         style="fill:#1973ff;fill-opacity:1;stroke:none;display:inline;filter:url(#filter4854-1-1-4)" />
+    </g>
+    <g
+       transform="translate(-259.4639,486.41781)"
+       id="layer1-1"
+       style="display:inline" />
+  </g>
+</svg>

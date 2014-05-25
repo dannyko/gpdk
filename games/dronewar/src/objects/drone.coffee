@@ -1,5 +1,5 @@
 class $z.Drone extends $z.Circle
-  @url = GameAssetsUrl + "drone_1.png"
+  @url = GameAssetsUrl + "drone.svg"
   @max_speed = 3
 
   constructor: (@config = {}) ->

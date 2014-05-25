@@ -567,7 +567,7 @@
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMid meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
@@ -1670,7 +1670,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: GameAssetsUrl + "viper_1.png",
+        url: GameAssetsUrl + "viper.svg",
         offset: {
           x: 0,
           y: 19
@@ -1771,7 +1771,7 @@
             react: true
           }
         ],
-        url: GameAssetsUrl + "fang_1.png",
+        url: GameAssetsUrl + "fang.svg",
         offset: {
           x: 0,
           y: 25
@@ -1784,7 +1784,7 @@
       };
     };
 
-    Ship.sidewinder = function() {
+    Ship.cobra = function() {
       return {
         path: [
           {
@@ -1851,7 +1851,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: GameAssetsUrl + "sidewinder_1.png",
+        url: GameAssetsUrl + "cobra.svg",
         offset: {
           x: 0,
           y: 0
@@ -1907,13 +1907,13 @@
   $z.Drone = (function(_super) {
     __extends(Drone, _super);
 
-    Drone.url = GameAssetsUrl + "drone_1.png";
+    Drone.url = GameAssetsUrl + "drone.svg";
 
     Drone.max_speed = 3;
 
     function Drone(config) {
       this.config = config != null ? config : {};
-      this.config.size = 30;
+      this.config.size = 25;
       Drone.__super__.constructor.call(this, this.config);
       this.root = this.config.root;
       this.param = {
@@ -2074,7 +2074,7 @@
 
     function Dronewar() {
       this.keydown = __bind(this.keydown, this);
-      this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'sidewinder_1.png'];
+      this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone.svg', GameAssetsUrl + 'viper.svg', GameAssetsUrl + 'fang.svg', GameAssetsUrl + 'cobra.svg'];
       Dronewar.__super__.constructor.apply(this, arguments);
     }
 
@@ -2144,7 +2144,7 @@
     };
 
     Dronewar.prototype.start = function() {
-      var dur, fang, go, how, prompt, root, sidewinder, title, viper, _ref;
+      var cobra, dur, fang, go, how, prompt, root, title, viper, _ref;
       $z.Gamescore.initialLives = 100;
       $z.Gamescore.lives = $z.Gamescore.initialLives;
       this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');
@@ -2177,14 +2177,14 @@
       prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "24").attr("x", $z.Game.width / 2 - 350).attr("y", $z.Game.height / 4 + 20).attr('font-family', 'arial').attr('font-weight', 'bold');
       prompt.text("SELECT SHIP:");
       root = this.root;
-      sidewinder = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", $z.Game.width / 2 - 350).attr("y", $z.Game.height / 4 + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
-      sidewinder.text("SIDEWINDER").style("fill", "#099");
+      cobra = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", $z.Game.width / 2 - 350).attr("y", $z.Game.height / 4 + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
+      cobra.text("COBRA").style("fill", "#099");
       dur = 500;
-      sidewinder.on("click", function() {
+      cobra.on("click", function() {
         if (this.style.fill === '#000996') {
           return;
         }
-        this.root.ship($z.Ship.sidewinder());
+        this.root.ship($z.Ship.cobra());
         d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
@@ -2197,7 +2197,7 @@
         }
         this.root.ship($z.Ship.viper());
         d3.select(this).transition().duration(dur).style("fill", "#099");
-        sidewinder.style("fill", "#FFF");
+        cobra.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
       });
       fang = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "32").attr("x", $z.Game.width / 2 - 350).attr("y", $z.Game.height / 4 + 300).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
@@ -2209,7 +2209,7 @@
         this.root.ship($z.Ship.fang());
         d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
-        return sidewinder.style("fill", "#FFF");
+        return cobra.style("fill", "#FFF");
       });
       go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "42").attr("x", this.root.r.x - 70).attr("y", this.root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       go.text("START");
@@ -2217,7 +2217,7 @@
         dur = 500;
         title.transition().duration(dur).style("opacity", 0).remove();
         prompt.transition().duration(dur).style("opacity", 0).remove();
-        sidewinder.transition().duration(dur).style("opacity", 0).remove();
+        cobra.transition().duration(dur).style("opacity", 0).remove();
         viper.transition().duration(dur).style("opacity", 0).remove();
         fang.transition().duration(dur).style("opacity", 0).remove();
         go.transition().duration(dur).style("opacity", 0).remove();
@@ -2400,7 +2400,7 @@
     Root.prototype.ship = function(ship, dur) {
       var endPath;
       if (ship == null) {
-        ship = $z.Ship.sidewinder();
+        ship = $z.Ship.cobra();
       }
       if (dur == null) {
         dur = 500;

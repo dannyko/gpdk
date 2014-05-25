@@ -10,7 +10,7 @@ class $z.Spacepong extends $z.Game
     count
 
   constructor: (@config = {}) ->
-    @image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png']    
+    @image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.svg', GameAssetsUrl + 'green_ship.svg', GameAssetsUrl + 'red_ship.svg', GameAssetsUrl + 'paddle.svg', GameAssetsUrl + 'ball.svg']    
     super
     @initialN = 1
     @svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')')

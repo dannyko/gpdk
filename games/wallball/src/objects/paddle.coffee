@@ -1,5 +1,5 @@
 class $z.Paddle extends $z.Polygon
-  @image_url = GameAssetsUrl + "paddle.png"
+  @image_url = GameAssetsUrl + "paddle.svg"
 
   constructor: (@config = {}) ->
     @config.size ||= 90

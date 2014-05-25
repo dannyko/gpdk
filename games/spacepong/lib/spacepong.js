@@ -567,7 +567,7 @@
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMid meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
@@ -1628,7 +1628,7 @@
   $z.Ball = (function(_super) {
     __extends(Ball, _super);
 
-    Ball.image_url = GameAssetsUrl + "ball.png";
+    Ball.image_url = GameAssetsUrl + "ball.svg";
 
     function Ball(config) {
       this.config = config != null ? config : {};
@@ -1732,7 +1732,7 @@
   $z.Paddle = (function(_super) {
     __extends(Paddle, _super);
 
-    Paddle.image_url = GameAssetsUrl + "paddle.png";
+    Paddle.image_url = GameAssetsUrl + "paddle.svg";
 
     function Paddle(config) {
       var _base, _base1;
@@ -1903,7 +1903,7 @@
 
     __extends(Ship, _super);
 
-    Ship.image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"];
+    Ship.image_url = [GameAssetsUrl + "green_ship.svg", GameAssetsUrl + "blue_ship.svg", GameAssetsUrl + "red_ship.svg"];
 
     Ship.increment_count = [1, 2, 4];
 
@@ -2112,7 +2112,7 @@
       this.stop = __bind(this.stop, this);
       this.spawn_ball_callback = __bind(this.spawn_ball_callback, this);
       this.keydown = __bind(this.keydown, this);
-      this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.png', GameAssetsUrl + 'green_ship.png', GameAssetsUrl + 'red_ship.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'ball.png'];
+      this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.svg', GameAssetsUrl + 'green_ship.svg', GameAssetsUrl + 'red_ship.svg', GameAssetsUrl + 'paddle.svg', GameAssetsUrl + 'ball.svg'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
       this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');

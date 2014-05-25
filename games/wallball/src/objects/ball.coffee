@@ -1,5 +1,5 @@
 class $z.Ball extends $z.Circle
-  @image_url = GameAssetsUrl + "ball.png"
+  @image_url = GameAssetsUrl + "ball.svg"
 
   constructor: (@config = {}) ->
     @config.size   ||= 12

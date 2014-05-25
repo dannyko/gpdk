@@ -17,18 +17,26 @@ class $z.Wall extends $z.Polygon
     @config.path ||= set_wall(w, h)
     @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
     super(@config)
-    @r.x = $z.Game.width * 0.5
-    @r.y = -$z.Game.height * 0.5 + 0.05 * $z.Game.height
+    @r.x     =  w
+    @r.y     = -h + 0.05 * $z.Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
-    @speed = 2 # initial wall speed
+    @speed   = 2 # initial wall speed
     @padding = 300
+    @clip = @svg
+      .append 'clipPath'
+      .attr 'id', 'cut-top'
+      .append 'rect'
+      .attr 'x', -w
+      .attr 'y', -@r.y - @padding
+      .attr 'width', $z.Game.width
+      .attr 'height', $z.Game.height
     @g.remove()
     @g = d3.select('#game_g').insert("g", ":first-child")
-    @g.attr("class", "wall")
+    @g.attr("class", "wall").attr 'clip-path', 'url(#cut-top)'
     @image = @g.append("image")
      .attr("xlink:href", $z.Wall.image_url)
-     .attr("x", -w - 1).attr("y", -h)
-     .attr("width", $z.Game.width + 2)
+     .attr("x", -w).attr("y", -h)
+     .attr("width", $z.Game.width)
      .attr("height", $z.Game.height)
     @overlay = @g.append("path")
      .attr("d", @d_attr())
@@ -45,6 +53,7 @@ class $z.Wall extends $z.Polygon
       on_edge   = true
       @r.y = @tol - $z.Game.height * 0.5
     @v.y = -@v.y if on_edge or Math.random() < @switch_probability # randomly change direction of wall movement    
+    @clip.attr 'y', -@r.y - @padding * 0.5
     super
 
   remove: ->

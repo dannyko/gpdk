@@ -567,7 +567,7 @@
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMid meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
@@ -1628,7 +1628,7 @@
   $z.Ball = (function(_super) {
     __extends(Ball, _super);
 
-    Ball.image_url = GameAssetsUrl + "ball.png";
+    Ball.image_url = GameAssetsUrl + "ball.svg";
 
     function Ball(config) {
       var _base, _base1;
@@ -1792,7 +1792,7 @@
   $z.Paddle = (function(_super) {
     __extends(Paddle, _super);
 
-    Paddle.image_url = GameAssetsUrl + "paddle.png";
+    Paddle.image_url = GameAssetsUrl + "paddle.svg";
 
     function Paddle(config) {
       var _base, _base1;
@@ -1997,15 +1997,16 @@
       (_base1 = this.config).path || (_base1.path = set_wall(w, h));
       this.config.tick = function() {};
       Wall.__super__.constructor.call(this, this.config);
-      this.r.x = $z.Game.width * 0.5;
-      this.r.y = -$z.Game.height * 0.5 + 0.05 * $z.Game.height;
+      this.r.x = w;
+      this.r.y = -h + 0.05 * $z.Game.height;
       this.switch_probability = 0.005;
       this.speed = 2;
       this.padding = 300;
+      this.clip = this.svg.append('clipPath').attr('id', 'cut-top').append('rect').attr('x', -w).attr('y', -this.r.y - this.padding).attr('width', $z.Game.width).attr('height', $z.Game.height);
       this.g.remove();
       this.g = d3.select('#game_g').insert("g", ":first-child");
-      this.g.attr("class", "wall");
-      this.image = this.g.append("image").attr("xlink:href", $z.Wall.image_url).attr("x", -w - 1).attr("y", -h).attr("width", $z.Game.width + 2).attr("height", $z.Game.height);
+      this.g.attr("class", "wall").attr('clip-path', 'url(#cut-top)');
+      this.image = this.g.append("image").attr("xlink:href", $z.Wall.image_url).attr("x", -w).attr("y", -h).attr("width", $z.Game.width).attr("height", $z.Game.height);
       this.overlay = this.g.append("path").attr("d", this.d_attr()).attr("x", -w).attr("y", -h).style('opacity', 0);
       this.start();
     }
@@ -2024,6 +2025,7 @@
       if (on_edge || Math.random() < this.switch_probability) {
         this.v.y = -this.v.y;
       }
+      this.clip.attr('y', -this.r.y - this.padding * 0.5);
       return Wall.__super__.draw.apply(this, arguments);
     };
 
@@ -2052,7 +2054,7 @@
     function Wallball(config) {
       this.config = config != null ? config : {};
       this.keydown = __bind(this.keydown, this);
-      this.image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png'];
+      this.image_list = [GameAssetsUrl + 'ball.svg', GameAssetsUrl + 'paddle.svg', GameAssetsUrl + 'wall.png'];
       Wallball.__super__.constructor.apply(this, arguments);
       this.setup();
       this.svg.style('background-color', '#000');

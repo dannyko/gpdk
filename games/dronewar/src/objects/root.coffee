@@ -101,7 +101,7 @@ class $z.Root extends $z.Polygon
     bullet.start()
     return
 
-  ship: (ship = $z.Ship.sidewinder(), dur = 500) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
+  ship: (ship = $z.Ship.cobra(), dur = 500) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
     @collision = false
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill

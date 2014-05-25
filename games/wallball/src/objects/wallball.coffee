@@ -1,6 +1,6 @@
 class $z.Wallball extends $z.Game
   constructor: (@config = {}) ->
-    @image_list = [GameAssetsUrl + 'ball.png', GameAssetsUrl + 'paddle.png', GameAssetsUrl + 'wall.png']
+    @image_list = [GameAssetsUrl + 'ball.svg', GameAssetsUrl + 'paddle.svg', GameAssetsUrl + 'wall.png']
     super
     @setup()
     @svg.style('background-color', '#000')
