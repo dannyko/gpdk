@@ -17,7 +17,7 @@ class $z.Game
     @svg        = d3.select("#game_svg")
     @svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height)
       .attr('width', '100%')
-      .attr("preserveAspectRatio", "xMidYMid meet")
+      .attr("preserveAspectRatio", "xMidYMin meet")
     @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")

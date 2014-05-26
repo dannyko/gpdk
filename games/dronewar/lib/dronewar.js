@@ -567,7 +567,7 @@
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMid meet");
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMin meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
@@ -2147,7 +2147,7 @@
       var cobra, dur, fang, go, how, prompt, root, title, viper, _ref;
       $z.Gamescore.initialLives = 100;
       $z.Gamescore.lives = $z.Gamescore.initialLives;
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('min-height', '100%');
       this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;

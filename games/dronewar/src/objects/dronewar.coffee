@@ -56,7 +56,7 @@ class $z.Dronewar extends $z.Game
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
       .style('background-size', 'cover')
       .style('background-repeat', 'no-repeat')
-      .style('background-position', 'top center')
+      .style('min-height', '100%')
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones
@@ -136,7 +136,7 @@ class $z.Dronewar extends $z.Game
     cobra.on("click", -> 
       return if this.style.fill == '#000996'
       root.ship($z.Ship.cobra()) 
-      d3.select(this).transition().duration(dur).style("fill", "#099") 
+      d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
     )
