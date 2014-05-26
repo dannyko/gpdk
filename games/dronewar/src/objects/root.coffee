@@ -13,7 +13,7 @@ class $z.Root extends $z.Polygon
     @charge        = 5e3 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
-    @bitmap  = @g.insert("image", 'path').attr('id', 'ship_image')
+    @shipImage  = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
     @tick    = -> return
     @drawing = false
@@ -103,6 +103,7 @@ class $z.Root extends $z.Polygon
 
   ship: (ship = $z.Ship.cobra(), dur = 500) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
     @collision = false
+    $z.Physics.callbacks.pop() 
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill
     @bullet_size   = ship.bullet_size
@@ -111,12 +112,8 @@ class $z.Root extends $z.Polygon
     @path          = ship.path
     @BB() # set the rectangular bounding box for this path
     endPath  = @d_attr() # new end-path to morph to
-    @bitmap.attr('opacity', 1)
-      .transition()
-      .duration(dur * 0.5)
-      .attr('opacity', 0)
-      .remove()
-    @image.attr("opacity", 1)
+    @image.attr("opacity", .5)
+      .attr('fill', '#223')
       .data([endPath])
       .transition()
       .duration(dur)
@@ -124,19 +121,24 @@ class $z.Root extends $z.Polygon
       .transition()
       .duration(dur * 0.5)
       .attr("opacity", 0)
-    @bitmap.attr("xlink:href", ship.url)
-      .attr("x", -@bb_width * 0.5 + ship.offset.x).attr("y", -@bb_height * 0.5 + ship.offset.y)
+    @shipImage
+      .transition()
+      .duration(dur * 0.5)
+      .attr('opacity', 0)
+      .remove()
+      .transition()
+      .attr("x", -@bb_width * 0.5 + ship.offset.x)
+      .attr("y", -@bb_height * 0.5 + ship.offset.y)
       .attr("width", @bb_width)
       .attr("height", @bb_height)
-      .attr("opacity", 0)
       .transition()
-      .delay(dur)
       .duration(dur)
+      .attr("xlink:href", ship.url)
       .attr("opacity", 1)
       .each('end', => 
-        @set_path()
+        # @set_path()
         @collision = true
-        $z.Physics.callbacks.push(@fire)
+        $z.Physics.callbacks[0] = @fire
       )
       
   start: ->
@@ -197,7 +199,7 @@ class $z.Root extends $z.Polygon
       .duration(dur * 0.25 )
       .ease('linear')
       .style("opacity", 0)
-    @bitmap.transition()
+    @shipImage.transition()
       .duration(2 * dur)
       .ease('linear')
       .attr('transform', 'scale(10)')

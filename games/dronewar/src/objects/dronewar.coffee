@@ -135,7 +135,7 @@ class $z.Dronewar extends $z.Game
     dur = 500
     cobra.on("click", -> 
       return if this.style.fill == '#000996'
-      @root.ship($z.Ship.cobra()) 
+      root.ship($z.Ship.cobra()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
       viper.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -152,7 +152,7 @@ class $z.Dronewar extends $z.Game
     viper.text("VIPER")
     viper.on("click", -> 
       return if this.style.fill == '#000996'
-      @root.ship($z.Ship.viper()) 
+      root.ship($z.Ship.viper()) 
       d3.select(this).transition().duration(dur).style("fill", "#099") 
       cobra.style("fill", "#FFF") 
       fang.style("fill", "#FFF")
@@ -170,7 +170,7 @@ class $z.Dronewar extends $z.Game
     fang.text("FANG")
     fang.on("click", -> 
       return if this.style.fill == '#000996'
-      @root.ship($z.Ship.fang())
+      root.ship($z.Ship.fang())
       d3.select(this).transition().duration(dur).style("fill", "#099")
       viper.style("fill", "#FFF")
       cobra.style("fill", "#FFF")

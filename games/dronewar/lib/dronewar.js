@@ -2184,7 +2184,7 @@
         if (this.style.fill === '#000996') {
           return;
         }
-        this.root.ship($z.Ship.cobra());
+        root.ship($z.Ship.cobra());
         d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
@@ -2195,7 +2195,7 @@
         if (this.style.fill === '#000996') {
           return;
         }
-        this.root.ship($z.Ship.viper());
+        root.ship($z.Ship.viper());
         d3.select(this).transition().duration(dur).style("fill", "#099");
         cobra.style("fill", "#FFF");
         return fang.style("fill", "#FFF");
@@ -2206,7 +2206,7 @@
         if (this.style.fill === '#000996') {
           return;
         }
-        this.root.ship($z.Ship.fang());
+        root.ship($z.Ship.fang());
         d3.select(this).transition().duration(dur).style("fill", "#099");
         viper.style("fill", "#FFF");
         return cobra.style("fill", "#FFF");
@@ -2279,7 +2279,7 @@
       this.charge = 5e3;
       this.stroke("none");
       this.fill("#000");
-      this.bitmap = this.g.insert("image", 'path').attr('id', 'ship_image');
+      this.shipImage = this.g.insert("image", 'path').attr('id', 'ship_image');
       this.ship();
       this.tick = function() {};
       this.drawing = false;
@@ -2406,6 +2406,7 @@
         dur = 500;
       }
       this.collision = false;
+      $z.Physics.callbacks.pop();
       this.bullet_stroke = ship.bullet_stroke;
       this.bullet_fill = ship.bullet_fill;
       this.bullet_size = ship.bullet_size;
@@ -2414,13 +2415,11 @@
       this.path = ship.path;
       this.BB();
       endPath = this.d_attr();
-      this.bitmap.attr('opacity', 1).transition().duration(dur * 0.5).attr('opacity', 0).remove();
-      this.image.attr("opacity", 1).data([endPath]).transition().duration(dur).attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
-      return this.bitmap.attr("xlink:href", ship.url).attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).attr("opacity", 0).transition().delay(dur).duration(dur).attr("opacity", 1).each('end', (function(_this) {
+      this.image.attr("opacity", .5).attr('fill', '#223').data([endPath]).transition().duration(dur).attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
+      return this.shipImage.transition().duration(dur * 0.5).attr('opacity', 0).remove().transition().attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).transition().duration(dur).attr("xlink:href", ship.url).attr("opacity", 1).each('end', (function(_this) {
         return function() {
-          _this.set_path();
           _this.collision = true;
-          return $z.Physics.callbacks.push(_this.fire);
+          return $z.Physics.callbacks[0] = _this.fire;
         };
       })(this));
     };
@@ -2469,7 +2468,7 @@
       }
       this.collision = false;
       this.image.transition().duration(dur * 0.5).attr('opacity', 1).transition().duration(1.5 * dur).attr("fill", "#900").transition().duration(dur * 0.25).ease('linear').style("opacity", 0);
-      this.bitmap.transition().duration(2 * dur).ease('linear').attr('transform', 'scale(10)').attr('opacity', 0);
+      this.shipImage.transition().duration(2 * dur).ease('linear').attr('transform', 'scale(10)').attr('opacity', 0);
       return this.g.transition().duration(dur).ease('linear').style('opacity', 0);
     };
 
