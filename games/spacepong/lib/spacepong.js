@@ -567,7 +567,7 @@
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMid meet");
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMin meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
