@@ -1804,6 +1804,7 @@
           if (!done) {
             _this.r.x += dx;
             _this.draw();
+            d3.timer.flush();
           }
           if (_this.r.x > _this.max_x) {
             _this.r.x = _this.max_x;
@@ -1829,6 +1830,7 @@
         this.r.x = this.max_x;
       }
       this.draw();
+      d3.timer.flush();
     };
 
     Paddle.prototype.start = function() {

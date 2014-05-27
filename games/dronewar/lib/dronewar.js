@@ -2056,10 +2056,6 @@
       if (Math.abs(dy) > $z.Game.height * 0.5 - this.size) {
         this.v.y += scale * dy;
       }
-      if (Drone.__super__.offscreen.call(this)) {
-        this.r.x = Math.min(Math.max(0, this.r.x), $z.Game.width);
-        this.r.y = Math.min(Math.max(0, this.r.y), $z.Game.height);
-      }
       return false;
     };
 

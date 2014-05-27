@@ -44,6 +44,7 @@ class $z.Paddle extends $z.Polygon
       unless done
         @r.x += dx
         @draw()
+        d3.timer.flush()
       @r.x = @max_x if @r.x > @max_x
       @r.x = @min_x if @r.x < @min_x
       done
@@ -54,6 +55,7 @@ class $z.Paddle extends $z.Polygon
     @r.x = @min_x if @r.x < @min_x
     @r.x = @max_x if @r.x > @max_x
     @draw()
+    d3.timer.flush()
     return
 
   start: ->

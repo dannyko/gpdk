@@ -15,12 +15,13 @@ class $z.Wall extends $z.Polygon
     w = $z.Game.width * 0.5
     h = $z.Game.height * 0.5
     @config.path ||= set_wall(w, h)
-    @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
+    # @config.tick = -> # allows the element to be part of the physics engine without moving in response to collisions; can still take part in collision events
     super(@config)
     @r.x     =  w
     @r.y     = -h + 0.05 * $z.Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
-    @speed   = 2 # initial wall speed
+    @speed   = 1 # initial wall speed
+    @v.y   = @speed
     @padding = 300
     @clip = @svg
       .append 'clipPath'
@@ -45,7 +46,6 @@ class $z.Wall extends $z.Polygon
     @start()
 
   draw: ->
-    @r.y += @dt * @v.y * @speed # update wall position with constant speed and variable direction
     if @r.y > ($z.Game.height * 0.5 - @padding)
       on_edge   = true
       @r.y = $z.Game.height * 0.5 - @padding

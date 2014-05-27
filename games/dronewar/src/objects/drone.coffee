@@ -149,7 +149,4 @@ class $z.Drone extends $z.Circle
       @v.x += scale * dx
     if Math.abs(dy) > $z.Game.height * 0.5 - @size
       @v.y += scale * dy
-    if super()
-      @r.x = Math.min(Math.max(0, @r.x), $z.Game.width)
-      @r.y = Math.min(Math.max(0, @r.y), $z.Game.height)
     return false

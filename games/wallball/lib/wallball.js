@@ -1891,6 +1891,7 @@
         this.r.x = this.max_x;
       }
       this.draw();
+      d3.timer.flush();
     };
 
     Paddle.prototype.start = function() {
@@ -1995,12 +1996,12 @@
       w = $z.Game.width * 0.5;
       h = $z.Game.height * 0.5;
       (_base1 = this.config).path || (_base1.path = set_wall(w, h));
-      this.config.tick = function() {};
       Wall.__super__.constructor.call(this, this.config);
       this.r.x = w;
       this.r.y = -h + 0.05 * $z.Game.height;
       this.switch_probability = 0.005;
       this.speed = 2;
+      this.v.y = this.speed;
       this.padding = 300;
       this.clip = this.svg.append('clipPath').attr('id', 'cut-top').append('rect').attr('x', -w).attr('y', -this.r.y - this.padding).attr('width', $z.Game.width).attr('height', $z.Game.height);
       this.g.remove();
@@ -2013,7 +2014,6 @@
 
     Wall.prototype.draw = function() {
       var on_edge;
-      this.r.y += this.dt * this.v.y * this.speed;
       if (this.r.y > ($z.Game.height * 0.5 - this.padding)) {
         on_edge = true;
         this.r.y = $z.Game.height * 0.5 - this.padding;
