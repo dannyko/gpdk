@@ -1500,11 +1500,13 @@
         elapsedTime = Physics.elapsedTime;
       }
       Nstep = Math.floor(elapsedTime / Physics.tick);
-      Nmax = 800;
+      Nmax = 600;
       if (Nstep > Nmax) {
         dur = 2000;
         Physics.stop();
-        $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur);
+        $z.Game.instance.message('CPU SPEED ERROR', function() {
+          return $z.Game.instance.stop();
+        }, dur);
       }
       step = 0;
       while (step < Nstep) {

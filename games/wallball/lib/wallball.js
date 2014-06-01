@@ -1376,11 +1376,13 @@
         elapsedTime = Physics.elapsedTime;
       }
       Nstep = Math.floor(elapsedTime / Physics.tick);
-      Nmax = 800;
+      Nmax = 600;
       if (Nstep > Nmax) {
         dur = 2000;
         Physics.stop();
-        $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur);
+        $z.Game.instance.message('CPU SPEED ERROR', function() {
+          return $z.Game.instance.stop();
+        }, dur);
       }
       step = 0;
       while (step < Nstep) {
@@ -1763,7 +1765,7 @@
               return $z.Game.instance.stop();
             });
           }
-          if (!$z.Physics.off) {
+          if (this.collision) {
             $z.Game.sound.play('miss');
           }
           this.remove();
@@ -1967,7 +1969,7 @@
       if (window !== window.top) {
         d3.select(window).on("mousemove", this.redraw);
       }
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
     };
 
     Paddle.prototype.stop = function() {
@@ -1976,7 +1978,7 @@
       if (window !== window.top) {
         d3.select(window).on("mousemove", null);
       }
-      return this.svg.call(d3.behavior.drag().origin(Object).on("drag", null));
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
     };
 
     Paddle.prototype.remove_check = function(n) {

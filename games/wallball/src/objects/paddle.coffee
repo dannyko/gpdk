@@ -61,13 +61,15 @@ class $z.Paddle extends $z.Polygon
     super
     d3.select(window.top).on("mousemove", @redraw) # default mouse behavior is to control the root element position
     d3.select(window).on("mousemove", @redraw) if window isnt window.top # default mouse behavior is to control the root element position
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
+    d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", @redraw))
+    # @svg.call(d3.behavior.drag().origin(Object).on("drag", @redraw))
     
   stop: ->
     super
     d3.select(window.top).on("mousemove", null) # default mouse behavior is to control the root element position
     d3.select(window).on("mousemove", null) if window isnt window.top # default mouse behavior is to control the root element position if game is rendered in an iframe
-    @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
+    d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", @redraw))
+    # @svg.call(d3.behavior.drag().origin(Object).on("drag", null))
 
   remove_check: (n) -> # what happens when root gets hit by a ball
     intersect_x        = n.r.x - @r.x

@@ -65,7 +65,7 @@ class $z.Ball extends $z.Circle
         else 
           $z.Game.instance.paddle.fadeOut()
           $z.Game.instance.message('GAME OVER', -> $z.Game.instance.stop())
-        $z.Game.sound.play('miss') unless $z.Physics.off
+        $z.Game.sound.play('miss') if @collision
         @remove()
         $z.Game.instance.spawn_ball()
         return

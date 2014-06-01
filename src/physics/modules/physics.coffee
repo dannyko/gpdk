@@ -51,11 +51,15 @@ class $z.Physics # numerical integration module for solving differential equatio
   
   @update = (elapsedTime = Physics.elapsedTime) ->
     Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
-    Nmax  = 800
+    Nmax  = 600
     if Nstep > Nmax
       dur = 2000
       Physics.stop()
-      $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur)
+      $z.Game.instance.message(
+        'CPU SPEED ERROR'
+        -> $z.Game.instance.stop()
+        dur
+      )
     step  = 0 # initialize step counter
     while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
       Physics.step()
