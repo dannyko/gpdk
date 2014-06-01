@@ -5,8 +5,9 @@ class $z.Ball extends $z.Circle
     @config.size   ||= 12
     @config.fill   ||= '#FFF'
     super(@config)
-    @speed_factor = 0.002
-    @initial_speed = 5
+    @cleanup(false) # turn off default offscreen behavior (removal)
+    @speed_factor = 0.0002
+    @initial_speed = .4
     @speed = @initial_speed + $z.Gamescore.value * @speed_factor
     @max_speed = 200
     @image.remove()
@@ -64,7 +65,7 @@ class $z.Ball extends $z.Circle
         else 
           $z.Game.instance.paddle.fadeOut()
           $z.Game.instance.message('GAME OVER', -> $z.Game.instance.stop())
-        $z.Game.sound.play('miss')
+        $z.Game.sound.play('miss') unless $z.Physics.off
         @remove()
         $z.Game.instance.spawn_ball()
         return
@@ -76,6 +77,8 @@ class $z.Ball extends $z.Circle
     $z.Game.sound.play('ball')
 
   flash: ->
+    return if @is_flashing # wait until previous flash finishes
+    @is_flashing = true
     dur      = 1000 / 3 # color effect transition duration parameter
     # N    = 240 # random color parameter
     fill = "#FF4" # hsl(" + Math.random() * N + ",80%," + "40%" + ")"
@@ -93,4 +96,7 @@ class $z.Ball extends $z.Circle
       .duration(dur)
       .ease('linear')
       .attr("opacity", 0)
+      .each('end', =>  # use double arrow since we don't know if user has bound the data (@) to the overlay element
+        @is_flashing = false
+      )
       .remove()

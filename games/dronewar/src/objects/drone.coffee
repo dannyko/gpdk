@@ -1,6 +1,6 @@
 class $z.Drone extends $z.Circle
   @url = GameAssetsUrl + "drone.svg"
-  @max_speed = 3
+  @max_speed = .1
 
   constructor: (@config = {}) ->
     @config.size = 30
@@ -38,10 +38,11 @@ class $z.Drone extends $z.Circle
     super
     
   start: ->
-    v0           = 1 + $z.Gamescore.value * 0.0001 * $z.Drone.max_speed 
+    v0           = .1 + $z.Gamescore.value * 0.00001 * $z.Drone.max_speed 
     @max_speed   = 0
     dur          = 1000
     @invincible  = true
+    @collision   = true
     super(dur, (d) -> 
       dx         = d.root.r.x - d.r.x
       dy         = d.root.r.y - d.r.y

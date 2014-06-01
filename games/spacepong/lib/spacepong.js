@@ -176,6 +176,28 @@
       return array.pop();
     };
 
+    Utils.delayedLoop = function(dur, Niter, callback, finalCallback) {
+      var i, runLoop;
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (finalCallback == null) {
+        finalCallback = void 0;
+      }
+      i = 0;
+      runLoop = function() {
+        callback(i);
+        if (++i === Niter) {
+          if (typeof finalCallback === "function") {
+            finalCallback();
+          }
+          return;
+        }
+        return setTimeout(runLoop, dur);
+      };
+      return runLoop();
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -400,9 +422,14 @@
       if (dur == null) {
         dur = 30;
       }
-      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
-        return typeof callback === "function" ? callback(d) : void 0;
-      });
+      if (dur != null) {
+        return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
+          return typeof callback === "function" ? callback(d) : void 0;
+        });
+      } else {
+        this.g.style("opacity", 1);
+        return typeof callback === "function" ? callback(this) : void 0;
+      }
     };
 
     Element.prototype.fadeOut = function(dur, callback) {
@@ -445,7 +472,11 @@
         duration = void 0;
       }
       if (callback == null) {
-        callback = void 0;
+        callback = (function(_this) {
+          return function() {
+            return _this.collision = true;
+          };
+        })(this);
       }
       if (this.is_sleeping) {
         console.log('element.start: is_sleeping... bug?');
@@ -457,7 +488,6 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
-      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -526,14 +556,22 @@
       this.draw();
     };
 
-    Element.prototype.scale = function(scalingFactor, dur) {
+    Element.prototype.scale = function(scalingFactor, dur, callback) {
       if (scalingFactor == null) {
         scalingFactor = 10;
       }
       if (dur == null) {
-        dur = 420;
+        dur = void 0;
       }
-      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
+      if (callback == null) {
+        callback = function() {};
+      }
+      if (dur != null) {
+        return this.image.transition().duration(dur).ease('linear').attr('transform', 'scale(' + scalingFactor + ')').each('end', callback);
+      } else {
+        this.image.attr('transform', 'scale(' + scalingFactor + ')');
+        return callback();
+      }
     };
 
     return Element;
@@ -661,23 +699,20 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len;
-      len = $z.Collision.list.length;
-      while (len--) {
-        $z.Collision.list[len].remove();
-      }
+      this.g.selectAll('g').each(function(d) {
+        return d != null ? d.remove() : void 0;
+      });
     };
 
     Game.prototype.message = function(txt, callback, dur) {
-      var ready;
+      var ready, spacing;
       if (dur == null) {
-        dur = 500;
+        dur = 1000;
       }
-      if (callback === void 0) {
-        callback = function() {};
-      }
+      callback || (callback = function() {});
       this.g.selectAll('.game_message').remove();
-      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - 105).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
+      spacing = 10;
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - txt.length * spacing).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -1296,10 +1331,10 @@
 
     Physics.paused = false;
 
-    Physics.verlet_step = function(element, dt) {
+    Physics.verlet = function(element, dt) {
       var accumulateSwitch;
       if (dt == null) {
-        dt = element.dt;
+        dt = Physics.tick;
       }
       element.f.scale(0.5 * dt * dt);
       element.dr.x = element.v.x;
@@ -1319,21 +1354,8 @@
       element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
-    Physics.verlet = function(element, elapsedTime) {
-      var Nstep, dt, error, step;
-      Nstep = Math.floor(elapsedTime / Physics.tick);
-      step = 0;
-      while (step < Nstep) {
-        Physics.verlet_step(element);
-        ++step;
-      }
-      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
-      dt = element.dt * error;
-      Physics.verlet_step(element, dt);
-    };
-
     Physics.integrate = function(t) {
-      var bool, elapsedTime, fps, index;
+      var elapsedTime, fps;
       if (Physics.off) {
         return true;
       }
@@ -1345,24 +1367,38 @@
       }
       Physics.timestamp = t;
       Physics.update(elapsedTime);
-      $z.Collision.detect();
-      index = Physics.callbacks.length;
-      while (index--) {
-        if (Physics.callbacks.length === 0) {
-          break;
-        }
-        bool = Physics.callbacks[index](t);
-        if (bool) {
-          $z.Utils.index_pop(Physics.callbacks, index);
-        }
-      }
-      return this.off;
+      return Physics.off;
     };
 
     Physics.update = function(elapsedTime) {
-      var index, _results;
+      var Nmax, Nstep, dt, dur, error, step;
       if (elapsedTime == null) {
         elapsedTime = Physics.elapsedTime;
+      }
+      Nstep = Math.floor(elapsedTime / Physics.tick);
+      Nmax = 800;
+      if (Nstep > Nmax) {
+        dur = 2000;
+        Physics.stop();
+        $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur);
+      }
+      step = 0;
+      while (step < Nstep) {
+        Physics.step();
+        $z.Collision.detect();
+        Physics.run_callbacks();
+        ++step;
+      }
+      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
+      dt = Physics.tick * error;
+      Physics.step(dt);
+      return Physics.run_callbacks();
+    };
+
+    Physics.step = function(elapsedTime) {
+      var index, _results;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.tick;
       }
       index = $z.Collision.list.length;
       _results = [];
@@ -1381,14 +1417,32 @@
       return _results;
     };
 
+    Physics.run_callbacks = function() {
+      var bool, index, _results;
+      index = Physics.callbacks.length;
+      _results = [];
+      while (index--) {
+        if (Physics.callbacks.length === 0) {
+          break;
+        }
+        bool = Physics.callbacks[index](Physics.timestamp);
+        if (bool) {
+          _results.push($z.Utils.index_pop(Physics.callbacks, index));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
     Physics.start = function() {
       var blurCallback;
-      if (!this.off) {
+      if (!Physics.off) {
         return;
       }
-      this.off = false;
-      this.timestamp = 0;
-      d3.timer(this.integrate);
+      Physics.off = false;
+      Physics.timestamp = 0;
+      d3.timer(Physics.integrate);
       blurCallback = function() {
         Physics.paused = true;
         return Physics.stop();
@@ -1414,10 +1468,11 @@
     };
 
     Physics.stop = function() {
-      if (this.off) {
+      if (Physics.off) {
         return;
       }
-      this.off = true;
+      Physics.off = true;
+      Physics.timestamp = void 0;
       setTimeout(Physics.update, 2 * Physics.tick);
     };
 
@@ -1633,10 +1688,11 @@
     function Ball(config) {
       this.config = config != null ? config : {};
       Ball.__super__.constructor.apply(this, arguments);
+      this.cleanup(false);
       this.is_busy = false;
       this.size = 10;
       this.name = 'Ball';
-      this.initial_speed = 8;
+      this.initial_speed = .4;
       this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.image.remove();
@@ -1654,10 +1710,19 @@
     };
 
     Ball.prototype.draw = function() {
+      var miny, _ref, _ref1;
       if ($z.Gamescore.lives < 0) {
         return;
       }
-      if (this.r.y < this.tol + this.size) {
+      miny = .2 * this.speed;
+      if ((-miny < (_ref = this.v.y) && _ref <= 0)) {
+        this.v.y = -miny;
+      }
+      if ((0 < (_ref1 = this.v.y) && _ref1 < miny)) {
+        this.v.y = miny;
+      }
+      this.v.normalize(this.speed);
+      if (this.r.y < this.tol) {
         this.r.y = this.tol + this.size;
         this.v.y = Math.abs(this.v.y);
         this.reaction();
@@ -1673,48 +1738,43 @@
         this.reaction();
       }
       if (this.r.y >= $z.Game.height - this.size - this.tol) {
-        if ($z.Gamescore.lives <= 0) {
-          $z.Gamescore.lives = -1;
-          $z.Game.instance.paddle.fadeOut();
-          $z.Game.instance.message('GAME OVER', function() {
-            return $z.Game.instance.stop();
-          });
-          return;
+        if (this.collision) {
+          if ($z.Gamescore.lives <= 0) {
+            $z.Gamescore.lives = -1;
+            $z.Game.instance.paddle.fadeOut();
+            $z.Physics.stop();
+            $z.Game.instance.message('GAME OVER', function() {
+              return $z.Game.instance.stop();
+            });
+            return;
+          } else {
+            $z.Gamescore.lives -= 1;
+            $z.Game.sound.play('miss');
+            this.remove();
+            $z.Game.instance.text();
+          }
         }
-        $z.Gamescore.lives -= 1;
-        $z.Game.instance.text();
-        $z.Game.sound.play('miss');
-        this.remove();
       }
       return Ball.__super__.draw.apply(this, arguments);
     };
 
     Ball.prototype.remove = function() {
-      var dur, fadeOutSwitch;
+      var dur;
       dur = 500;
-      fadeOutSwitch = true;
-      Ball.__super__.remove.call(this, fadeOutSwitch, dur);
+      Ball.__super__.remove.call(this, dur);
       if (!($z.Gamescore.lives < 0)) {
         $z.Game.instance.spawn_ball('GET READY');
       }
     };
 
     Ball.prototype.reaction = function(n) {
-      if (this.is_busy) {
-        return;
-      }
-      this.is_busy = true;
-      this.v.normalize(this.speed);
       this.flash();
-      if (!this.is_busy) {
-        $z.Game.sound.play('bong');
-      }
       return Ball.__super__.reaction.apply(this, arguments);
     };
 
     Ball.prototype.flash = function() {
       var dur, fill;
-      if (this.flashing) {
+      if (this.flashing || $z.Physics.off) {
         return;
       }
       this.flashing = true;
@@ -1738,7 +1798,7 @@
       var _base, _base1;
       this.config = config != null ? config : {};
       this.redraw = __bind(this.redraw, this);
-      (_base = this.config).size || (_base.size = 114);
+      (_base = this.config).size || (_base.size = 90);
       this.height = 14;
       (_base1 = this.config).path || (_base1.path = [
         {
@@ -1765,17 +1825,17 @@
           pathSegTypeAsLetter: 'Z'
         }
       ]);
-      this.padding = 50;
+      this.padding = 4;
       this.config.fill = 'red';
       this.config.stroke = 'none';
       this.config.r = $z.Factory.spawn($z.Vec);
       this.config.r.x = $z.Game.width / 2;
-      this.config.r.y = $z.Game.height - this.height - this.padding;
+      this.config.r.y = $z.Game.height - this.height - this.padding * 10;
       Paddle.__super__.constructor.call(this, this.config);
       this.is_root = true;
       this.min_y_speed = this.config.min_y_speed || 8;
-      this.max_x = $z.Game.width - this.config.size - this.tol - this.padding * 0.1;
-      this.min_x = this.config.size + this.tol + this.padding * 0.1;
+      this.max_x = $z.Game.width - this.config.size - this.tol;
+      this.min_x = this.config.size + this.tol;
       this.overshoot = this.padding;
       this.image.remove();
       this.g.attr("class", "paddle");
@@ -1804,7 +1864,6 @@
           if (!done) {
             _this.r.x += dx;
             _this.draw();
-            d3.timer.flush();
           }
           if (_this.r.x > _this.max_x) {
             _this.r.x = _this.max_x;
@@ -1822,7 +1881,7 @@
       if (e == null) {
         e = d3.event;
       }
-      this.r.x += (e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0) / $z.Game.scale;
+      this.r.x += e.dx || e.movementX || e.mozMovementX || e.webkitMovementX || 0;
       if (this.r.x < this.min_x) {
         this.r.x = this.min_x;
       }
@@ -1830,26 +1889,19 @@
         this.r.x = this.max_x;
       }
       this.draw();
-      d3.timer.flush();
     };
 
     Paddle.prototype.start = function() {
       Paddle.__super__.start.apply(this, arguments);
       this.tick = function() {};
       d3.select(window).on("mousemove", this.redraw);
-      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("dragstart", function() {
-        return d3.select(window).on("mousemove", null);
-      }).on("drag", this.redraw).on("dragend", (function(_this) {
-        return function() {
-          return d3.select(window).on("mousemove", _this.redraw);
-        };
-      })(this)));
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", this.redraw));
     };
 
     Paddle.prototype.stop = function() {
       Paddle.__super__.stop.apply(this, arguments);
       d3.select(window).on("mousemove", null);
-      return this.svg.call(d3.behavior.drag().origin(Object).on("dragstart", null).on("drag", null).on("dragend", null));
+      return d3.select(document.body).call(d3.behavior.drag().origin(Object).on("drag", null));
     };
 
     Paddle.prototype.remove_check = function(n) {
@@ -1909,7 +1961,7 @@
 
     Ship.increment_count = [1, 2, 4];
 
-    Ship.speed = [.5, 1, 2];
+    Ship.speed = [.03, .04, .05];
 
     Ship.size = [40, 35, 30];
 
@@ -1950,13 +2002,19 @@
     }
 
     Ship.prototype.start = function() {
-      var dur;
-      dur = 300;
-      return Ship.__super__.start.call(this, dur);
+      var dur, speed;
+      dur = 500;
+      speed = 0;
+      speed = this.speed;
+      this.speed = 0;
+      return Ship.__super__.start.call(this, dur, function(d) {
+        d.speed = speed;
+        return d.collision = true;
+      });
     };
 
     Ship.prototype.init = function() {
-      var dur, h, maxDifficulty, w;
+      var h, maxDifficulty, w;
       if ($z.Gamescore.value > 0) {
         maxDifficulty = Math.min(3, Math.floor($z.Gamescore.value / 500 + Math.random()));
       } else {
@@ -1972,8 +2030,7 @@
       this.image = this.g.append("image").attr("xlink:href", $z.Ship.image_url[this.difficulty]).attr("x", -w).attr("y", -h).attr("width", 2 * w).attr("height", 2 * h);
       this.overlay.remove();
       this.overlay = this.g.append('circle').attr('r', this.size).attr('x', 0).attr('y', 0).style('opacity', 0);
-      dur = 1;
-      this.scale(1, dur);
+      this.scale(1);
       this.v.y = 0;
       this.r.x = $z.Game.width * 0.8 * Math.random();
       this.r.y = 0.05 * $z.Game.height * Math.random();
@@ -1981,14 +2038,20 @@
         this.r.x = 2 * this.size;
       }
       if (this.r.x > ($z.Game.width - 2 * this.size)) {
-        return this.r.x = $z.Game.width - 2 * this.size;
+        this.r.x = $z.Game.width - 2 * this.size;
       }
+      return this.start();
     };
 
     Ship.prototype.draw = function() {
-      if (Math.abs(this.v.y - $z.Ship.speed[this.difficulty]) > 0.1 * $z.Ship.speed[this.difficulty]) {
-        this.v.y += .1 * ($z.Ship.speed[this.difficulty] - this.v.y);
+      if (this.invincible) {
+        this.v.y = 0;
+      } else {
+        if (Math.abs(this.v.y - $z.Ship.speed[this.difficulty]) > 0.1 * $z.Ship.speed[this.difficulty]) {
+          this.v.y += .015 * ($z.Ship.speed[this.difficulty] - this.v.y);
+        }
       }
+      this.v.x = 0;
       if (this.r.x < this.size) {
         this.r.x = this.size;
       }
@@ -1999,11 +2062,15 @@
     };
 
     Ship.prototype.reaction = function(n) {
+      var speed;
       if ((n != null) && n.constructor === Ship) {
+        speed = Math.max(this.speed, n.speed) * 4;
         if (n.r.y > this.r.y) {
-          n.v.y = 3 * n.speed;
+          n.v.y = speed;
+          this.v.y *= 0.5;
         } else {
-          this.v.y = 3 * n.speed;
+          this.v.y = speed;
+          n.v.y *= 0.5;
         }
       }
       return Ship.__super__.reaction.apply(this, arguments);
@@ -2017,13 +2084,14 @@
       if (this.is_removed || this.is_flashing) {
         return;
       }
-      this.is_removed = true;
+      this.collision = false;
       if (this.offscreen() && $z.Gamescore.lives >= 0) {
         $z.Gamescore.decrement_value();
         $z.Game.sound.play('loss');
         $z.Game.instance.text();
       }
-      this.scale(0.2);
+      dur = 500;
+      this.scale(0.2, dur);
       dur = 420;
       switch (this.difficulty) {
         case 0:
@@ -2036,12 +2104,16 @@
           color = '#844';
       }
       this.flash(dur, color, scaleFactor = 2, initialOpacity = 0.6);
-      this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0);
+      this.g.transition().duration(dur).ease('poly(0.5)').style("opacity", 0).each('end', (function(_this) {
+        return function() {
+          return _this.is_removed = true;
+        };
+      })(this));
       if (!quietSwitch) {
         $z.Game.sound.play('boom');
       }
       Nship = $z.Collision.list.filter(function(d) {
-        return d.constructor === Ship && !d.is_removed;
+        return d.constructor === Ship && d.collision;
       }).length;
       if (Nship === 0 && $z.Gamescore.lives >= 0) {
         return $z.Game.instance.spawn_ships();
@@ -2050,6 +2122,9 @@
 
     Ship.prototype.remove_check = function(element) {
       var d, i, old_count, _i, _ref;
+      if (this.is_removed) {
+        return;
+      }
       if (element.name === 'Ball') {
         element.reaction();
         d = $z.Collision.circle_polygon(element, this);
@@ -2119,8 +2194,9 @@
       this.initialN = 1;
       this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');
       this.setup();
-      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "32").attr("x", "20").attr("y", "80").attr('font-family', 'arial').attr('font-weight', 'bold');
-      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "70").attr('font-family', 'arial').attr('font-weight', 'bold');
+      this.lives = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "100").attr('font-family', 'arial').attr('font-weight', 'bold');
       d3.select(window.top).on("keydown", this.keydown);
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
@@ -2142,7 +2218,8 @@
       this.paddle = $z.Factory.spawn($z.Paddle);
       $z.Game.paddle = this.paddle;
       this.spawn_check_needed = true;
-      return $z.Gamescore.lives = 2;
+      $z.Gamescore.lives = 2;
+      return this.level = 0;
     };
 
     Spacepong.prototype.keydown = function() {
@@ -2171,20 +2248,30 @@
     };
 
     Spacepong.prototype.spawn_ships = function() {
-      var index, ship;
+      var Niter, delay, dur, i, loopCallback, msg, _i, _ref;
       if ($z.Gamescore.value > 0) {
         this.new_ship_count = Math.max(2, this.initialN + Math.floor($z.Gamescore.value / 1000 + Math.random() * 2));
       } else {
         this.new_ship_count = 1;
       }
-      index = this.new_ship_count;
-      while (index--) {
-        ship = $z.Factory.spawn($z.Ship);
-        ship.start();
+      for (i = _i = 0, _ref = $z.Ship.speed.length - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        $z.Ship.speed[i] *= 1.05;
       }
+      Niter = this.new_ship_count;
+      loopCallback = function() {
+        return $z.Factory.spawn($z.Ship);
+      };
+      delay = 150;
+      $z.Utils.delayedLoop(delay, Niter, loopCallback);
+      dur = 500;
+      msg = $z.Gamescore.value === 0 ? 'GET READY' : 'LEVEL UP';
+      this.message(msg, function() {}, dur);
+      ++this.level;
+      this.text();
     };
 
     Spacepong.prototype.text = function() {
+      this.leveltxt.text('LEVEL: ' + this.level);
       this.scoretxt.text('SCORE: ' + $z.Gamescore.value);
       if (!($z.Gamescore.lives < 0)) {
         return this.lives.text('LIVES: ' + $z.Gamescore.lives);

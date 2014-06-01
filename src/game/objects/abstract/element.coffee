@@ -75,11 +75,15 @@ class $z.Element
   offscreen: -> @r.x < -@size or @r.y < -@size or @r.x > $z.Game.width + @size or @r.y > $z.Game.height + @size
 
   fadeIn: (dur = 30, callback) ->
-    @g.transition()
-    .duration(dur)
-    .ease('linear')
-    .style("opacity", 1)
-    .each('end', (d) -> callback?(d))
+    if dur?
+      @g.transition()
+        .duration(dur)
+        .ease('linear')
+        .style("opacity", 1)
+        .each('end', (d) -> callback?(d))
+    else
+      @g.style("opacity", 1)
+      callback?(@)
 
   fadeOut: (dur = 30, callback) ->
     @g.transition()
@@ -104,7 +108,7 @@ class $z.Element
         @is_flashing = false
       )
 
-  start: (duration = undefined, callback = undefined) ->
+  start: (duration = undefined, callback = => @collision = true) ->
     if @is_sleeping
       console.log('element.start: is_sleeping... bug?')
       return
@@ -113,7 +117,6 @@ class $z.Element
       $z.Collision.list.push(@) # tell physics module that this element wants to join
     else
       console.log('element.start: this element is already on the physics list! bug?')
-    @collision  = true
     @is_removed = false  # mark the element as removed
     @draw()
     @fadeIn(duration, callback)
@@ -164,9 +167,14 @@ class $z.Element
     @draw()
     return
 
-  scale: (scalingFactor = 10, dur = 420) ->
-    @image
-     .attr('transform', 'scale(1)')
-     .transition()
-     .duration(dur)
-     .attr('transform', 'scale(' + scalingFactor + ')')
+  scale: (scalingFactor = 10, dur = undefined, callback = ->) ->
+    if dur?
+      @image
+       .transition()
+       .duration(dur)
+       .ease('linear')
+       .attr('transform', 'scale(' + scalingFactor + ')')
+       .each('end', callback)
+    else
+      @image.attr('transform', 'scale(' + scalingFactor + ')')
+      callback()

@@ -20,7 +20,7 @@ class $z.Wall extends $z.Polygon
     @r.x     =  w
     @r.y     = -h + 0.05 * $z.Game.height
     @switch_probability = 0.005 # frequency of the wall's randomized direction changes
-    @speed   = 1 # initial wall speed
+    @speed   = .05 # initial wall speed
     @v.y   = @speed
     @padding = 300
     @clip = @svg

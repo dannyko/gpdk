@@ -10,7 +10,7 @@ class $z.Root extends $z.Polygon
     @angle         = 0
     @angleStep     = 2 * Math.PI / 40 # initialize per-step angle change magnitude 
     @lastfire      = undefined # initialize timestamp
-    @charge        = 5e3 # sets drone interaction strength
+    @charge        = 3 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
     @shipImage  = @g.insert("image", 'path').attr('id', 'ship_image')
@@ -21,6 +21,7 @@ class $z.Root extends $z.Polygon
     @
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
+    return if $z.Physics.off
     return unless @collision # don't draw if not active
     # return if (d3.event.defaultPrevented) # click suppressed
     # maxJump = 70 # max jump size
@@ -93,8 +94,8 @@ class $z.Root extends $z.Polygon
     bullet = $z.Factory.spawn($z.Bullet, bullet_config) # spawn replaces object creation; i.e., new Bullet({power: @bullet_size * @bullet_size})
     bullet.r.x = @r.x + x * (@size / 3 + @bullet_size)
     bullet.r.y = @r.y + y * 20
-    bullet.v.x = @bullet_speed * x
-    bullet.v.y = @bullet_speed * y
+    bullet.v.x = @bullet_speed * x * .025
+    bullet.v.y = @bullet_speed * y * .025
     bullet.stroke(@bullet_stroke)
     bullet.fill(@bullet_fill)
     # console.log('root.shoot', x, y, bullet.r.x, bullet.r.y, bullet.v.x, bullet.v.y)
@@ -112,8 +113,8 @@ class $z.Root extends $z.Polygon
     @path          = ship.path
     @BB() # set the rectangular bounding box for this path
     endPath  = @d_attr() # new end-path to morph to
-    @image.attr("opacity", .5)
-      .attr('fill', '#223')
+    @image.attr("opacity", .1)
+      .attr('fill', '#FFF')
       .data([endPath])
       .transition()
       .duration(dur)

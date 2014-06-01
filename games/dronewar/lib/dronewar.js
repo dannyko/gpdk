@@ -176,6 +176,28 @@
       return array.pop();
     };
 
+    Utils.delayedLoop = function(dur, Niter, callback, finalCallback) {
+      var i, runLoop;
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (finalCallback == null) {
+        finalCallback = void 0;
+      }
+      i = 0;
+      runLoop = function() {
+        callback(i);
+        if (++i === Niter) {
+          if (typeof finalCallback === "function") {
+            finalCallback();
+          }
+          return;
+        }
+        return setTimeout(runLoop, dur);
+      };
+      return runLoop();
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -400,9 +422,14 @@
       if (dur == null) {
         dur = 30;
       }
-      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
-        return typeof callback === "function" ? callback(d) : void 0;
-      });
+      if (dur != null) {
+        return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
+          return typeof callback === "function" ? callback(d) : void 0;
+        });
+      } else {
+        this.g.style("opacity", 1);
+        return typeof callback === "function" ? callback(this) : void 0;
+      }
     };
 
     Element.prototype.fadeOut = function(dur, callback) {
@@ -445,7 +472,11 @@
         duration = void 0;
       }
       if (callback == null) {
-        callback = void 0;
+        callback = (function(_this) {
+          return function() {
+            return _this.collision = true;
+          };
+        })(this);
       }
       if (this.is_sleeping) {
         console.log('element.start: is_sleeping... bug?');
@@ -457,7 +488,6 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
-      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -526,14 +556,22 @@
       this.draw();
     };
 
-    Element.prototype.scale = function(scalingFactor, dur) {
+    Element.prototype.scale = function(scalingFactor, dur, callback) {
       if (scalingFactor == null) {
         scalingFactor = 10;
       }
       if (dur == null) {
-        dur = 420;
+        dur = void 0;
       }
-      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
+      if (callback == null) {
+        callback = function() {};
+      }
+      if (dur != null) {
+        return this.image.transition().duration(dur).ease('linear').attr('transform', 'scale(' + scalingFactor + ')').each('end', callback);
+      } else {
+        this.image.attr('transform', 'scale(' + scalingFactor + ')');
+        return callback();
+      }
     };
 
     return Element;
@@ -661,23 +699,20 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len;
-      len = $z.Collision.list.length;
-      while (len--) {
-        $z.Collision.list[len].remove();
-      }
+      this.g.selectAll('g').each(function(d) {
+        return d != null ? d.remove() : void 0;
+      });
     };
 
     Game.prototype.message = function(txt, callback, dur) {
-      var ready;
+      var ready, spacing;
       if (dur == null) {
-        dur = 500;
+        dur = 1000;
       }
-      if (callback === void 0) {
-        callback = function() {};
-      }
+      callback || (callback = function() {});
       this.g.selectAll('.game_message').remove();
-      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - 105).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
+      spacing = 10;
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - txt.length * spacing).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -1420,10 +1455,10 @@
 
     Physics.paused = false;
 
-    Physics.verlet_step = function(element, dt) {
+    Physics.verlet = function(element, dt) {
       var accumulateSwitch;
       if (dt == null) {
-        dt = element.dt;
+        dt = Physics.tick;
       }
       element.f.scale(0.5 * dt * dt);
       element.dr.x = element.v.x;
@@ -1443,21 +1478,8 @@
       element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
     };
 
-    Physics.verlet = function(element, elapsedTime) {
-      var Nstep, dt, error, step;
-      Nstep = Math.floor(elapsedTime / Physics.tick);
-      step = 0;
-      while (step < Nstep) {
-        Physics.verlet_step(element);
-        ++step;
-      }
-      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
-      dt = element.dt * error;
-      Physics.verlet_step(element, dt);
-    };
-
     Physics.integrate = function(t) {
-      var bool, elapsedTime, fps, index;
+      var elapsedTime, fps;
       if (Physics.off) {
         return true;
       }
@@ -1469,24 +1491,38 @@
       }
       Physics.timestamp = t;
       Physics.update(elapsedTime);
-      $z.Collision.detect();
-      index = Physics.callbacks.length;
-      while (index--) {
-        if (Physics.callbacks.length === 0) {
-          break;
-        }
-        bool = Physics.callbacks[index](t);
-        if (bool) {
-          $z.Utils.index_pop(Physics.callbacks, index);
-        }
-      }
-      return this.off;
+      return Physics.off;
     };
 
     Physics.update = function(elapsedTime) {
-      var index, _results;
+      var Nmax, Nstep, dt, dur, error, step;
       if (elapsedTime == null) {
         elapsedTime = Physics.elapsedTime;
+      }
+      Nstep = Math.floor(elapsedTime / Physics.tick);
+      Nmax = 800;
+      if (Nstep > Nmax) {
+        dur = 2000;
+        Physics.stop();
+        $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur);
+      }
+      step = 0;
+      while (step < Nstep) {
+        Physics.step();
+        $z.Collision.detect();
+        Physics.run_callbacks();
+        ++step;
+      }
+      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
+      dt = Physics.tick * error;
+      Physics.step(dt);
+      return Physics.run_callbacks();
+    };
+
+    Physics.step = function(elapsedTime) {
+      var index, _results;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.tick;
       }
       index = $z.Collision.list.length;
       _results = [];
@@ -1505,14 +1541,32 @@
       return _results;
     };
 
+    Physics.run_callbacks = function() {
+      var bool, index, _results;
+      index = Physics.callbacks.length;
+      _results = [];
+      while (index--) {
+        if (Physics.callbacks.length === 0) {
+          break;
+        }
+        bool = Physics.callbacks[index](Physics.timestamp);
+        if (bool) {
+          _results.push($z.Utils.index_pop(Physics.callbacks, index));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
     Physics.start = function() {
       var blurCallback;
-      if (!this.off) {
+      if (!Physics.off) {
         return;
       }
-      this.off = false;
-      this.timestamp = 0;
-      d3.timer(this.integrate);
+      Physics.off = false;
+      Physics.timestamp = 0;
+      d3.timer(Physics.integrate);
       blurCallback = function() {
         Physics.paused = true;
         return Physics.stop();
@@ -1538,10 +1592,11 @@
     };
 
     Physics.stop = function() {
-      if (this.off) {
+      if (Physics.off) {
         return;
       }
-      this.off = true;
+      Physics.off = true;
+      Physics.timestamp = void 0;
       setTimeout(Physics.update, 2 * Physics.tick);
     };
 
@@ -1679,7 +1734,7 @@
         bullet_fill: '#90F ',
         bullet_size: 4,
         bullet_speed: 5,
-        bullet_tick: 60
+        bullet_tick: 70
       };
     };
 
@@ -1778,9 +1833,9 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#C00',
-        bullet_size: 6,
+        bullet_size: 5,
         bullet_speed: 4,
-        bullet_tick: 90
+        bullet_tick: 80
       };
     };
 
@@ -1858,9 +1913,9 @@
         },
         bullet_stroke: 'none',
         bullet_fill: '#d3bc5f',
-        bullet_size: 5,
+        bullet_size: 4.5,
         bullet_speed: 4.5,
-        bullet_tick: 100
+        bullet_tick: 90
       };
     };
 
@@ -1909,7 +1964,7 @@
 
     Drone.url = GameAssetsUrl + "drone.svg";
 
-    Drone.max_speed = 3;
+    Drone.max_speed = .1;
 
     function Drone(config) {
       this.config = config != null ? config : {};
@@ -1950,10 +2005,11 @@
 
     Drone.prototype.start = function() {
       var dur, v0;
-      v0 = 1 + $z.Gamescore.value * 0.0001 * $z.Drone.max_speed;
+      v0 = .1 + $z.Gamescore.value * 0.00001 * $z.Drone.max_speed;
       this.max_speed = 0;
       dur = 1000;
       this.invincible = true;
+      this.collision = true;
       return Drone.__super__.start.call(this, dur, function(d) {
         var d1, dx, dy;
         dx = d.root.r.x - d.r.x;
@@ -2083,13 +2139,13 @@
       if (!(this.N >= this.maxN)) {
         this.N += drone_increment;
       }
-      this.charge *= 20;
       this.text();
       this.svg.style("cursor", "pointer");
       this.element = [];
       multiplier = 20;
       offset = 200;
-      $z.Drone.max_speed += 0.1;
+      $z.Drone.max_speed += 0.02;
+      $z.Game.instance.root.charge += .02;
       drone_config = {
         energy: this.N * multiplier + offset,
         root: this.root
@@ -2272,7 +2328,7 @@
       this.angle = 0;
       this.angleStep = 2 * Math.PI / 40;
       this.lastfire = void 0;
-      this.charge = 5e3;
+      this.charge = 3;
       this.stroke("none");
       this.fill("#000");
       this.shipImage = this.g.insert("image", 'path').attr('id', 'ship_image');
@@ -2286,6 +2342,9 @@
     Root.prototype.redraw = function(xy) {
       if (xy == null) {
         xy = d3.mouse(this.game_g.node());
+      }
+      if ($z.Physics.off) {
+        return;
       }
       if (!this.collision) {
         return;
@@ -2386,8 +2445,8 @@
       bullet = $z.Factory.spawn($z.Bullet, bullet_config);
       bullet.r.x = this.r.x + x * (this.size / 3 + this.bullet_size);
       bullet.r.y = this.r.y + y * 20;
-      bullet.v.x = this.bullet_speed * x;
-      bullet.v.y = this.bullet_speed * y;
+      bullet.v.x = this.bullet_speed * x * .025;
+      bullet.v.y = this.bullet_speed * y * .025;
       bullet.stroke(this.bullet_stroke);
       bullet.fill(this.bullet_fill);
       bullet.start();
@@ -2411,7 +2470,7 @@
       this.path = ship.path;
       this.BB();
       endPath = this.d_attr();
-      this.image.attr("opacity", .5).attr('fill', '#223').data([endPath]).transition().duration(dur).attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
+      this.image.attr("opacity", .1).attr('fill', '#FFF').data([endPath]).transition().duration(dur).attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
       return this.shipImage.transition().duration(dur * 0.5).attr('opacity', 0).remove().transition().attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).transition().duration(dur).attr("xlink:href", ship.url).attr("opacity", 1).each('end', (function(_this) {
         return function() {
           _this.collision = true;

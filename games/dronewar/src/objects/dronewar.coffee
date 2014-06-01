@@ -10,13 +10,13 @@ class $z.Dronewar extends $z.Game
     return if $z.Gamescore.lives < 0 or $z.Physics.off # do nothing if the game is over/ending
     drone_increment = 1
     @N += drone_increment unless @N >= @maxN
-    @charge *= 20
     @text()
     @svg.style("cursor", "pointer")
     @element   = [] # reinitialize element list
     multiplier = 20
     offset     = 200
-    $z.Drone.max_speed += 0.1
+    $z.Drone.max_speed += 0.02
+    $z.Game.instance.root.charge += .02
     drone_config = {energy: @N * multiplier + offset, root: @root}
     for i in [0...@N] # create element list
       newAttacker = $z.Factory.spawn($z.Drone, drone_config) unless $z.Gamescore.lives < 0 or $z.Physics.off # spawn if game is over or ending

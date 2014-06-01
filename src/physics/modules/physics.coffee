@@ -21,7 +21,7 @@ class $z.Physics # numerical integration module for solving differential equatio
 #    (callback, element) ->
 #      window.setTimeout(callback, Physics.tick)
 
-  @verlet_step = (element, dt = element.dt) ->
+  @verlet = (element, dt = Physics.tick) ->
     element.f.scale(0.5 * dt * dt)
     element.dr.x = element.v.x # initialize displacement vector
     element.dr.y = element.v.y # initialize displacement vector
@@ -37,19 +37,6 @@ class $z.Physics # numerical integration module for solving differential equatio
     element.v.add(element.fcopy.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
     return
 
-  @verlet = (element, elapsedTime) -> # default algorithm simulates Newtonian dynamics using approximate velocity Verlet algorithm 
-    # integral time step(s):
-    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
-    step  = 0 # initialize step counter
-    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
-      Physics.verlet_step(element)
-      ++step
-    # fractional time step:
-    error = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
-    dt    = element.dt * error # scale timestep of physics to compensate for noise in framerate
-    Physics.verlet_step(element, dt) # substep to compensate for slop in timing
-    return
-
   @integrate = (t) ->
     return true if Physics.off
     # requestAnimFrame(Physics.integrate) # keep running the loop
@@ -60,15 +47,28 @@ class $z.Physics # numerical integration module for solving differential equatio
       console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
     Physics.timestamp = t
     Physics.update(elapsedTime)
-    $z.Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
-    index = Physics.callbacks.length 
-    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
-      break if Physics.callbacks.length is 0
-      bool = Physics.callbacks[index](t) # execute the callback
-      $z.Utils.index_pop(Physics.callbacks, index) if bool # returning a value of true means we can remove this callback
-    @off
+    return Physics.off
   
   @update = (elapsedTime = Physics.elapsedTime) ->
+    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
+    Nmax  = 800
+    if Nstep > Nmax
+      dur = 2000
+      Physics.stop()
+      $z.Game.instance.message('CPU SPEED ERROR', $z.Game.instance.stop, dur)
+    step  = 0 # initialize step counter
+    while step < Nstep # adjust the number of steps to take depending on the machine speed - slower machines should take more steps to maintain game difficulty
+      Physics.step()
+      $z.Collision.detect() # detect all collisions between active elements and execute their corresonding reactions
+      Physics.run_callbacks()
+      ++step
+    # fractional time step:
+    error = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
+    dt    = Physics.tick * error # scale timestep of physics to compensate for noise in framerate
+    Physics.step(dt)
+    Physics.run_callbacks()
+
+  @step = (elapsedTime = Physics.tick) -> # one full step of the physics engine - update all elements, resolve collisions, etc.
     index = $z.Collision.list.length # update after requestAnimFrame to match 60 fps most closely when falling back to setTimeout (see http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/)
     while (index--) # iterate backwards to avoid indexing/variable array length issues, caused by removing elements from the array as we go
       if $z.Collision.list[index].is_removed
@@ -78,11 +78,18 @@ class $z.Physics # numerical integration module for solving differential equatio
         if Physics.debug
           console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', $z.Collision.list[index].r.x, 'r.y:', $z.Collision.list[index].r.y)
 
+  @run_callbacks = ->
+    index = Physics.callbacks.length 
+    while (index--) # backwards to avoid reindexing issues from splice inside element.cleanup()
+      break if Physics.callbacks.length is 0
+      bool = Physics.callbacks[index](Physics.timestamp) # execute the callback
+      $z.Utils.index_pop(Physics.callbacks, index) if bool # returning a value of true means we can remove this callback
+
   @start = -> 
-    return unless @off # don't start twice
-    @off = false 
-    @timestamp = 0 # to keep track of integration frequency
-    d3.timer(@integrate)
+    return unless Physics.off # don't start twice
+    Physics.off = false 
+    Physics.timestamp = 0 # to keep track of integration frequency
+    d3.timer(Physics.integrate)
     blurCallback = -> # window loses focus
       Physics.paused = true
       Physics.stop()
@@ -102,7 +109,8 @@ class $z.Physics # numerical integration module for solving differential equatio
     return
 
   @stop = -> 
-    return if @off
-    @off = true
+    return if Physics.off
+    Physics.off = true
+    Physics.timestamp = undefined # reset to prevent big jumps
     setTimeout(Physics.update, 2 * Physics.tick) # flush elements waiting to be removed
     return

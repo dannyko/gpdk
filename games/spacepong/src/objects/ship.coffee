@@ -1,7 +1,7 @@
 class $z.Ship extends $z.Polygon
   @image_url = [GameAssetsUrl + "green_ship.svg", GameAssetsUrl + "blue_ship.svg", GameAssetsUrl + "red_ship.svg"]
   @increment_count = [1, 2, 4]
-  @speed = [.5, 1, 2]
+  @speed = [.03, .04, .05]
   @size  = [40, 35, 30] # half width/height
 
   ship_path = (w, h) ->
@@ -20,8 +20,14 @@ class $z.Ship extends $z.Polygon
     @init()
 
   start: ->
-    dur = 300 # fade-in duration
-    super(dur)
+    dur         = 500 # fade-in duration
+    speed       = 0
+    speed       = @speed
+    @speed      = 0
+    super(dur, (d) -> 
+      d.speed      = speed
+      d.collision  = true
+    )
 
   init: ->
     if $z.Gamescore.value > 0
@@ -46,50 +52,63 @@ class $z.Ship extends $z.Polygon
       .attr('x', 0)
       .attr('y', 0)
       .style('opacity', 0)
-    dur = 1 # ms duration, too fast to see (i.e. "instantaneous")
-    @scale(1, dur)
+    @scale(1)
     @v.y = 0
     @r.x = $z.Game.width * 0.8 * Math.random()
     @r.y = 0.05 * $z.Game.height * Math.random()
     @r.x = 2 * @size if @r.x < 2 * @size
     @r.x = $z.Game.width - 2 * @size if @r.x > ($z.Game.width - 2 * @size)
+    @start()
 
   draw: ->
-    if Math.abs(@v.y - $z.Ship.speed[@difficulty]) > 0.1 * $z.Ship.speed[@difficulty] then @v.y += .1 * ($z.Ship.speed[@difficulty] - @v.y) # adjust wspeed towards its natural value
+    if @invincible
+      @v.y = 0
+    else
+      if Math.abs(@v.y - $z.Ship.speed[@difficulty]) > 0.1 * $z.Ship.speed[@difficulty] then @v.y += .015 * ($z.Ship.speed[@difficulty] - @v.y) # adjust wspeed towards its natural value
+    @v.x = 0
     @r.x = @size if @r.x < @size # keep ships in viewport
     @r.x = ($z.Game.width - @size) if @r.x > ($z.Game.width - @size) # keep ship in viewport
     super
 
   reaction: (n) ->
     if n? and n.constructor is Ship
+      speed = Math.max(@speed, n.speed) * 4
       if n.r.y > @r.y # ship is below this ship
-       n.v.y = 3 * n.speed
+       n.v.y  = speed
+       @v.y  *= 0.5
       else
-        @v.y = 3 * n.speed
+       @v.y   = speed
+       n.v.y *= 0.5
     super
 
   remove: (quietSwitch = $z.Gamescore.lives < 0) ->
     return if @is_removed or @is_flashing # don't allow destruction twice (i.e. before transition finishes)
-    @is_removed = true
+    @collision  = false
     if @offscreen() and $z.Gamescore.lives >= 0 # penalize score for missing a ship unless game is over or ending
       $z.Gamescore.decrement_value()
       $z.Game.sound.play('loss')
       $z.Game.instance.text()
-    @scale(0.2) # shrink the image via a d3 transition
+    dur = 500
+    @scale(0.2, dur) # shrink the image via a d3 transition
     dur = 420
     switch @difficulty # tint the hue of the flash towards the color of the ship-type (green, blue, red)
       when 0 then color = '#484'
       when 1 then color = '#448'
       when 2 then color = '#844'
     @flash(dur, color, scaleFactor = 2, initialOpacity = 0.6)
-    @g.transition().duration(dur)
+    @g.transition()
+      .duration(dur)
       .ease('poly(0.5)')
       .style("opacity", 0)
+      .each('end', =>
+        @is_removed = true
+      )
     $z.Game.sound.play('boom') unless quietSwitch
-    Nship = $z.Collision.list.filter((d) -> d.constructor is Ship and not d.is_removed).length
+    Nship       = $z.Collision.list.filter((d) -> d.constructor is Ship and d.collision).length
     $z.Game.instance.spawn_ships() if Nship is 0 and $z.Gamescore.lives >= 0
 
   remove_check: (element) -> # ship handles its own reactions and always overrides the default physics engine
+    return if @is_removed
     if element.name is 'Ball' # hit by ball, remove and awaard points
       element.reaction()
       d = $z.Collision.circle_polygon(element, @)
@@ -99,7 +118,7 @@ class $z.Ship extends $z.Polygon
         when 2 then element.v.x =  Math.abs(element.v.x)
         when 3 then element.v.y =  Math.abs(element.v.y)
       old_count = $z.Spacepong.ball_count()        
-      if $z.Gamescore.lives >= 0 
+      if $z.Gamescore.lives >= 0
         $z.Gamescore.increment_value() for i in [0...$z.Ship.increment_count[@difficulty]]
       $z.Game.instance.text()
       $z.Game.instance.spawn_ball('MULTIBALL UP') if old_count < $z.Spacepong.ball_count()
@@ -107,4 +126,3 @@ class $z.Ship extends $z.Polygon
       return true
     else # hit another ship, let physics engine handle the reaction
       return false
-

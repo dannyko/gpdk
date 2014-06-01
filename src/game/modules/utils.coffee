@@ -29,6 +29,16 @@ class $z.Utils
       array[length - 1] = swap
     array.pop()
 
+  @delayedLoop = (dur = 1000, Niter, callback, finalCallback = undefined) ->
+    i = 0 # initialize 
+    runLoop = ->
+      callback(i)
+      if ++i is Niter
+        finalCallback?()
+        return 
+      setTimeout(runLoop, dur)
+    runLoop()
+
   @set = (obj, config) ->
     for x of config # set the new configuration values for the object to prepare it for its new role
       obj[x] = config[x] # set configuration value

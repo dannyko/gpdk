@@ -8,10 +8,34 @@
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    version="1.1"
    width="180"
    height="22"
-   id="svg2">
+   id="svg2"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="paddle.svg">
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1366"
+     inkscape:window-height="746"
+     id="namedview196"
+     showgrid="false"
+     inkscape:zoom="2.8865478"
+     inkscape:cx="91.551407"
+     inkscape:cy="10.128247"
+     inkscape:window-x="-8"
+     inkscape:window-y="239"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
   <defs
      id="defs4">
     <linearGradient
@@ -1147,7 +1171,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1179,14 +1203,16 @@
      style="display:inline">
     <path
        d="m 84.852814,196.20683 a 18.940361,18.435284 0 1 1 -37.880722,0 18.940361,18.435284 0 1 1 37.880722,0 z"
-       transform="matrix(0.4337502,0,0,0.49800613,-1.5484533,91.165461)"
+       transform="matrix(0.39037518,0,0,0.39881804,1.6569353,109.74079)"
        id="path4318"
-       style="fill:url(#radialGradient3162);fill-opacity:1;stroke:none;display:inline;filter:url(#filter7098)" />
+       style="fill:url(#radialGradient3162);fill-opacity:1;stroke:none;display:inline;filter:url(#filter7098)"
+       inkscape:connector-curvature="0" />
     <path
        d="m 84.852814,196.20683 a 18.940361,18.435284 0 1 1 -37.880722,0 18.940361,18.435284 0 1 1 37.880722,0 z"
-       transform="matrix(-0.4337502,0,0,0.49800613,212.56701,91.165461)"
+       transform="matrix(-0.39037518,0,0,0.39881407,209.70806,109.74153)"
        id="path4348"
-       style="fill:url(#radialGradient3982);fill-opacity:1;stroke:none;display:inline;filter:url(#filter7092)" />
+       style="fill:url(#radialGradient3982);fill-opacity:1;stroke:none;display:inline;filter:url(#filter7092)"
+       inkscape:connector-curvature="0" />
   </g>
   <g
      transform="translate(-15.360218,-177.50292)"

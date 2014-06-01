@@ -82,21 +82,20 @@ class $z.Game
     return
 
   cleanup: -> # remove all elements from Collision list and set to object reference to null
-    len = $z.Collision.list.length # length
-    $z.Collision.list[len].remove() while (len--) # decrementing avoids potential indexing issues after popping last element off of $z.Collision.list during element.remove()      
+    @g.selectAll('g').each (d) -> d?.remove()
     return
 
-  message: (txt, callback, dur = 500) ->
-    if callback is undefined
-      callback = ->
+  message: (txt, callback, dur = 1000) ->
+    callback ||= ->
     @g.selectAll('.game_message').remove()
+    spacing = 10 
     ready = @g.append("text")
       .attr('class', 'game_message')
       .text(txt)
       .attr("stroke", "none")
       .attr("fill", $z.Game.message_color)
       .attr("font-size", "36")
-      .attr("x", $z.Game.width  / 2 - 105)
+      .attr("x", $z.Game.width  / 2 - txt.length * spacing)
       .attr("y", $z.Game.height / 2 + 20)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')

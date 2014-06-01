@@ -24,18 +24,29 @@ class $z.Spacepong extends $z.Game
       .text("")
       .attr("stroke", "none")
       .attr("fill", "#F90")
-      .attr("font-size", "32")
+      .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "80")
+      .attr("y", "40")
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
+
+    @leveltxt = @g.append("text")
+      .text("")
+      .attr("stroke", "none")
+      .attr("fill", "#F90")
+      .attr("font-size", "24")
+      .attr("x", "20")
+      .attr("y", "70")
+      .attr('font-family', 'arial')
+      .attr('font-weight', 'bold')
+
     @lives = @g.append("text")
       .text("")
       .attr("stroke", "none")
       .attr("fill", "#F90")
       .attr("font-size", "24")
       .attr("x", "20")
-      .attr("y", "40")
+      .attr("y", "100")
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
 
@@ -59,6 +70,7 @@ class $z.Spacepong extends $z.Game
     $z.Game.paddle = @paddle
     @spawn_check_needed = true
     $z.Gamescore.lives = 2
+    @level = 0 # initialize
 
   keydown: =>
     switch d3.event.keyCode 
@@ -79,18 +91,29 @@ class $z.Spacepong extends $z.Game
 
   spawn_ships: ->
     if $z.Gamescore.value > 0
-      @new_ship_count = Math.max(2, @initialN + Math.floor($z.Gamescore.value / 1000 + Math.random() * 2)) # (Math.random() * 4) + 1    
+      @new_ship_count   = Math.max(2, @initialN + Math.floor($z.Gamescore.value / 1000 + Math.random() * 2)) # (Math.random() * 4) + 1    
     else 
-      @new_ship_count = 1 # always start with one ship
-    index = @new_ship_count
-    while index--
-      ship = $z.Factory.spawn($z.Ship)
-      ship.start()
+      @new_ship_count   = 1 # always start with one ship
+    $z.Ship.speed[i]   *= 1.05 for i in [0..$z.Ship.speed.length - 1]
+    Niter               = @new_ship_count
+    loopCallback        = -> $z.Factory.spawn $z.Ship
+    delay               = 150
+    $z.Utils.delayedLoop(delay, Niter, loopCallback)
+    dur = 500
+    msg = if $z.Gamescore.value is 0 then 'GET READY' else 'LEVEL UP'
+    @message(
+      msg
+      ->
+      dur
+    )
+    ++@level
+    @text()
     return
 
   text: ->
+    @leveltxt.text('LEVEL: ' + @level)
     @scoretxt.text('SCORE: ' + $z.Gamescore.value)
-    @lives.text('LIVES: ' + $z.Gamescore.lives) unless $z.Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
+    @lives.text(   'LIVES: ' + $z.Gamescore.lives) unless $z.Gamescore.lives < 0 # updated text to display current # of lives unless game is over/ending
 
   stop: =>
     super

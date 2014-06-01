@@ -3,7 +3,7 @@ class $z.Paddle extends $z.Polygon
 
   constructor: (@config = {}) ->
     @config.size ||= 90
-    @height = 14
+    @height        = 10
     @config.path ||= [     # Use default paddle if none defined
              {pathSegTypeAsLetter: 'M', x: -@config.size,  y: -@height, react: true},
              {pathSegTypeAsLetter: 'L', x: -@config.size,  y:  @height, react: true},
@@ -20,15 +20,15 @@ class $z.Paddle extends $z.Polygon
     @r.x       = $z.Game.width / 2
     @r.y       = $z.Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = $z.Game.width - @config.size - @tol
-    @min_x     = @config.size + @tol
+    @max_x     = $z.Game.width - @config.size * 0.65 - @tol
+    @min_x     = @config.size * 0.65 + @tol
     @g.attr("class", "paddle")
     @image.remove()
     @image = @g.append("image")
      .attr("xlink:href", $z.Paddle.image_url)
-     .attr("x", -@size).attr("y", -@height)
-     .attr("width", @size * 2)
-     .attr("height", @height * 2)
+     .attr("x", -@size * 1.25).attr("y", -@height * 1.25)
+     .attr("width", @size * 2.5)
+     .attr("height", @height * 2.5)
     @start()
 
   nudge: (sign) ->

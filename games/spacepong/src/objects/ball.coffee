@@ -3,10 +3,11 @@ class $z.Ball extends $z.Circle
 
   constructor: (@config = {}) ->
     super
+    @cleanup(false) # turn off default offscreen behavior (removal)
     @is_busy       = false # to prevent overlapping 'bong' sound effects from firing
     @size          = 10
     @name          = 'Ball'
-    @initial_speed = 8
+    @initial_speed = .4
     @speed         = @initial_speed
     @max_speed     = @size * 10
     @image.remove()
@@ -27,7 +28,11 @@ class $z.Ball extends $z.Circle
 
   draw: ->
     return if $z.Gamescore.lives < 0 # do nothing if game is over / ending
-    if @r.y < @tol + @size # don't allow it to go beyond top sidewall
+    miny = .2 * @speed
+    @v.y = -miny if -miny < @v.y <= 0
+    @v.y =  miny if 0 < @v.y < miny
+    @v.normalize(@speed)
+    if @r.y < @tol # don't allow it to go beyond top sidewall
       @r.y = @tol + @size 
       @v.y = Math.abs(@v.y)
       @reaction()
@@ -40,34 +45,32 @@ class $z.Ball extends $z.Circle
       @v.x = -Math.abs(@v.x)
       @reaction()
     if @r.y >= $z.Game.height - @size - @tol # hit the bottom of the frame, lose a life and spawn a new Ball
-      if $z.Gamescore.lives <= 0
-        $z.Gamescore.lives = -1
-        $z.Game.instance.paddle.fadeOut()
-        $z.Game.instance.message('GAME OVER', -> $z.Game.instance.stop())
-        return
-      $z.Gamescore.lives -= 1
-      $z.Game.instance.text()
-      $z.Game.sound.play('miss')
-      @remove()
+      if @collision
+        if $z.Gamescore.lives <= 0
+          $z.Gamescore.lives = -1
+          $z.Game.instance.paddle.fadeOut()
+          $z.Physics.stop()
+          $z.Game.instance.message('GAME OVER', -> $z.Game.instance.stop())
+          return
+        else
+          $z.Gamescore.lives -= 1
+          $z.Game.sound.play('miss')
+          @remove()
+          $z.Game.instance.text()
     super
 
   remove: ->
     dur = 500
-    fadeOutSwitch = true
-    super(fadeOutSwitch, dur)
+    super(dur)
     $z.Game.instance.spawn_ball('GET READY') unless $z.Gamescore.lives < 0
     return
 
   reaction: (n) ->  
-    return if @is_busy
-    @is_busy = true
-    @v.normalize(@speed)
     @flash()
-    $z.Game.sound.play('bong') unless @is_busy
     super
     
   flash: ->
-    return if @flashing
+    return if @flashing or $z.Physics.off
     @flashing = true
     # N    = 240 # random color parameter
     dur  = 200 # color effect transition duration parameter
