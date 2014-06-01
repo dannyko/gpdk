@@ -2201,7 +2201,7 @@
       var cobra, dur, fang, go, how, prompt, root, title, viper, _ref;
       $z.Gamescore.initialLives = 100;
       $z.Gamescore.lives = $z.Gamescore.initialLives;
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('min-height', '100%');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%').style('background-repeat', 'no-repeat').style('min-height', '100%');
       this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;

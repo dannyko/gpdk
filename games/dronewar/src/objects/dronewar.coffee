@@ -54,7 +54,7 @@ class $z.Dronewar extends $z.Game
     $z.Gamescore.initialLives = 100 # for this game, use lives to mean the "energy" that the ship has left
     $z.Gamescore.lives = $z.Gamescore.initialLives
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
-      .style('background-size', 'cover')
+      .style('background-size', '100%')
       .style('background-repeat', 'no-repeat')
       .style('min-height', '100%')
     @initialN = @config.initialN || 1

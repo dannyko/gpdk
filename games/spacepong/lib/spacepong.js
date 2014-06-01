@@ -2194,7 +2194,7 @@
       this.image_list = [GameAssetsUrl + 'earth_background.jpg', GameAssetsUrl + 'blue_ship.svg', GameAssetsUrl + 'green_ship.svg', GameAssetsUrl + 'red_ship.svg', GameAssetsUrl + 'paddle.svg', GameAssetsUrl + 'ball.svg'];
       Spacepong.__super__.constructor.apply(this, arguments);
       this.initialN = 1;
-      this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', 'cover').style('background-repeat', 'no-repeat').style('background-position', 'top center');
+      this.svg.style("background-image", 'url(' + $z.Spacepong.bg_img + ')').style('background-size', '100%').style('background-repeat', 'no-repeat').style('background-position', 'top center');
       this.setup();
       this.scoretxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "40").attr('font-family', 'arial').attr('font-weight', 'bold');
       this.leveltxt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#F90").attr("font-size", "24").attr("x", "20").attr("y", "70").attr('font-family', 'arial').attr('font-weight', 'bold');
