@@ -599,22 +599,24 @@
 
     Game.height = 600;
 
+    Game.maxdim = Math.max(Game.width, Game.height);
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMin meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%').attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
-      this.g.attr('id', 'game_g').style('width', '').style('height', '');
+      this.g.attr('id', 'game_g');
       $z.Game.instance = this;
       $z.Game.instance.div.style('opacity', 0);
       this.preload_images();
@@ -1694,7 +1696,7 @@
       this.is_busy = false;
       this.size = 10;
       this.name = 'Ball';
-      this.initial_speed = .4;
+      this.initial_speed = .6;
       this.speed = this.initial_speed;
       this.max_speed = this.size * 10;
       this.image.remove();
@@ -1963,7 +1965,7 @@
 
     Ship.increment_count = [1, 2, 4];
 
-    Ship.speed = [.03, .04, .05];
+    Ship.speed = [.02, .04, .08];
 
     Ship.size = [40, 35, 30];
 
@@ -2203,6 +2205,7 @@
       if (window !== window.top) {
         d3.select(window).on("keydown", this.keydown);
       }
+      this.svg.append("rect").attr("x", 0).attr("y", 0).attr("width", $z.Game.width).attr("height", $z.Game.height).attr("fill", 'none').attr("stroke", '#222').attr("stroke-width", 2);
       $z.Game.sound = new Howl({
         urls: [GameAssetsUrl + 'spacepong.mp3', GameAssetsUrl + 'spacepong.ogg'],
         volume: 0.15,

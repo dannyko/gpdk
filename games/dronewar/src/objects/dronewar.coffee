@@ -56,7 +56,6 @@ class $z.Dronewar extends $z.Game
     @svg.style("background-image", 'url(' + Dronewar.bg_img + ')')
       .style('background-size', '100%')
       .style('background-repeat', 'no-repeat')
-      .style('min-height', '100%')
     @initialN = @config.initialN || 1
     @N        = @initialN
     @maxN     = 36 # limit the max number of drones

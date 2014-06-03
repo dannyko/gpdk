@@ -7,7 +7,7 @@ class $z.Ball extends $z.Circle
     @is_busy       = false # to prevent overlapping 'bong' sound effects from firing
     @size          = 10
     @name          = 'Ball'
-    @initial_speed = .4
+    @initial_speed = .6
     @speed         = @initial_speed
     @max_speed     = @size * 10
     @image.remove()

@@ -599,22 +599,24 @@
 
     Game.height = 600;
 
+    Game.maxdim = Math.max(Game.width, Game.height);
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMin meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%').attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
-      this.g.attr('id', 'game_g').style('width', '').style('height', '');
+      this.g.attr('id', 'game_g');
       $z.Game.instance = this;
       $z.Game.instance.div.style('opacity', 0);
       this.preload_images();
@@ -1735,7 +1737,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#90F ',
         bullet_size: 4,
-        bullet_speed: 5,
+        bullet_speed: 6,
         bullet_tick: 70
       };
     };
@@ -1836,7 +1838,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#C00',
         bullet_size: 5,
-        bullet_speed: 4,
+        bullet_speed: 5,
         bullet_tick: 80
       };
     };
@@ -1916,7 +1918,7 @@
         bullet_stroke: 'none',
         bullet_fill: '#d3bc5f',
         bullet_size: 4.5,
-        bullet_speed: 4.5,
+        bullet_speed: 5.5,
         bullet_tick: 90
       };
     };
@@ -2201,7 +2203,7 @@
       var cobra, dur, fang, go, how, prompt, root, title, viper, _ref;
       $z.Gamescore.initialLives = 100;
       $z.Gamescore.lives = $z.Gamescore.initialLives;
-      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%').style('background-repeat', 'no-repeat').style('min-height', '100%');
+      this.svg.style("background-image", 'url(' + Dronewar.bg_img + ')').style('background-size', '100%').style('background-repeat', 'no-repeat');
       this.initialN = this.config.initialN || 1;
       this.N = this.initialN;
       this.maxN = 36;

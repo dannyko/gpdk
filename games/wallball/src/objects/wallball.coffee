@@ -29,6 +29,17 @@ class $z.Wallball extends $z.Game
     d3.select(window.top).on("keydown", @keydown) # keyboard listener
     d3.select(window).on("keydown", @keydown) if window isnt window.top # keyboard listener
     $z.Game.message_color = '#FF4'
+
+    @svg
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", 0)
+      .attr("width", $z.Game.width)
+      .attr("height", $z.Game.height)
+      .attr("fill", 'none')
+      .attr("stroke", '#222')
+      .attr("stroke-width", 2)
+          
     $z.Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
       volume: 0.5,

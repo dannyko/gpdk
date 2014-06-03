@@ -9,22 +9,22 @@ class $z.Game
   @message_color: "#FFF"
   @width: 800 # default 'natural' width for the game (sets aspect ratio)
   @height: 600 # default 'natural' height for the game (sets aspect ratio) ### parseInt(@svg.attr("height"), 10)
+  @maxdim: Math.max(@width, @height)
   
   constructor: (@config = {}) ->
     @images_loaded  = false # initialize
     @element    = [] # initialize
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
-    @svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height)
-      .attr('width', '100%')
-      .attr("preserveAspectRatio", "xMidYMin meet")
     @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
+    @svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height)
+      .attr("preserveAspectRatio", "xMidYMin meet")
+      .attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%')
+      .attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%')
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")
     @g          = @svg.append('g') if @g.empty()
     @g.attr('id', 'game_g')
-      .style('width', '')
-      .style('height', '')
     $z.Game.instance = @ # associate class $z.variable with this instance for global accessibility from any context
     $z.Game.instance.div.style('opacity', 0)
     @preload_images()

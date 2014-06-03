@@ -599,22 +599,24 @@
 
     Game.height = 600;
 
+    Game.maxdim = Math.max(Game.width, Game.height);
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%').attr("preserveAspectRatio", "xMidYMin meet");
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%').attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
-      this.g.attr('id', 'game_g').style('width', '').style('height', '');
+      this.g.attr('id', 'game_g');
       $z.Game.instance = this;
       $z.Game.instance.div.style('opacity', 0);
       this.preload_images();
@@ -1866,8 +1868,8 @@
       var _base, _base1;
       this.config = config != null ? config : {};
       this.redraw = __bind(this.redraw, this);
-      (_base = this.config).size || (_base.size = 90);
-      this.height = 10;
+      (_base = this.config).size || (_base.size = 80);
+      this.height = 15;
       (_base1 = this.config).path || (_base1.path = [
         {
           pathSegTypeAsLetter: 'M',
@@ -1902,8 +1904,8 @@
       this.r.x = $z.Game.width / 2;
       this.r.y = $z.Game.height - this.height - this.padding;
       this.min_y_speed = this.config.min_y_speed || 8;
-      this.max_x = $z.Game.width - this.config.size * 0.65 - this.tol;
-      this.min_x = this.config.size * 0.65 + this.tol;
+      this.max_x = $z.Game.width - this.config.size * 1.2 - this.tol;
+      this.min_x = this.config.size * 1.2 + this.tol;
       this.g.attr("class", "paddle");
       this.image.remove();
       this.image = this.g.append("image").attr("xlink:href", $z.Paddle.image_url).attr("x", -this.size * 1.25).attr("y", -this.height * 1.25).attr("width", this.size * 2.5).attr("height", this.height * 2.5);
@@ -2134,6 +2136,7 @@
         d3.select(window).on("keydown", this.keydown);
       }
       $z.Game.message_color = '#FF4';
+      this.svg.append("rect").attr("x", 0).attr("y", 0).attr("width", $z.Game.width).attr("height", $z.Game.height).attr("fill", 'none').attr("stroke", '#222').attr("stroke-width", 2);
       $z.Game.sound = new Howl({
         urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
         volume: 0.5,

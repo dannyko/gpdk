@@ -2,8 +2,8 @@ class $z.Paddle extends $z.Polygon
   @image_url = GameAssetsUrl + "paddle.svg"
 
   constructor: (@config = {}) ->
-    @config.size ||= 90
-    @height        = 10
+    @config.size ||= 80
+    @height        = 15
     @config.path ||= [     # Use default paddle if none defined
              {pathSegTypeAsLetter: 'M', x: -@config.size,  y: -@height, react: true},
              {pathSegTypeAsLetter: 'L', x: -@config.size,  y:  @height, react: true},
@@ -20,8 +20,8 @@ class $z.Paddle extends $z.Polygon
     @r.x       = $z.Game.width / 2
     @r.y       = $z.Game.height - @height - @padding
     @min_y_speed = @config.min_y_speed || 8
-    @max_x     = $z.Game.width - @config.size * 0.65 - @tol
-    @min_x     = @config.size * 0.65 + @tol
+    @max_x     = $z.Game.width - @config.size * 1.2 - @tol
+    @min_x     = @config.size * 1.2 + @tol
     @g.attr("class", "paddle")
     @image.remove()
     @image = @g.append("image")
