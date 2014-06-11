@@ -17,10 +17,11 @@ class $z.Game
     @div        = d3.select("#game_div")
     @svg        = d3.select("#game_svg")
     @svg        = @div.append('svg').attr('id', 'game_svg') if @svg.empty()
-    @svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height)
-      .attr("preserveAspectRatio", "xMidYMin meet")
-      .attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%')
-      .attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%')
+    @svg
+      .attr "viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height 
+      .attr "preserveAspectRatio", "xMidYMin meet" 
+      .attr 'width', '100%' 
+      .attr 'max-height', 100 * $z.Game.height / $z.Game.maxdim + '%' 
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")
     @g          = @svg.append('g') if @g.empty()

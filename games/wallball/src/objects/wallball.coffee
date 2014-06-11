@@ -39,7 +39,7 @@ class $z.Wallball extends $z.Game
       .attr("fill", 'none')
       .attr("stroke", '#222')
       .attr("stroke-width", 2)
-          
+
     $z.Game.sound = new Howl({
       urls: [GameAssetsUrl + 'wallball.mp3', GameAssetsUrl + 'wallball.ogg'],
       volume: 0.5,
@@ -142,7 +142,7 @@ class $z.Wallball extends $z.Game
       @wall.v.y = @wall.speed
       @spawn_ball()
       @text()
-      $z.Utils.fullscreen()
+      # $z.Utils.fullscreen()
       @div.style("cursor", "none")
     )
 

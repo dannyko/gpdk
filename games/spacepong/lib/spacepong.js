@@ -2306,7 +2306,6 @@
           _this.text();
           _this.spawn_ball('GET READY');
           _this.spawn_ships();
-          $z.Utils.fullscreen();
           return _this.div.style("cursor", "none");
         };
       })(this));

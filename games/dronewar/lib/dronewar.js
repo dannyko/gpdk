@@ -610,7 +610,7 @@
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%').attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', '100%').attr('max-height', 100 * $z.Game.height / $z.Game.maxdim + '%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
@@ -2280,8 +2280,7 @@
         how.transition().duration(dur).style("opacity", 0).remove();
         $z.Game.instance.root.start();
         $z.Gamescore.value = 0;
-        $z.Game.instance.level();
-        return $z.Utils.fullscreen();
+        return $z.Game.instance.level();
       });
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", $z.Game.width / 2 - 350).attr("y", this.root.r.y + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation");
@@ -2339,7 +2338,6 @@
       this.ship();
       this.tick = function() {};
       this.drawing = false;
-      this.fadeIn();
       return this;
     };
 
@@ -2462,10 +2460,10 @@
         ship = $z.Ship.cobra();
       }
       if (dur == null) {
-        dur = 500;
+        dur = 1000;
       }
       this.collision = false;
-      $z.Physics.callbacks.pop();
+      $z.Physics.callbacks = [];
       this.bullet_stroke = ship.bullet_stroke;
       this.bullet_fill = ship.bullet_fill;
       this.bullet_size = ship.bullet_size;
@@ -2474,11 +2472,14 @@
       this.path = ship.path;
       this.BB();
       endPath = this.d_attr();
-      this.image.attr("opacity", .1).attr('fill', '#FFF').data([endPath]).transition().duration(dur).attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).attr("opacity", 0);
-      return this.shipImage.transition().duration(dur * 0.5).attr('opacity', 0).remove().transition().attr("x", -this.bb_width * 0.5 + ship.offset.x).attr("y", -this.bb_height * 0.5 + ship.offset.y).attr("width", this.bb_width).attr("height", this.bb_height).transition().duration(dur).attr("xlink:href", ship.url).attr("opacity", 1).each('end', (function(_this) {
+      this.image.attr("opacity", .2).attr('fill', '#FFF').data([endPath]).transition().duration(dur * 0.25).ease('linear').attrTween("d", $z.Utils.pathTween).transition().duration(dur * 0.5).ease('linear').attr("opacity", 0);
+      return this.g.transition().ease('linear').duration(dur * 0.5).style('opacity', 0).each('end', (function(_this) {
         return function() {
-          _this.collision = true;
-          return $z.Physics.callbacks[0] = _this.fire;
+          _this.shipImage.attr("xlink:href", ship.url).attr("x", -_this.bb_width * 0.5 + ship.offset.x).attr("y", -_this.bb_height * 0.5 + ship.offset.y).attr("width", _this.bb_width).attr("height", _this.bb_height);
+          return _this.g.transition().delay(dur * 0.125).duration(dur).ease('linear').style('opacity', 1).each('end', function() {
+            _this.collision = true;
+            return $z.Physics.callbacks[0] = _this.fire;
+          });
         };
       })(this));
     };

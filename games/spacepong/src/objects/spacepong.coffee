@@ -175,7 +175,7 @@ class $z.Spacepong extends $z.Game
       @text()
       @spawn_ball('GET READY')
       @spawn_ships()
-      $z.Utils.fullscreen()
+      # $z.Utils.fullscreen()
       @div.style("cursor", "none")
     )
 

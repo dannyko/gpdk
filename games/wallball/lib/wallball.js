@@ -2215,7 +2215,6 @@
           _this.wall.v.y = _this.wall.speed;
           _this.spawn_ball();
           _this.text();
-          $z.Utils.fullscreen();
           return _this.div.style("cursor", "none");
         };
       })(this));

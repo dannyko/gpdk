@@ -13,11 +13,10 @@ class $z.Root extends $z.Polygon
     @charge        = 3 # sets drone interaction strength
     @stroke("none")
     @fill("#000")
-    @shipImage  = @g.insert("image", 'path').attr('id', 'ship_image')
+    @shipImage     = @g.insert("image", 'path').attr('id', 'ship_image')
     @ship() # morph ship path out of zero-size default path (easy zoom effect)
-    @tick    = -> return
-    @drawing = false
-    @fadeIn()
+    @tick          = -> return
+    @drawing       = false
     @
 
   redraw: (xy = d3.mouse(@game_g.node())) =>
@@ -68,7 +67,7 @@ class $z.Root extends $z.Polygon
     deltay = 0 if isNaN(deltay)
     deltax = @angleStep * Math.ceil(d3.event.dx) / Math.abs(Math.ceil(d3.event.dx))
     deltax = 0 if isNaN(deltax)
-    delta = if Math.abs(deltay) > Math.abs(deltax) then deltay else deltax
+    delta  = if Math.abs(deltay) > Math.abs(deltax) then deltay else deltax
     @angle = @angle - delta
     @rotate_path()
     return
@@ -102,9 +101,9 @@ class $z.Root extends $z.Polygon
     bullet.start()
     return
 
-  ship: (ship = $z.Ship.cobra(), dur = 500) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
+  ship: (ship = $z.Ship.cobra(), dur = 1000) -> # provides a morph effect when switching between ship types using $z.Utils.pathTween
     @collision = false
-    $z.Physics.callbacks.pop() 
+    $z.Physics.callbacks = []
     @bullet_stroke = ship.bullet_stroke
     @bullet_fill   = ship.bullet_fill
     @bullet_size   = ship.bullet_size
@@ -113,35 +112,42 @@ class $z.Root extends $z.Polygon
     @path          = ship.path
     @BB() # set the rectangular bounding box for this path
     endPath  = @d_attr() # new end-path to morph to
-    @image.attr("opacity", .1)
+    @image.attr("opacity", .2)
       .attr('fill', '#FFF')
       .data([endPath])
       .transition()
-      .duration(dur)
+      .duration(dur * 0.25)
+      .ease('linear')
       .attrTween("d", $z.Utils.pathTween)
       .transition()
       .duration(dur * 0.5)
+      .ease('linear')
       .attr("opacity", 0)
-    @shipImage
+    @g
       .transition()
+      .ease('linear')
       .duration(dur * 0.5)
-      .attr('opacity', 0)
-      .remove()
-      .transition()
-      .attr("x", -@bb_width * 0.5 + ship.offset.x)
-      .attr("y", -@bb_height * 0.5 + ship.offset.y)
-      .attr("width", @bb_width)
-      .attr("height", @bb_height)
-      .transition()
-      .duration(dur)
-      .attr("xlink:href", ship.url)
-      .attr("opacity", 1)
-      .each('end', => 
+      .style('opacity', 0)
+      .each('end', =>
+        @shipImage
+          .attr("xlink:href", ship.url)    
+          .attr("x", -@bb_width * 0.5 + ship.offset.x)
+          .attr("y", -@bb_height * 0.5 + ship.offset.y)
+          .attr("width", @bb_width)
+          .attr("height", @bb_height)
         # @set_path()
-        @collision = true
-        $z.Physics.callbacks[0] = @fire
+        @g
+          .transition()
+          .delay(dur * 0.125)
+          .duration(dur)
+          .ease('linear')
+          .style('opacity', 1)
+          .each('end', =>
+            @collision = true
+            $z.Physics.callbacks[0] = @fire
+          )
       )
-      
+
   start: ->
     super
     # d3.select(document.body).on("mousemove", @redraw) # default mouse behavior is to control the root element position
