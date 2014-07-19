@@ -186,20 +186,24 @@ class $z.Dronewar extends $z.Game
       .attr('font-weight', 'bold')
       .style("cursor", "pointer")
     go.text("START")
-    go.on("click", -> 
-      dur = 500
-      title.transition().duration(dur).style("opacity", 0).remove()
-      prompt.transition().duration(dur).style("opacity", 0).remove()
-      cobra.transition().duration(dur).style("opacity", 0).remove()
-      viper.transition().duration(dur).style("opacity", 0).remove()
-      fang.transition().duration(dur).style("opacity", 0).remove()
-      go.transition().duration(dur).style("opacity", 0).remove()
-      how.transition().duration(dur).style("opacity", 0).remove()
-      $z.Game.instance.root.start()
-      $z.Gamescore.value = 0
-      $z.Game.instance.level()
-      # $z.Utils.fullscreen()
-    )
+
+    setTimeout( ->
+      go.on("click", -> 
+        dur = 500
+        title.transition().duration(dur).style("opacity", 0).remove()
+        prompt.transition().duration(dur).style("opacity", 0).remove()
+        cobra.transition().duration(dur).style("opacity", 0).remove()
+        viper.transition().duration(dur).style("opacity", 0).remove()
+        fang.transition().duration(dur).style("opacity", 0).remove()
+        go.transition().duration(dur).style("opacity", 0).remove()
+        how.transition().duration(dur).style("opacity", 0).remove()
+        $z.Game.instance.root.start()
+        $z.Gamescore.value = 0
+        $z.Game.instance.level()
+        # $z.Utils.fullscreen()
+      ) 
+    dur * 4)
+
     how = @g.append("text")
       .text("")
       .attr("stroke", "none")

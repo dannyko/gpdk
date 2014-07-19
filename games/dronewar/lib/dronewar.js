@@ -2269,19 +2269,21 @@
       });
       go = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#FF2").attr("font-size", "42").attr("x", this.root.r.x - 70).attr("y", this.root.r.y + 100).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       go.text("START");
-      go.on("click", function() {
-        dur = 500;
-        title.transition().duration(dur).style("opacity", 0).remove();
-        prompt.transition().duration(dur).style("opacity", 0).remove();
-        cobra.transition().duration(dur).style("opacity", 0).remove();
-        viper.transition().duration(dur).style("opacity", 0).remove();
-        fang.transition().duration(dur).style("opacity", 0).remove();
-        go.transition().duration(dur).style("opacity", 0).remove();
-        how.transition().duration(dur).style("opacity", 0).remove();
-        $z.Game.instance.root.start();
-        $z.Gamescore.value = 0;
-        return $z.Game.instance.level();
-      });
+      setTimeout(function() {
+        return go.on("click", function() {
+          dur = 500;
+          title.transition().duration(dur).style("opacity", 0).remove();
+          prompt.transition().duration(dur).style("opacity", 0).remove();
+          cobra.transition().duration(dur).style("opacity", 0).remove();
+          viper.transition().duration(dur).style("opacity", 0).remove();
+          fang.transition().duration(dur).style("opacity", 0).remove();
+          go.transition().duration(dur).style("opacity", 0).remove();
+          how.transition().duration(dur).style("opacity", 0).remove();
+          $z.Game.instance.root.start();
+          $z.Gamescore.value = 0;
+          return $z.Game.instance.level();
+        });
+      }, dur * 4);
       how = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", "18").attr("x", $z.Game.width / 2 - 350).attr("y", this.root.r.y + 140).attr('font-family', 'arial').attr('font-weight', 'bold').style("cursor", "pointer");
       how.text("Use mouse / tap screen to control movement and use scrollwheel / drag for rotation");
       if ($z.Game.musicSwitch) {

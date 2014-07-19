@@ -5,7 +5,7 @@ class $z.Rainflow extends $z.Game
     super
     @map_width     = 360
     @map_height    = 180 
-    @image     = @g.append('image')
+    @image         = @g.append('image')
       .attr('xlink:href', 'earth_elevation6.png')
       .attr('height', @map_height)
       .attr('width', @map_width)
@@ -106,6 +106,7 @@ class $z.Rainflow extends $z.Game
         $z.Game.instance.raining = false
     int      = setInterval(new_drop, dur)
     clear    = -> clearInterval(int)
+    
 $(document).ready( -> 
   new $z.Rainflow() # create the game instance
 )
