@@ -21,20 +21,16 @@ class $z.Physics # numerical integration module for solving differential equatio
 #    (callback, element) ->
 #      window.setTimeout(callback, Physics.tick)
 
-  @verlet = (element, dt = Physics.tick) ->
-    element.f.scale(0.5 * dt * dt)
-    element.dr.x = element.v.x # initialize displacement vector
-    element.dr.y = element.v.y # initialize displacement vector
-    element.dr.scale(dt).add(element.f) # store displacement vector
-    element.r.add(element.dr) # update position
+  @euler = (element, dt = Physics.tick) ->
     return if element.cleanup() # don't setup for the next update if element is removed
-    element.fcopy.init(element.f) # copy this object for temporary storage
     element.f.x = 0 # initialize current force
     element.f.y = 0 # initialize current force
     accumulateSwitch = true # parameter for $z.Force module
     element.force_param.forEach (param) -> # loop over force parameter array elements
       $z.Force.eval(element, param, element.f, accumulateSwitch) # accumulate the forces acting on this element one at a time
-    element.v.add(element.fcopy.add(element.f).scale(0.5 * dt)) # Verlet velocity update, assuming that the force is velocity-independent
+    element.v.add(element.f.scale(dt)) # velocity update, assuming that the force is velocity-independent
+    element.dr.init(element.v).scale(dt) # compute displacement vector
+    element.r.add(element.dr) # update position
     return
 
   @integrate = (t) ->
@@ -50,7 +46,7 @@ class $z.Physics # numerical integration module for solving differential equatio
     return Physics.off
   
   @update = (elapsedTime = Physics.elapsedTime) ->
-    Nstep = Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
+    Nstep = 2 # Math.floor(elapsedTime / Physics.tick) # compute number of integral steps to take (slower computer implies more physics steps per frame)
     Nmax  = 600
     if Nstep > Nmax
       dur = 2000
@@ -67,9 +63,9 @@ class $z.Physics # numerical integration module for solving differential equatio
       Physics.run_callbacks()
       ++step
     # fractional time step:
-    error = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
-    dt    = Physics.tick * error # scale timestep of physics to compensate for noise in framerate
-    Physics.step(dt)
+    #error = (elapsedTime - Nstep * Physics.tick) / Physics.tick # relative error in animation speed due to noise
+    #dt    = Physics.tick * error # scale timestep of physics to compensate for noise in framerate
+    #Physics.step(dt)
     Physics.run_callbacks()
 
   @step = (elapsedTime = Physics.tick) -> # one full step of the physics engine - update all elements, resolve collisions, etc.

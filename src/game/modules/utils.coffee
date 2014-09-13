@@ -108,13 +108,14 @@ class $z.Utils
     interp(d, this)
 
   @bilinear_interp = (matrix, x, y) ->
-    tol = 1e-1 # for offset in case x = Math.floor(x)
-    xf  = Math.floor(x)
-    xc  = Math.ceil(x + tol)
-    yf  = Math.floor(y)
-    yc  = Math.ceil(y + tol)
-    dxf = x - xf
-    dxc = xc - x
-    dyf = y - yf
-    dyc = yc - y
+    tol    = 1e-100 # for offset in case x = Math.floor(x)
+    xf     = Math.floor(x)
+    xc     = Math.ceil(x + tol)
+    yf     = Math.floor(y)
+    yc     = Math.ceil(y + tol)
+    dxf    = x - xf
+    dxc    = xc - x
+    dyf    = y - yf
+    dyc    = yc - y
     interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf
+    interp

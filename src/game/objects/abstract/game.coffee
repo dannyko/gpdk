@@ -21,7 +21,8 @@ class $z.Game
       .attr "viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height 
       .attr "preserveAspectRatio", "xMidYMin meet" 
       .attr 'width', '100%' 
-      .attr 'max-height', 100 * $z.Game.height / $z.Game.maxdim + '%' 
+      .style('max-height', '100%')
+      # .style 'max-height', 100 * $z.Game.height / $z.Game.maxdim + '%' 
     @scale      = 1 # initialize zoom level (implementation still pending)
     @g          = d3.select("#game_g")
     @g          = @svg.append('g') if @g.empty()

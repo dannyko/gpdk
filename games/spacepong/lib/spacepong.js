@@ -610,7 +610,7 @@
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', 100 * $z.Game.width / $z.Game.maxdim + '%').attr('height', 100 * $z.Game.height / $z.Game.maxdim + '%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', '100%').style('max-height', '100%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
@@ -1961,7 +1961,7 @@
 
     __extends(Ship, _super);
 
-    Ship.image_url = [GameAssetsUrl + "green_ship.svg", GameAssetsUrl + "blue_ship.svg", GameAssetsUrl + "red_ship.svg"];
+    Ship.image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"];
 
     Ship.increment_count = [1, 2, 4];
 

@@ -176,6 +176,28 @@
       return array.pop();
     };
 
+    Utils.delayedLoop = function(dur, Niter, callback, finalCallback) {
+      var i, runLoop;
+      if (dur == null) {
+        dur = 1000;
+      }
+      if (finalCallback == null) {
+        finalCallback = void 0;
+      }
+      i = 0;
+      runLoop = function() {
+        callback(i);
+        if (++i === Niter) {
+          if (typeof finalCallback === "function") {
+            finalCallback();
+          }
+          return;
+        }
+        return setTimeout(runLoop, dur);
+      };
+      return runLoop();
+    };
+
     Utils.set = function(obj, config) {
       var x, _results;
       _results = [];
@@ -300,7 +322,7 @@
 
     Utils.bilinear_interp = function(matrix, x, y) {
       var dxc, dxf, dyc, dyf, interp, tol, xc, xf, yc, yf;
-      tol = 1e-1;
+      tol = 1e-100;
       xf = Math.floor(x);
       xc = Math.ceil(x + tol);
       yf = Math.floor(y);
@@ -309,7 +331,8 @@
       dxc = xc - x;
       dyf = y - yf;
       dyc = yc - y;
-      return interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf;
+      interp = matrix[yf][xf] * dxc * dyc + matrix[yf][xc] * dxf * dyc + matrix[yc][xf] * dxc * dyf + matrix[yc][xc] * dxf * dyf;
+      return interp;
     };
 
     return Utils;
@@ -360,7 +383,7 @@
       this.svg = this.config.svg || $z.Game.instance.svg;
       this.game_g = this.config.game_g || $z.Game.instance.g;
       this.quadtree = this.config.quadtree || null;
-      this.tick = this.config.tick || $z.Physics.verlet;
+      this.tick = this.config.tick || $z.Physics.euler;
       this.is_removed = false;
       this.is_sleeping = false;
       this.is_flashing = false;
@@ -400,9 +423,14 @@
       if (dur == null) {
         dur = 30;
       }
-      return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
-        return typeof callback === "function" ? callback(d) : void 0;
-      });
+      if (dur != null) {
+        return this.g.transition().duration(dur).ease('linear').style("opacity", 1).each('end', function(d) {
+          return typeof callback === "function" ? callback(d) : void 0;
+        });
+      } else {
+        this.g.style("opacity", 1);
+        return typeof callback === "function" ? callback(this) : void 0;
+      }
     };
 
     Element.prototype.fadeOut = function(dur, callback) {
@@ -445,7 +473,11 @@
         duration = void 0;
       }
       if (callback == null) {
-        callback = void 0;
+        callback = (function(_this) {
+          return function() {
+            return _this.collision = true;
+          };
+        })(this);
       }
       if (this.is_sleeping) {
         console.log('element.start: is_sleeping... bug?');
@@ -457,7 +489,6 @@
       } else {
         console.log('element.start: this element is already on the physics list! bug?');
       }
-      this.collision = true;
       this.is_removed = false;
       this.draw();
       this.fadeIn(duration, callback);
@@ -526,14 +557,22 @@
       this.draw();
     };
 
-    Element.prototype.scale = function(scalingFactor, dur) {
+    Element.prototype.scale = function(scalingFactor, dur, callback) {
       if (scalingFactor == null) {
         scalingFactor = 10;
       }
       if (dur == null) {
-        dur = 420;
+        dur = void 0;
       }
-      return this.image.attr('transform', 'scale(1)').transition().duration(dur).attr('transform', 'scale(' + scalingFactor + ')');
+      if (callback == null) {
+        callback = function() {};
+      }
+      if (dur != null) {
+        return this.image.transition().duration(dur).ease('linear').attr('transform', 'scale(' + scalingFactor + ')').each('end', callback);
+      } else {
+        this.image.attr('transform', 'scale(' + scalingFactor + ')');
+        return callback();
+      }
     };
 
     return Element;
@@ -561,22 +600,24 @@
 
     Game.height = 600;
 
+    Game.maxdim = Math.max(Game.width, Game.height);
+
     function Game(config) {
       this.config = config != null ? config : {};
       this.images_loaded = false;
       this.element = [];
       this.div = d3.select("#game_div");
       this.svg = d3.select("#game_svg");
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr('width', '100%');
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', '100%').style('max-height', '100%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
         this.g = this.svg.append('g');
       }
-      this.g.attr('id', 'game_g').style('width', '').style('height', '');
+      this.g.attr('id', 'game_g');
       $z.Game.instance = this;
       $z.Game.instance.div.style('opacity', 0);
       this.preload_images();
@@ -661,23 +702,20 @@
     };
 
     Game.prototype.cleanup = function() {
-      var len;
-      len = $z.Collision.list.length;
-      while (len--) {
-        $z.Collision.list[len].remove();
-      }
+      this.g.selectAll('g').each(function(d) {
+        return d != null ? d.remove() : void 0;
+      });
     };
 
     Game.prototype.message = function(txt, callback, dur) {
-      var ready;
+      var ready, spacing;
       if (dur == null) {
-        dur = 500;
+        dur = 1000;
       }
-      if (callback === void 0) {
-        callback = function() {};
-      }
+      callback || (callback = function() {});
       this.g.selectAll('.game_message').remove();
-      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - 105).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
+      spacing = 10;
+      ready = this.g.append("text").attr('class', 'game_message').text(txt).attr("stroke", "none").attr("fill", $z.Game.message_color).attr("font-size", "36").attr("x", $z.Game.width / 2 - txt.length * spacing).attr("y", $z.Game.height / 2 + 20).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0).transition().duration(dur).style("opacity", 1).transition().duration(dur).style('opacity', 0).remove().each('end', callback);
     };
 
     return Game;
@@ -1296,44 +1334,27 @@
 
     Physics.paused = false;
 
-    Physics.verlet_step = function(element, dt) {
+    Physics.euler = function(element, dt) {
       var accumulateSwitch;
       if (dt == null) {
-        dt = element.dt;
+        dt = Physics.tick;
       }
-      element.f.scale(0.5 * dt * dt);
-      element.dr.x = element.v.x;
-      element.dr.y = element.v.y;
-      element.dr.scale(dt).add(element.f);
-      element.r.add(element.dr);
       if (element.cleanup()) {
         return;
       }
-      element.fcopy.init(element.f);
       element.f.x = 0;
       element.f.y = 0;
       accumulateSwitch = true;
       element.force_param.forEach(function(param) {
         return $z.Force["eval"](element, param, element.f, accumulateSwitch);
       });
-      element.v.add(element.fcopy.add(element.f).scale(0.5 * dt));
-    };
-
-    Physics.verlet = function(element, elapsedTime) {
-      var Nstep, dt, error, step;
-      Nstep = Math.floor(elapsedTime / Physics.tick);
-      step = 0;
-      while (step < Nstep) {
-        Physics.verlet_step(element);
-        ++step;
-      }
-      error = (elapsedTime - Nstep * Physics.tick) / Physics.tick;
-      dt = element.dt * error;
-      Physics.verlet_step(element, dt);
+      element.v.add(element.f.scale(dt));
+      element.dr.init(element.v).scale(dt);
+      element.r.add(element.dr);
     };
 
     Physics.integrate = function(t) {
-      var bool, elapsedTime, fps, index;
+      var elapsedTime, fps;
       if (Physics.off) {
         return true;
       }
@@ -1345,24 +1366,37 @@
       }
       Physics.timestamp = t;
       Physics.update(elapsedTime);
-      $z.Collision.detect();
-      index = Physics.callbacks.length;
-      while (index--) {
-        if (Physics.callbacks.length === 0) {
-          break;
-        }
-        bool = Physics.callbacks[index](t);
-        if (bool) {
-          $z.Utils.index_pop(Physics.callbacks, index);
-        }
-      }
-      return this.off;
+      return Physics.off;
     };
 
     Physics.update = function(elapsedTime) {
-      var index, _results;
+      var Nmax, Nstep, dur, step;
       if (elapsedTime == null) {
         elapsedTime = Physics.elapsedTime;
+      }
+      Nstep = 2;
+      Nmax = 600;
+      if (Nstep > Nmax) {
+        dur = 2000;
+        Physics.stop();
+        $z.Game.instance.message('CPU SPEED ERROR', function() {
+          return $z.Game.instance.stop();
+        }, dur);
+      }
+      step = 0;
+      while (step < Nstep) {
+        Physics.step();
+        $z.Collision.detect();
+        Physics.run_callbacks();
+        ++step;
+      }
+      return Physics.run_callbacks();
+    };
+
+    Physics.step = function(elapsedTime) {
+      var index, _results;
+      if (elapsedTime == null) {
+        elapsedTime = Physics.tick;
       }
       index = $z.Collision.list.length;
       _results = [];
@@ -1381,14 +1415,32 @@
       return _results;
     };
 
+    Physics.run_callbacks = function() {
+      var bool, index, _results;
+      index = Physics.callbacks.length;
+      _results = [];
+      while (index--) {
+        if (Physics.callbacks.length === 0) {
+          break;
+        }
+        bool = Physics.callbacks[index](Physics.timestamp);
+        if (bool) {
+          _results.push($z.Utils.index_pop(Physics.callbacks, index));
+        } else {
+          _results.push(void 0);
+        }
+      }
+      return _results;
+    };
+
     Physics.start = function() {
       var blurCallback;
-      if (!this.off) {
+      if (!Physics.off) {
         return;
       }
-      this.off = false;
-      this.timestamp = 0;
-      d3.timer(this.integrate);
+      Physics.off = false;
+      Physics.timestamp = 0;
+      d3.timer(Physics.integrate);
       blurCallback = function() {
         Physics.paused = true;
         return Physics.stop();
@@ -1414,10 +1466,11 @@
     };
 
     Physics.stop = function() {
-      if (this.off) {
+      if (Physics.off) {
         return;
       }
-      this.off = true;
+      Physics.off = true;
+      Physics.timestamp = void 0;
       setTimeout(Physics.update, 2 * Physics.tick);
     };
 
@@ -1653,21 +1706,21 @@
       }
       this.lifetime = $z.Utils.timestamp() - this.lifetime;
       if (this.offscreen()) {
-        if (this.r.x > this.width) {
-          this.r.x = this.r.x % this.width;
+        if (this.r.x > $z.Game.width) {
+          this.r.x = this.r.x % $z.Game.width;
         }
         if (this.r.x < 0) {
-          this.r.x = this.width + this.r.x;
+          this.r.x = $z.Game.width + this.r.x;
         }
         if (this.r.y < 0) {
           this.r.y = 0;
           this.v.y = Math.abs(this.v.y);
-          this.r.x = (this.r.x + this.width * 0.5) % this.width;
+          this.r.x = (this.r.x + $z.Game.width * 0.5) % $z.Game.width;
         }
-        if (this.r.y > this.height) {
-          this.r.y = this.height;
+        if (this.r.y > $z.Game.height) {
+          this.r.y = $z.Game.height;
           this.v.y = -Math.abs(this.v.y);
-          this.r.x = (this.r.x + this.width * 0.5) % this.width;
+          this.r.x = (this.r.x + $z.Game.width * 0.5) % $z.Game.width;
         }
       }
     };
@@ -1703,13 +1756,14 @@
               return Number(d);
             });
           });
+          _this.elevation.pop();
           _this.gravity_param = {
             tol: 1,
             energy: V,
             type: 'gradient'
           };
           _this.friction_param = {
-            alpha: .2,
+            alpha: .02,
             type: 'friction'
           };
           _this.svg.on("click", _this.drop);
@@ -1720,7 +1774,7 @@
       prompt.text("RAINFLOW");
       dur = 1500;
       prompt.transition().duration(dur).attr('opacity', 1).transition().duration(dur).delay(dur).attr('opacity', 0).remove();
-      inst = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", 10).attr("x", this.map_width / 2 - 100).attr("y", this.map_height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      inst = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", 10).attr("x", this.map_width / 2 - 45).attr("y", this.map_height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       inst.text("click to make it rain");
       inst.transition().duration(dur).attr('opacity', 1).transition().duration(dur).attr('opacity', 0).remove().each('end', function() {
         return d3.text('topo_flip.csv', drops);
@@ -1742,8 +1796,9 @@
           if (y > _this.elevation.length - 1) {
             y = y % (_this.elevation.length - 1);
           }
-          scale = 1e-4;
-          return energy = scale * $z.Utils.bilinear_interp(_this.elevation, x, y);
+          scale = 1e-6;
+          energy = scale * $z.Utils.bilinear_interp(_this.elevation, x, y);
+          return energy;
         };
       })(this);
     }

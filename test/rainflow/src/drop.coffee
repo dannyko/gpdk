@@ -18,16 +18,16 @@ class $z.Drop extends $z.Circle
     @remove() if @lifetime > @max_lifetime
     @lifetime = $z.Utils.timestamp() - @lifetime
     if @offscreen() # periodic wrapping 
-      if @r.x > @width then @r.x = @r.x % @width
-      if @r.x < 0 then @r.x = @width + @r.x
+      if @r.x > $z.Game.width then @r.x = @r.x % $z.Game.width
+      if @r.x < 0 then @r.x = $z.Game.width + @r.x
       if @r.y < 0 then (
         @r.y = 0
         @v.y = Math.abs(@v.y)
-        @r.x = (@r.x + @width * 0.5) % @width
+        @r.x = (@r.x + $z.Game.width * 0.5) % $z.Game.width
       )
-      if @r.y > @height then (
-        @r.y = @height
+      if @r.y > $z.Game.height then (
+        @r.y = $z.Game.height
         @v.y = -Math.abs(@v.y)
-        @r.x = (@r.x + @width * 0.5) % @width
+        @r.x = (@r.x + $z.Game.width * 0.5) % $z.Game.width
       )
     return    

@@ -610,7 +610,7 @@
       if (this.svg.empty()) {
         this.svg = this.div.append('svg').attr('id', 'game_svg');
       }
-      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', '100%').attr('max-height', 100 * $z.Game.height / $z.Game.maxdim + '%');
+      this.svg.attr("viewBox", '0 0 ' + $z.Game.width + ' ' + $z.Game.height).attr("preserveAspectRatio", "xMidYMin meet").attr('width', '100%').style('max-height', '100%');
       this.scale = 1;
       this.g = d3.select("#game_g");
       if (this.g.empty()) {
@@ -1729,7 +1729,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: GameAssetsUrl + "viper.svg",
+        url: GameAssetsUrl + "viper_1.png",
         offset: {
           x: 0,
           y: 19
@@ -1830,7 +1830,7 @@
             react: true
           }
         ],
-        url: GameAssetsUrl + "fang.svg",
+        url: GameAssetsUrl + "fang_1.png",
         offset: {
           x: 0,
           y: 25
@@ -1910,7 +1910,7 @@
             pathSegTypeAsLetter: 'Z'
           }
         ],
-        url: GameAssetsUrl + "cobra.svg",
+        url: GameAssetsUrl + "cobra_1.png",
         offset: {
           x: 0,
           y: 0
@@ -1966,7 +1966,7 @@
   $z.Drone = (function(_super) {
     __extends(Drone, _super);
 
-    Drone.url = GameAssetsUrl + "drone.svg";
+    Drone.url = GameAssetsUrl + "drone_1.png";
 
     Drone.max_speed = .1;
 
@@ -2130,7 +2130,7 @@
 
     function Dronewar() {
       this.keydown = __bind(this.keydown, this);
-      this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone.svg', GameAssetsUrl + 'viper.svg', GameAssetsUrl + 'fang.svg', GameAssetsUrl + 'cobra.svg'];
+      this.image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'cobra_1.png'];
       Dronewar.__super__.constructor.apply(this, arguments);
     }
 

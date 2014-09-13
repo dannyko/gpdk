@@ -18,12 +18,13 @@ class $z.Rainflow extends $z.Game
     drops = (text) => # callback to execute after text file loads
       row            = text.split('\n') 
       @elevation     = row.map( (d) -> return d.split(',').map( (d) -> return Number(d) ) ) # matrix rows (m = 180) of elevations indexed by matrix column (n = 360)
+      @elevation.pop()
       @gravity_param =
         tol: 1 # for computing numerical gradient using a centered finite difference approximation
         energy: V
         type: 'gradient'
       @friction_param =
-        alpha: .2
+        alpha: .02
         type: 'friction'
       @svg.on("click", @drop) # default mouse button listener
       # d3.select(window).on("keydown", @keydown) # default keyboard listener
@@ -55,7 +56,7 @@ class $z.Rainflow extends $z.Game
       .attr("stroke", "none")
       .attr("fill", "white")
       .attr("font-size", 10)
-      .attr("x", @map_width / 2 - 100 )
+      .attr("x", @map_width / 2 - 45 )
       .attr("y", @map_height / 4 + 40)
       .attr('font-family', 'arial')
       .attr('font-weight', 'bold')
@@ -80,7 +81,7 @@ class $z.Rainflow extends $z.Game
       x      = x % (@elevation[0].length - 1) if x > @elevation[0].length - 1
       y      = @elevation.length - 1 + y % (@elevation.length - 1) if y < 0
       y      = y % (@elevation.length - 1) if y > @elevation.length - 1
-      scale  = 1e-4 # units
+      scale  = 1e-6 # units
       energy = scale * $z.Utils.bilinear_interp @elevation, x, y
 
   drop: (r = @root.r) =>

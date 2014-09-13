@@ -3,7 +3,7 @@ class $z.Dronewar extends $z.Game
   @bg_img = GameAssetsUrl + 'space_background.jpg'
 
   constructor: ->
-    @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone.svg', GameAssetsUrl + 'viper.svg', GameAssetsUrl + 'fang.svg', GameAssetsUrl + 'cobra.svg']    
+    @image_list = [GameAssetsUrl + 'space_background.jpg', GameAssetsUrl + 'drone_1.png', GameAssetsUrl + 'viper_1.png', GameAssetsUrl + 'fang_1.png', GameAssetsUrl + 'cobra_1.png']    
     super
 
   level: ->

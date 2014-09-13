@@ -1,5 +1,5 @@
 class $z.Ship extends $z.Polygon
-  @image_url = [GameAssetsUrl + "green_ship.svg", GameAssetsUrl + "blue_ship.svg", GameAssetsUrl + "red_ship.svg"]
+  @image_url = [GameAssetsUrl + "green_ship.png", GameAssetsUrl + "blue_ship.png", GameAssetsUrl + "red_ship.png"]
   @increment_count = [1, 2, 4]
   @speed = [.02, .04, .08]
   @size  = [40, 35, 30] # half width/height
