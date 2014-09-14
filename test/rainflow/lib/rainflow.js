@@ -1351,18 +1351,11 @@
     };
 
     Physics.integrate = function(t) {
-      var dur, fps;
+      var fps;
       if (Physics.off) {
         return true;
       }
       Physics.elapsedTime = t - Physics.timestamp;
-      if (Physics.elapsedTime > Physics.maxElapsedTime) {
-        dur = 2000;
-        Physics.stop();
-        $z.Game.instance.message('CPU SPEED ERROR', function() {
-          return $z.Game.instance.stop();
-        }, dur);
-      }
       if (Physics.debug) {
         fps = 1000 / elapsedTime;
         console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);

@@ -39,14 +39,14 @@ class $z.Physics # numerical integration module for solving differential equatio
     return true if Physics.off
     # requestAnimFrame(Physics.integrate) # keep running the loop
     Physics.elapsedTime = t - Physics.timestamp
-    if Physics.elapsedTime > Physics.maxElapsedTime
-      dur = 2000
-      Physics.stop()
-      $z.Game.instance.message(
-        'CPU SPEED ERROR'
-        -> $z.Game.instance.stop()
-        dur
-      )
+#    if Physics.elapsedTime > Physics.maxElapsedTime
+#      dur = 2000
+#      Physics.stop()
+#      $z.Game.instance.message(
+#        'CPU SPEED ERROR'
+#        -> $z.Game.instance.stop()
+#        dur
+#      )
     if Physics.debug
       fps = 1000 / elapsedTime # instantaneous frames per second (noisy)
       console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps)
