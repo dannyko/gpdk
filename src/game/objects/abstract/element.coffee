@@ -162,10 +162,10 @@ class $z.Element
     $z.Utils.set(@, config) if config?
     @ # return this element instance
     
-  update: (elapsedTime) -> # helper to combine these three operations into one loop for efficiency    
-    @tick?(@, elapsedTime) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
-    @draw()
-    return
+#  update: (elapsedTime) -> # helper to combine these three operations into one loop for efficiency    
+#    @tick?(@, elapsedTime) # the physics function takes the instance (self) as an input argument to avoid making unnecessary closures or deep-copies of the function
+#    @draw()
+#    return
 
   scale: (scalingFactor = 10, dur = undefined, callback = ->) ->
     if dur?

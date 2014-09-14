@@ -550,13 +550,6 @@
       return this;
     };
 
-    Element.prototype.update = function(elapsedTime) {
-      if (typeof this.tick === "function") {
-        this.tick(this, elapsedTime);
-      }
-      this.draw();
-    };
-
     Element.prototype.scale = function(scalingFactor, dur, callback) {
       if (scalingFactor == null) {
         scalingFactor = 10;
@@ -1322,6 +1315,10 @@
 
     Physics.tick = 1000 / Physics.fps;
 
+    Physics.maxElapsedTime = 100 * Physics.tick;
+
+    Physics.Nstep = 2;
+
     Physics.off = true;
 
     Physics.game = null;
@@ -1354,63 +1351,59 @@
     };
 
     Physics.integrate = function(t) {
-      var elapsedTime, fps;
+      var dur, fps;
       if (Physics.off) {
         return true;
       }
-      elapsedTime = t - Physics.timestamp;
-      Physics.elapsedTime = elapsedTime;
-      if (Physics.debug) {
-        fps = 1000 / elapsedTime;
-        console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
-      }
-      Physics.timestamp = t;
-      Physics.update(elapsedTime);
-      return Physics.off;
-    };
-
-    Physics.update = function(elapsedTime) {
-      var Nmax, Nstep, dur, step;
-      if (elapsedTime == null) {
-        elapsedTime = Physics.elapsedTime;
-      }
-      Nstep = 2;
-      Nmax = 600;
-      if (Nstep > Nmax) {
+      Physics.elapsedTime = t - Physics.timestamp;
+      if (Physics.elapsedTime > Physics.maxElapsedTime) {
         dur = 2000;
         Physics.stop();
         $z.Game.instance.message('CPU SPEED ERROR', function() {
           return $z.Game.instance.stop();
         }, dur);
       }
-      step = 0;
-      while (step < Nstep) {
-        Physics.step();
-        $z.Collision.detect();
-        Physics.run_callbacks();
-        ++step;
+      if (Physics.debug) {
+        fps = 1000 / elapsedTime;
+        console.log('Physics.integrate:', 'dt: ', elapsedTime, 't: ', t, 'timestamp: ', Physics.timestamp, 'dt_chk: ', t - Physics.timestamp, 'fps: ' + fps);
       }
+      Physics.timestamp = t;
+      Physics.update();
+      return Physics.off;
+    };
+
+    Physics.update = function() {
+      Physics.step();
+      $z.Collision.detect();
+      Physics.draw_all();
       return Physics.run_callbacks();
     };
 
-    Physics.step = function(elapsedTime) {
-      var index, _results;
-      if (elapsedTime == null) {
-        elapsedTime = Physics.tick;
-      }
-      index = $z.Collision.list.length;
+    Physics.step = function() {
+      var element, index, stepCount, _results;
+      stepCount = 0;
       _results = [];
-      while (index--) {
-        if ($z.Collision.list[index].is_removed) {
-          _results.push($z.Utils.index_pop($z.Collision.list, index).sleep());
-        } else {
-          $z.Collision.list[index].update(elapsedTime);
-          if (Physics.debug) {
-            _results.push(console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', $z.Collision.list[index].r.x, 'r.y:', $z.Collision.list[index].r.y));
-          } else {
-            _results.push(void 0);
+      while (stepCount < Physics.Nstep) {
+        stepCount++;
+        index = $z.Collision.list.length;
+        _results.push((function() {
+          var _results1;
+          _results1 = [];
+          while (index--) {
+            if ($z.Collision.list[index].is_removed) {
+              _results1.push($z.Utils.index_pop($z.Collision.list, index).sleep());
+            } else {
+              element = $z.Collision.list[index];
+              element.tick(element, Physics.elapsedTime / Physics.Nstep);
+              if (Physics.debug) {
+                _results1.push(console.log('Physics.update', 'index:', index, 'fps:', fps, 'r.x:', $z.Collision.list[index].r.x, 'r.y:', $z.Collision.list[index].r.y));
+              } else {
+                _results1.push(void 0);
+              }
+            }
           }
-        }
+          return _results1;
+        })());
       }
       return _results;
     };
@@ -1429,6 +1422,17 @@
         } else {
           _results.push(void 0);
         }
+      }
+      return _results;
+    };
+
+    Physics.draw_all = function() {
+      var element, index, _results;
+      index = $z.Collision.list.length;
+      _results = [];
+      while (index--) {
+        element = $z.Collision.list[index];
+        _results.push(element.draw());
       }
       return _results;
     };
@@ -1797,8 +1801,7 @@
             y = y % (_this.elevation.length - 1);
           }
           scale = 1e-6;
-          energy = scale * $z.Utils.bilinear_interp(_this.elevation, x, y);
-          return energy;
+          return energy = scale * $z.Utils.bilinear_interp(_this.elevation, x, y);
         };
       })(this);
     }
@@ -1834,7 +1837,6 @@
       new_drop = function() {
         $z.Factory.spawn($z.Drop, config.pop()).start();
         if (config.length === 0) {
-          console.log('clearing');
           clear();
           return $z.Game.instance.raining = false;
         }

@@ -102,7 +102,6 @@ class $z.Rainflow extends $z.Game
     new_drop = -> 
       $z.Factory.spawn($z.Drop, config.pop()).start()
       if config.length is 0
-        console.log('clearing')
         clear()
         $z.Game.instance.raining = false
     int      = setInterval(new_drop, dur)
