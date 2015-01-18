@@ -1767,10 +1767,10 @@
           return _this.start();
         };
       })(this);
-      prompt = this.g.append("text").text("").attr("stroke", "black").attr("fill", "deepskyblue").attr("font-size", "36").attr("x", this.map_width / 2 - 100).attr("y", this.map_height / 4).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
+      prompt = this.g.append("text").text("").attr("stroke", "none").attr("fill", "#1d1687").attr("font-size", "36").attr("x", this.map_width / 2 - 100).attr("y", this.map_height / 4).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       prompt.text("RAINFLOW");
       dur = 1500;
-      prompt.transition().duration(dur).attr('opacity', 1).transition().duration(dur).delay(dur).attr('opacity', 0).remove();
+      prompt.transition().duration(dur).attr('opacity', .7).transition().duration(dur).delay(dur).attr('opacity', 0).remove();
       inst = this.g.append("text").text("").attr("stroke", "none").attr("fill", "white").attr("font-size", 10).attr("x", this.map_width / 2 - 45).attr("y", this.map_height / 4 + 40).attr('font-family', 'arial').attr('font-weight', 'bold').attr('opacity', 0);
       inst.text("click to make it rain");
       inst.transition().duration(dur).attr('opacity', 1).transition().duration(dur).attr('opacity', 0).remove().each('end', function() {

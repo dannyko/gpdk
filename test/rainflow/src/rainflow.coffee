@@ -32,8 +32,8 @@ class $z.Rainflow extends $z.Game
 
     prompt = @g.append("text")
       .text("")
-      .attr("stroke", "black")
-      .attr("fill", "deepskyblue")
+      .attr("stroke", "none")
+      .attr("fill", "#1d1687")
       .attr("font-size", "36")
       .attr("x", @map_width / 2 - 100 )
       .attr("y", @map_height / 4)
@@ -44,7 +44,7 @@ class $z.Rainflow extends $z.Game
     dur = 1500
     prompt.transition()
       .duration(dur)
-      .attr('opacity', 1)
+      .attr('opacity', .7)
       .transition()
       .duration(dur)
       .delay(dur)
